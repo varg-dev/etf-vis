@@ -1,5 +1,5 @@
 import regression from 'regression';
-import { dateToInt, etfHistoricalToForecastArray, loadHistoricalETFData } from './utils';
+import { dateToTimestamp, etfHistoricalToForecastArray, loadHistoricalETFData, timestampToDate } from './utils';
 
 const koerperschaftsteuerRatio = 0.25;
 const solidaritaetszuschlagRatio = 0.055;
@@ -13,11 +13,14 @@ function splitSolidaritaetszuschlag(brutto) {
 }
 
 export class ForecastModel {
-    constructor(apiKey, backCastTimeFactor = 2) {
+    constructor(apiKey, backCastTimeFactor = 2, backCastTimeConstant = 7) {
         this.historicalData = {};
         this.predictors = {};
         this.backCastTimeFactor = backCastTimeFactor;
         this.apiKey = apiKey;
+        const backCastTimeDate = new Date(0);
+        backCastTimeDate.setMonth(backCastTimeConstant);
+        this.backCastTimestampConstant = dateToTimestamp(backCastTimeDate);
     }
 
     async _loadHistoricalDataIfNotPresent(etfIdentifier) {
@@ -26,9 +29,9 @@ export class ForecastModel {
         }
         const historicalData = await loadHistoricalETFData(etfIdentifier);
         const forecastArray = etfHistoricalToForecastArray(historicalData);
-        const firstTimestamp = forecastArray[0];
-        const lastTimestamp = forecastArray[forecastArray.length - 1];
-        const maxTimestampBeforePredictorRepetition = (lastTimestamp - firstTimestamp) / this.backCastTimeFactor;
+        const firstTimestamp = forecastArray[0][0];
+        const lastTimestamp = forecastArray[forecastArray.length - 1][0];
+        const maxTimestampBeforePredictorRepetition = lastTimestamp + (lastTimestamp - firstTimestamp) / this.backCastTimeFactor;
         this.historicalData[etfIdentifier] = {
             history: historicalData,
             forecastArray: forecastArray,
@@ -44,11 +47,17 @@ export class ForecastModel {
         if (timestamp in this.predictors[etfIdentifier]) {
             return;
         }
-        this.predictors[etfIdentifier][timestamp] = regression.linear(this.historicalData[etfIdentifier].forecastArray);
+        const forecastArray = this.historicalData[etfIdentifier].forecastArray;
+        const lastTimestampToIncludeInPrediction =
+            forecastArray[forecastArray.length - 1][0] -
+            Math.abs(forecastArray[forecastArray.length - 1][0] - timestamp) * this.backCastTimeFactor -
+            this.backCastTimestampConstant;
+        const filteredForecastArray = forecastArray.filter(entry => entry[0] >= lastTimestampToIncludeInPrediction);
+        this.predictors[etfIdentifier][timestamp] = regression.linear(filteredForecastArray);
     }
 
     _dateToPredictorTimestampAndDateTimestamp(date) {
-        const timestamp = dateToInt(date);
+        const timestamp = dateToTimestamp(date);
         return [
             timestamp > this.maxTimestampBeforePredictorRepetition
                 ? this.maxTimestampBeforePredictorRepetition

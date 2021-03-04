@@ -14,14 +14,18 @@ export async function loadHistoricalETFData(etfIdentifier, apiKey) {
             };
         }
     );
-    historicalData.sort((a, b) => b.timestamp - a.timestamp);
+    historicalData.sort((a, b) => a.timestamp - b.timestamp);
     return historicalData;
 }
 
 export function etfHistoricalToForecastArray(historicalData) {
-    return historicalData.map(entry => [dateToInt(entry.timestamp), entry.course]);
+    return historicalData.map(entry => [dateToTimestamp(entry.timestamp), entry.course]);
 }
 
-export function dateToInt(date) {
+export function dateToTimestamp(date) {
     return Math.floor(date.getTime() / timeDiffIgnoreDivisor);
+}
+
+export function timestampToDate(timestamp) {
+    return new Date(timestamp * timeDiffIgnoreDivisor);
 }

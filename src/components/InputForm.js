@@ -64,8 +64,6 @@ class InputForm extends React.Component {
                         onChange={e => {
                             const newDate = new Date(e.target.value);
                             this.handleChange(e.target.value, PREDICT_IDENTIFIER);
-                            console.log(newDate);
-                            console.log(newDate.getTime());
                             if (newDate != null && !isNaN(newDate.getTime())) {
                                 this.forecastModel
                                     .predict('IBM', newDate)
