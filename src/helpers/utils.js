@@ -3,6 +3,10 @@ import * as d3 from 'd3';
 // Ignore milliseconds, seconds, minutes.
 const timeDiffIgnoreDivisor = 1000 * 60 * 60;
 
+export const timestampIndexOfForecastArray = 0;
+export const courseIndexOfForecastArray = 1;
+export const numberOfMonthsOfAYear = 12;
+
 export async function loadHistoricalETFData(etfIdentifier, apiKey) {
     const historicalData = await d3.csv(
         `https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol=${etfIdentifier}&apikey=${apiKey}&datatype=csv`,
@@ -29,3 +33,5 @@ export function dateToTimestamp(date) {
 export function timestampToDate(timestamp) {
     return new Date(timestamp * timeDiffIgnoreDivisor);
 }
+
+export default numberOfMonthsOfAYear;

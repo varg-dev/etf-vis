@@ -1,5 +1,6 @@
 import React from 'react';
-import ForecastModel from '../helpers/modelCalculations';
+import ForecastModel from '../model/ForecastModel';
+import VisualizationModel from '../model/VisualizationModel';
 
 const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -34,6 +35,12 @@ class InputForm extends React.Component {
         };
         this.forecastModel = new ForecastModel('demo');
         this.handleChange = this.handleChange.bind(this);
+
+        const costFunction = amount => {
+            return [amount - 5, 5];
+        };
+        const vis = new VisualizationModel(10000, 100, 40, { IBM: 1.0 }, costFunction, 30);
+        console.log(vis);
     }
 
     handleChange(changedValue, changedStateIdentifier) {
