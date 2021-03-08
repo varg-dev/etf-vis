@@ -1,10 +1,8 @@
-import numberOfMonthsOfAYear from '../helpers/utils';
+import { numberOfMonthsOfAYear, calculateInflationAndDiscountedValue } from '../helpers/utils';
 
 const corporateTaxRatio = 0.25;
 
 const growthRate = 0.025;
-
-const inflationRate = 0.01;
 
 function calculateTaxesOnDividend(dividendAmount) {
     return [dividendAmount * (1 - corporateTaxRatio), dividendAmount * corporateTaxRatio];
@@ -100,19 +98,25 @@ export class AccumulateModel {
         // TODO missing: increase of costs over time.
 
         // deduce inflation from every value.
-        const startGainInflationLoss = inflationRate * newEtfStartCapital;
+        const [startGainInflationLoss, discountedNewEtfStartCapital] = calculateInflationAndDiscountedValue(
+            newEtfStartCapital
+        );
         this.values.inflation += startGainInflationLoss;
-        this.values.etfs[etfIdentifier].startCapital = newEtfStartCapital - startGainInflationLoss;
+        this.values.etfs[etfIdentifier].startCapital = discountedNewEtfStartCapital;
 
         const newMonthlyInvestment = prevETFData.monthlyInvestment + monthlyInvestmentGain + investmentGain;
-        const monthlyInvestmentInflationLoss = newMonthlyInvestment * inflationRate;
+        const [monthlyInvestmentInflationLoss, discountedNewMonthlyInvestment] = calculateInflationAndDiscountedValue(
+            newMonthlyInvestment
+        );
         this.values.inflation += monthlyInvestmentInflationLoss;
-        this.values.etfs[etfIdentifier].monthlyInvestment = newMonthlyInvestment - monthlyInvestmentInflationLoss;
+        this.values.etfs[etfIdentifier].monthlyInvestment = discountedNewMonthlyInvestment;
 
         const newDividendGain = prevETFData.dividend + dividendGain + etfDividendGain;
-        const dividendInflationLoss = newDividendGain * inflationRate;
+        const [dividendInflationLoss, discountedNewDividendGain] = calculateInflationAndDiscountedValue(
+            newDividendGain
+        );
         this.values.inflation += dividendInflationLoss;
-        this.values.etfs[etfIdentifier].dividend = newDividendGain - dividendInflationLoss;
+        this.values.etfs[etfIdentifier].dividend = discountedNewDividendGain;
 
         this.values.costs += investmentCosts;
         this.values.taxes += dividendTaxes;

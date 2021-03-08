@@ -193,6 +193,7 @@ export class VisualizationModel {
     }
 
     updateVisualization() {}
+
 }
 
 export default VisualizationModel;

@@ -6,6 +6,11 @@ const timeDiffIgnoreDivisor = 1000 * 60 * 60;
 export const timestampIndexOfForecastArray = 0;
 export const courseIndexOfForecastArray = 1;
 export const numberOfMonthsOfAYear = 12;
+export const inflationRate = 0.01;
+
+export function calculateInflationAndDiscountedValue(value){
+    return [value * inflationRate, value * (1 - inflationRate)];
+}
 
 export async function loadHistoricalETFData(etfIdentifier, apiKey) {
     const historicalData = await d3.csv(
