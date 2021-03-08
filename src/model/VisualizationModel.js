@@ -104,11 +104,14 @@ export class VisualizationModel {
 
     renderVisualization(renderDivRef) {
         const svgID = 'firstSVG';
+        const investedMoneyLineID = 'investedMoney';
 
-        const marginW = 100,
+        const marginW = 150,
             marginH = 40,
             width = 1000,
             height = 400;
+
+        const zeroLineStrokeWidth = 3;
 
         const svg = d3
             .select(renderDivRef)
@@ -120,28 +123,9 @@ export class VisualizationModel {
             .append('g')
             .attr('transform', `translate(${[marginW, marginH]})`);
 
-        /*const svgBBox = document.querySelector(`svg#${svgID}`).getBoundingClientRect();
-        const totalWidth = svgBBox.width;
-        const totalHeight = svgBBox.height;
-
-
-        const marginW = totalWidth * 0.2,
-            marginH = totalHeight * 0.1;
-        const width = totalWidth - 2 * marginW,
-            height = totalHeight - 2 * marginH;
-
-            
-            const svg = svgElement.attr('viewBox', `0 0 ${width + 2 * marginW} ${height + 2 * marginH}`)
-            .append('g')
-            .attr('transform', `translate(${[marginW, marginH]})`);*/
-
-        console.log(document.querySelector('svg').getBoundingClientRect());
-
-        console.log(width, height);
-
         // create scales
         const renderData = this.yearModels.map(a => a.getD3Representation());
-        const dataExtend = renderData.map(a => a[0]);
+        const dataExtend = renderData.map(a => a.extent);
         const minVal = d3.min(dataExtend.map(a => a[0]));
         const maxVal = d3.max(dataExtend.map(a => a[1]));
 
@@ -155,8 +139,7 @@ export class VisualizationModel {
             const yearModel = this.yearModels[i];
             const x = yearModel.date;
             const currentYearClass = x.toDateString().split(' ').join('_');
-            const data = yearModel.getD3Representation()[1];
-            console.log(data);
+            const data = yearModel.getD3Representation().bars;
             svg.selectAll(`rect.${currentYearClass}`)
                 .append('g')
                 .attr('class', currentYearClass)
@@ -168,32 +151,45 @@ export class VisualizationModel {
                 .attr('width', xWidth)
                 .attr('height', d => yScale(d.yEnd) - yScale(d.yStart))
                 .attr('class', d => d.class);
-
-            svg.append('g')
-                //.attr("font-family", "sans")
-                .style('font-size', '20px')
-                //.attr("transform","translate(42, 2)")
-                .call(d3.axisLeft(yScale));
-
-            svg.append('g')
-                //.attr("font-family", "sans")
-                .style('font-size', '20px')
-                .attr('transform', `translate(0, ${height})`)
-                .call(d3.axisBottom(xScale));
-
-            svg.append('g')
-                .append('line')
-                .attr('x1', xScale(this.dates[0]))
-                .attr('y1', yScale(0))
-                .attr('x2', xScale(this.nextFutureDate))
-                .attr('y2', yScale(0))
-                .attr('stroke-width', 1)
-                .attr('stroke', 'black');
         }
+        // Draw axis
+        svg.append('g')
+            .style('font-size', '20px')
+            .call(d3.axisLeft(yScale).tickFormat(d => `${d.toLocaleString()} EUR`));
+
+        svg.append('g')
+            .style('font-size', '20px')
+            .attr('transform', `translate(0, ${height})`)
+            .call(d3.axisBottom(xScale));
+
+        svg.append('g')
+            .append('line')
+            .attr('x1', xScale(this.dates[0]))
+            .attr('y1', yScale(0))
+            .attr('x2', xScale(this.nextFutureDate))
+            .attr('y2', yScale(0))
+            .attr('stroke-width', zeroLineStrokeWidth)
+            .attr('stroke', 'black');
+
+        // Draw invested Money line.
+        const moneyDataArray = renderData.map(e => e.investedMoney);
+        moneyDataArray.unshift({date: this.dates[0], money: this.startCapital});
+
+        svg.append('path')
+            .datum(moneyDataArray)
+            .attr('fill', 'none')
+            .attr('id', investedMoneyLineID)
+            .attr('stroke-width', 3)
+            .attr(
+                'd',
+                d3
+                    .line()
+                    .x(d => xScale(d.date))
+                    .y(d => yScale(d.money))
+            );
     }
 
     updateVisualization() {}
-
 }
 
 export default VisualizationModel;
