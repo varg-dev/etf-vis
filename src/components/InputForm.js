@@ -39,13 +39,18 @@ class InputForm extends React.Component {
         const costFunction = amount => {
             return [amount - 5, 5];
         };
-        const vis = new VisualizationModel(10000, 100, 40, { IBM: 1.0 }, costFunction, 30);
-        console.log(vis);
+        this.vis = new VisualizationModel(10000, 100, 40, { IBM: 1.0 }, costFunction, 30);
+        console.log(this.vis);
+        this.ref = React.createRef();
     }
 
     handleChange(changedValue, changedStateIdentifier) {
         this.setState({ [changedStateIdentifier]: changedValue });
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
+    }
+
+    componentDidMount(){
+        this.vis.renderVisualization(this.ref.current);
     }
 
     render() {
@@ -83,6 +88,7 @@ class InputForm extends React.Component {
                     Prediction:
                     <p key={PREDICT_OUT_IDENTIFIER}>{this.state[PREDICT_OUT_IDENTIFIER]}</p>
                 </label>
+                <div ref={this.ref}></div>
             </React.Fragment>
         );
     }
