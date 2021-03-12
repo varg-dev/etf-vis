@@ -1,56 +1,65 @@
 import React from 'react';
 import ForecastModel from '../model/ForecastModel';
 import VisualizationModel from '../model/VisualizationModel';
+import LineChart3D from '../renderer/LineChartd3';
 
 const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
-const TRANSAKTION_COSTS_IDENTIFIER = 'transactionCosts';
+const TRANSACTION_COSTS_IDENTIFIER = 'transactionCosts';
+const TRANSACTION_COSTS_TYPE_IDENTIFIER = 'transactionCostsType';
 const SAVING_PHASE_IDENTIFIER = 'savingPhase';
 const PAYOUT_PHASE_IDENTIFIER = 'payoutPhase';
 const AGE_IDENTIFIER = 'age';
-const PREDICT_IDENTIFIER = 'predict';
-const PREDICT_OUT_IDENTIFIER = 'predictOut';
+const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
 
 const identifierToLabel = {
     [STARTING_CAPITAL_IDENTIFIER]: 'Starting Capital',
     [MONTHLY_INVESTMENT_IDENTIFIER]: 'Monthly Investment',
-    [TRANSAKTION_COSTS_IDENTIFIER]: 'Transaction Costs',
+    [TRANSACTION_COSTS_IDENTIFIER]: 'Transaction Costs',
+    [TRANSACTION_COSTS_TYPE_IDENTIFIER]: 'Fixes Amount ?',
     [SAVING_PHASE_IDENTIFIER]: 'Saving Phase',
     [PAYOUT_PHASE_IDENTIFIER]: 'Payout Phase',
     [AGE_IDENTIFIER]: 'Your Age',
+    [TAX_FREE_AMOUNT_IDENTIFIER]: 'Tax Free Amount',
 };
 
 class InputForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            [STARTING_CAPITAL_IDENTIFIER]: 10000,
-            [MONTHLY_INVESTMENT_IDENTIFIER]: 100,
-            [TRANSAKTION_COSTS_IDENTIFIER]: 5,
-            [SAVING_PHASE_IDENTIFIER]: 40,
-            [PAYOUT_PHASE_IDENTIFIER]: 20,
-            [AGE_IDENTIFIER]: 30,
-            [PREDICT_IDENTIFIER]: new Date('2021-06-01').toISOString().slice(0, 10),
-            [PREDICT_OUT_IDENTIFIER]: 0,
+            [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text' },
+            [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text' },
+            [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text' },
+            [TRANSACTION_COSTS_TYPE_IDENTIFIER]: { value: false, type: 'checkbox' },
+            [SAVING_PHASE_IDENTIFIER]: { value: 40, type: 'text' },
+            [PAYOUT_PHASE_IDENTIFIER]: { value: 20, type: 'text' },
+            [AGE_IDENTIFIER]: { value: 30, type: 'text' },
+            [TAX_FREE_AMOUNT_IDENTIFIER]: { value: 801, type: 'text' },
         };
         this.forecastModel = new ForecastModel('demo');
         this.handleChange = this.handleChange.bind(this);
 
-        const costFunction = amount => {
-            return [amount - 5, 5];
-        };
-        this.vis = new VisualizationModel(10000, 100, 40, { IBM: 1.0 }, costFunction, 30);
-        console.log(this.vis);
+        this.vis = new VisualizationModel(
+            10000,
+            100,
+            40,
+            { IBM: 1.0 },
+            { percentageCosts: 0.0, fixedCosts: 5.0 },
+            30,
+            801
+        );
         this.ref = React.createRef();
     }
 
     handleChange(changedValue, changedStateIdentifier) {
-        this.setState({ [changedStateIdentifier]: changedValue });
+        this.setState({
+            [changedStateIdentifier]: { value: changedValue, type: this.state[changedStateIdentifier].type },
+        });
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
-    componentDidMount(){
-        this.vis.renderVisualization(this.ref.current);
+    componentDidMount() {
+        new LineChart3D().render(this.vis, this.ref.current);
     }
 
     render() {
@@ -61,33 +70,13 @@ class InputForm extends React.Component {
                         <InputFormElement
                             key={stateIdentifier}
                             label={identifierToLabel[stateIdentifier]}
-                            value={this.state[stateIdentifier]}
+                            value={this.state[stateIdentifier].value}
+                            type={this.state[stateIdentifier].type}
                             onValueChange={this.handleChange}
                             stateIdentifier={stateIdentifier}
                         />
                     ))}
                 </form>
-                <label>
-                    Predict Date:
-                    <input
-                        key={PREDICT_IDENTIFIER}
-                        type="text"
-                        value={this.state[PREDICT_IDENTIFIER]}
-                        onChange={e => {
-                            const newDate = new Date(e.target.value);
-                            this.handleChange(e.target.value, PREDICT_IDENTIFIER);
-                            if (newDate != null && !isNaN(newDate.getTime())) {
-                                this.forecastModel
-                                    .predict('IBM', newDate)
-                                    .then(e => this.handleChange(e, PREDICT_OUT_IDENTIFIER));
-                            }
-                        }}
-                    />
-                </label>
-                <label>
-                    Prediction:
-                    <p key={PREDICT_OUT_IDENTIFIER}>{this.state[PREDICT_OUT_IDENTIFIER]}</p>
-                </label>
                 <div ref={this.ref}></div>
             </React.Fragment>
         );
@@ -97,19 +86,22 @@ class InputForm extends React.Component {
 class InputFormElement extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { value: '' };
         this.handleChange = this.handleChange.bind(this);
     }
 
     handleChange(e) {
-        this.props.onValueChange(e.target.value, this.props.stateIdentifier);
+        let newValue = e.target.value;
+        if (this.props.type === 'checkbox') {
+            newValue = !this.props.value;
+        }
+        this.props.onValueChange(newValue, this.props.stateIdentifier);
     }
 
     render() {
         return (
             <label>
                 {this.props.label}
-                <input type="text" value={this.props.value} onChange={this.handleChange} />
+                <input type={this.props.type} value={this.props.value} onChange={this.handleChange} />
             </label>
         );
     }

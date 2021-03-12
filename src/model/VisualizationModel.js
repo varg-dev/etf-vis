@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { interval } from 'd3';
 import { numberOfMonthsOfAYear } from '../helpers/utils';
 import AccumulateModel from './AccumulateModel';
 
@@ -25,15 +26,20 @@ export class VisualizationModel {
         monthlyInvestment,
         savingPhaseLength,
         etfIdentifierToRatio,
-        costFunction,
+        costConfiguration,
         age,
-        intervalLengthInMonths = 12
+        taxFreeAmount,
+        intervalLengthInMonths = numberOfMonthsOfAYear
     ) {
+        if (!Number.isInteger(intervalLengthInMonths / numberOfMonthsOfAYear)) {
+            throw `currently only month lengths that are a factor of ${numberOfMonthsOfAYear} are allowed.`;
+        }
+        this.taxFreeAmount = taxFreeAmount;
         this.startCapital = startCapital;
         this.investmentPerPeriod = monthlyInvestment * intervalLengthInMonths;
         this.savingPhaseLength = savingPhaseLength;
         this.etfIdentifierToRatio = etfIdentifierToRatio;
-        this.costFunction = costFunction;
+        this.costConfiguration = costConfiguration;
         this.age = age;
         this.intervalLengthInMonths = intervalLengthInMonths;
         this._calculateTimestampsForVisualization();
@@ -52,50 +58,39 @@ export class VisualizationModel {
     }
 
     _calculateAllYearModels() {
-        const dividendFunction = year => {
-            return this.startCapital * 0.05;
-        };
-        const etfIdentifiersToAmount = {};
-        const initialModelValues = AccumulateModel.getInitialModelValues(
+        const yearModels = [AccumulateModel.getInitialModelValues(
             this.startCapital,
             this.etfIdentifierToRatio,
-            this.costFunction
-        );
-        const yearModels = [
-            new AccumulateModel(
-                this.dates[0],
-                this.dates[1],
-                this.investmentPerPeriod,
-                this.etfIdentifierToRatio,
-                this.costFunction,
-                dividendFunction,
-                initialModelValues
-            ),
-        ];
+            this.costConfiguration,
+            this.taxFreeAmount,
+            this.dates[0]
+        )];
         for (let i = 0; i < this.dates.length - 1; i++) {
             const previousYearValues = yearModels[yearModels.length - 1].values;
             yearModels.push(
                 new AccumulateModel(
+                    this.dates[0],
                     this.dates[i],
                     this.dates[i + 1],
                     this.investmentPerPeriod,
                     this.etfIdentifierToRatio,
-                    this.costFunction,
-                    dividendFunction,
-                    previousYearValues
+                    this.costConfiguration,
+                    previousYearValues,
+                    this.taxFreeAmount,
                 )
             );
         }
         if (this.dates.length > 1) {
             yearModels.push(
                 new AccumulateModel(
+                    this.dates[0],
                     this.dates[this.dates.length - 1],
                     this.nextFutureDate,
                     this.investmentPerPeriod,
                     this.etfIdentifierToRatio,
-                    this.costFunction,
-                    dividendFunction,
-                    yearModels[yearModels.length - 1].values
+                    this.costConfiguration,
+                    yearModels[yearModels.length - 1].values,
+                    this.taxFreeAmount
                 )
             );
             this.yearModels = yearModels;
@@ -173,7 +168,7 @@ export class VisualizationModel {
 
         // Draw invested Money line.
         const moneyDataArray = renderData.map(e => e.investedMoney);
-        moneyDataArray.unshift({date: this.dates[0], money: this.startCapital});
+        moneyDataArray.unshift({ date: this.dates[0], money: this.startCapital });
 
         svg.append('path')
             .datum(moneyDataArray)

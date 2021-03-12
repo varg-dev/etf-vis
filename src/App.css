@@ -38,28 +38,32 @@
 }
 
 .inflation {
-    fill: #ff7f00;
+    stroke: #ff7f00;
 }
 
 .taxes {
-    fill: #e31a1c;
+    stroke: #e31a1c;
 }
 
 .costs {
-    fill: #be3bff;
+    stroke: #be3bff;
 }
 
 .IBM_start_capital {
-    fill: #1f78b4;
+    stroke: #1f78b4;
 }
 
 .IBM_dividend {
-    fill: #71c1f7;
+    stroke: #71c1f7;
 }
 
 .IBM_monthly_investment {
-    fill: #002e4d;
+    stroke: #002e4d;
 }
+.IBM_total_amount {
+    stroke: #002e4d;
+}
+
 
 path#investedMoney {
     stroke: rgb(242, 252, 110);;

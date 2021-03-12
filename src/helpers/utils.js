@@ -8,8 +8,12 @@ export const courseIndexOfForecastArray = 1;
 export const numberOfMonthsOfAYear = 12;
 export const inflationRate = 0.01;
 
-export function calculateInflationAndDiscountedValue(value){
-    return [value * inflationRate, value * (1 - inflationRate)];
+export function isStartOfTheYear(date) {
+    return date.getMonth() === 0;
+}
+
+export function intervalIsEndOfYear(startDate, endDate){
+    return startDate.getFullYear() < endDate.getFullYear();
 }
 
 export async function loadHistoricalETFData(etfIdentifier, apiKey) {
