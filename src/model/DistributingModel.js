@@ -60,4 +60,13 @@ c_neu = c_split + costs * costs_sum
 
 
 
-// TODO: 1. accumulation model with non 1 year periods.
+// TODO: 1. accumulation model with non 1 year periods., dividend not visible, add missing ui elements.
+
+
+// Ausschuettungsmodell
+
+// keine umstellung von thesaurierer zu ausschuettener
+
+// einfach etf anteile verkaufen mit zielbetrag
+
+// steuerfrei, 

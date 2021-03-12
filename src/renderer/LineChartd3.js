@@ -61,7 +61,7 @@ export class LineChart3D {
                     date: yearModel.endDate,
                 });
                 lineData[dataToIndex[etfIdentifier + dividendIdentifier]].push({
-                    value: yearModel.values.etfs[etfIdentifier].dividend + heightOffset,
+                    value: yearModel.values.etfs[etfIdentifier].capital - yearModel.values.etfs[etfIdentifier].dividend + heightOffset,
                     date: yearModel.endDate,
                 });
                 heightOffset += yearModel.values.etfs[etfIdentifier].capital;
@@ -73,7 +73,7 @@ export class LineChart3D {
         lineData[dataToIndex.taxes].cssClass = 'taxes';
         lineData[dataToIndex.costs].cssClass = 'costs';
         for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
-            lineData[dataToIndex[etfIdentifier + capitalIdentifier]].cssClass = `${etfIdentifier}_dividend`;
+            lineData[dataToIndex[etfIdentifier + dividendIdentifier]].cssClass = `${etfIdentifier}_dividend`;
             lineData[dataToIndex[etfIdentifier + capitalIdentifier]].cssClass = `${etfIdentifier}_total_amount`;
         }
 
