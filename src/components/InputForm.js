@@ -39,15 +39,6 @@ class InputForm extends React.Component {
         this.forecastModel = new ForecastModel('demo');
         this.handleChange = this.handleChange.bind(this);
 
-        this.vis = new VisualizationModel(
-            10000,
-            100,
-            40,
-            { IBM: 1.0 },
-            { percentageCosts: 0.0, fixedCosts: 5.0 },
-            30,
-            801
-        );
         this.ref = React.createRef();
     }
 
@@ -58,8 +49,34 @@ class InputForm extends React.Component {
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
+    getVisulaizationModel(){
+        /*return new VisualizationModel(
+            10000,
+            100,
+            40,
+            { IBM: 1.0 },
+            { percentageCosts: 0.0, fixedCosts: 5.0 },
+            30,
+            801
+        );*/
+        return new VisualizationModel(
+            this.state[STARTING_CAPITAL_IDENTIFIER].value,
+            this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,
+            this.state[SAVING_PHASE_IDENTIFIER].value,
+            { IBM: 1.0 },
+            { percentageCosts: 0.0, fixedCosts: 5.0 },
+            this.state[AGE_IDENTIFIER].value,
+            this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
+        );
+    }
+
     componentDidMount() {
-        new LineChart3D().render(this.vis, this.ref.current);
+        
+        new LineChart3D().render(this.getVisulaizationModel(), this.ref.current);
+    }
+
+    componentDidUpdate(){
+        new LineChart3D().render(this.getVisulaizationModel(), this.ref.current);
     }
 
     render() {

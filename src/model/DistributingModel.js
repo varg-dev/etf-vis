@@ -54,3 +54,10 @@ c_neu = c_split + costs * costs_sum
 
 
 // UI: keine animation redraw is ok.
+
+
+
+
+
+
+// TODO: 1. accumulation model with non 1 year periods.

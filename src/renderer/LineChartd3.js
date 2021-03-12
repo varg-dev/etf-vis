@@ -12,6 +12,9 @@ export class LineChart3D {
 
         const zeroLineStrokeWidth = 3;
 
+        // Reset diagram by deletion.
+        renderDivRef.innerHTML = '';
+
         const svg = d3
             .select(renderDivRef)
             .append('svg')
@@ -66,8 +69,8 @@ export class LineChart3D {
         }
 
         // Append miscellaneous data to array.
-        lineData[dataToIndex.inflation].cssClass = 'inflation'; 
-        lineData[dataToIndex.taxes].cssClass = 'taxes'; 
+        lineData[dataToIndex.inflation].cssClass = 'inflation';
+        lineData[dataToIndex.taxes].cssClass = 'taxes';
         lineData[dataToIndex.costs].cssClass = 'costs';
         for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
             lineData[dataToIndex[etfIdentifier + capitalIdentifier]].cssClass = `${etfIdentifier}_dividend`;
@@ -94,9 +97,9 @@ export class LineChart3D {
             .style('font-size', '20px')
             .attr('transform', `translate(0, ${height})`)
             .call(d3.axisBottom(xScale));
-        
-            // Draw zero line.
-            svg.append('g')
+
+        // Draw zero line.
+        svg.append('g')
             .append('line')
             .attr('x1', xScale(visualizationModel.dates[0]))
             .attr('y1', yScale(0))
@@ -105,21 +108,19 @@ export class LineChart3D {
             .attr('stroke-width', zeroLineStrokeWidth)
             .attr('stroke', 'black');
 
-        for (let i = 0; i < lineData.length; i++){
-
-        
-        svg.append('path')
-            .datum(lineData[i])
-            .attr('fill', 'none')
-            .attr('class', d => d.cssClass)
-            .attr('stroke-width', 3)
-            .attr(
-                'd',
-                d3
-                    .line()
-                    .x(d => xScale(d.date))
-                    .y(d => yScale(d.value))
-            );
+        for (let i = 0; i < lineData.length; i++) {
+            svg.append('path')
+                .datum(lineData[i])
+                .attr('fill', 'none')
+                .attr('class', d => d.cssClass)
+                .attr('stroke-width', 3)
+                .attr(
+                    'd',
+                    d3
+                        .line()
+                        .x(d => xScale(d.date))
+                        .y(d => yScale(d.value))
+                );
         }
 
         /*const xWidth = (width / this.dates.length) * 0.9;
