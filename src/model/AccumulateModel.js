@@ -71,7 +71,6 @@ export class AccumulateModel {
             newInvestmentAmountNetto += this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
         }
         const totalGain = this.totalAmount - this.yearBeginningCapital - newInvestmentAmountNetto;
-        // TODO the gain decreases => never pay taxes????
         const [taxes, leftoverTaxFreeAmount] = calculateTaxesOnThesaurierer(
             totalGain,
             this.leftoverTaxFreeAmount,
@@ -81,7 +80,6 @@ export class AccumulateModel {
         );
         this.taxes += taxes;
         this.leftoverTaxFreeAmount = leftoverTaxFreeAmount;
-        // TODO calculation is probably wrong.
         this.inflation = calculateInflation(this.totalAmount, this.initialDate, this.endDate);
     }
 
