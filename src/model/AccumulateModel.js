@@ -1,4 +1,4 @@
-import { numberOfMonthsOfAYear, isStartOfTheYear } from '../helpers/utils';
+import { isStartOfTheYear } from '../helpers/utils';
 import {
     calculatePrizeGain,
     calculateNewInvestmentOfETFAndCosts,
@@ -19,14 +19,13 @@ export class AccumulateModel {
         lastYearModelValues,
         taxFreeAmountForAYear
     ) {
-        this.initialDate = initialDate; // required for forecasting later on.
+        this.initialDate = initialDate; // required for inflation later on.
         this.lastYearModelValues = lastYearModelValues;
         this.startDate = date;
         this.newInvestmentAmount = newInvestmentAmount;
         this.endDate = nextDate;
         this.etfIdentifierToRatio = etfIdentifierToRatio;
         this.costConfiguration = costConfiguration;
-        // TODO maybe remove values and put values directly on object. and take startDate from lastYearModelValues
         this.costs = lastYearModelValues.costs;
         this.costs = lastYearModelValues.costs;
         this.taxes = lastYearModelValues.taxes;
@@ -53,6 +52,7 @@ export class AccumulateModel {
             yearBeginningCapital: subtractedStartCapital,
             totalAmount: subtractedStartCapital,
             leftoverTaxFreeAmount: taxFreeAmount,
+            startDate: initialDate,
             endDate: initialDate,
         };
         for (const [etfIdentifier, etfRatio] of Object.entries(etfIdentifierToRatio)) {
@@ -65,13 +65,10 @@ export class AccumulateModel {
     }
 
     calculate() {
-        const dateDiff = new Date(this.endDate - this.startDate);
-        const compoundInterestTimeFactor =
-            dateDiff.getFullYear() - new Date(0).getFullYear() + dateDiff.getMonth() / numberOfMonthsOfAYear;
         for (const etfIdentifier in this.lastYearModelValues.etfs) {
             const etfInvestmentAmount = this.etfIdentifierToRatio[etfIdentifier] * this.newInvestmentAmount;
             this.etfs[etfIdentifier] = {};
-            this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount, compoundInterestTimeFactor);
+            this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
         }
         const [newInvestmentAmountNetto] = calculateCosts(this.newInvestmentAmount, this.costConfiguration);
         const totalGain = this.totalAmount - this.yearBeginningCapital - newInvestmentAmountNetto;
@@ -88,14 +85,16 @@ export class AccumulateModel {
         this.inflation = calculateInflation(this.totalAmount, this.initialDate, this.endDate);
     }
 
-    calculateNextEtfValueAndCosts(etfIdentifier, investmentAmount, compoundInterestTimeFactor) {
+    calculateNextEtfValueAndCosts(etfIdentifier, investmentAmount) {
         const prevETFData = this.lastYearModelValues.etfs[etfIdentifier];
-        const etfPrizeGain = calculatePrizeGain(prevETFData.capital);
-        const etfDividendGain = calculatePrizeGain(prevETFData.dividend);
+        const etfPrizeGain = calculatePrizeGain(prevETFData.capital, this.startDate, this.endDate, etfIdentifier);
+        const etfDividendGain = calculatePrizeGain(prevETFData.dividend, this.startDate,this.endDate, etfIdentifier);
         const [investment, investmentGain, investmentCosts] = calculateNewInvestmentOfETFAndCosts(
             investmentAmount,
-            compoundInterestTimeFactor,
-            this.costConfiguration
+            this.costConfiguration,
+            etfIdentifier,
+            this.startDate,
+            this.endDate
         );
         const dividendPayout = calculateNewDividendPayout(etfIdentifier, this.startDate, this.endDate);
         const totalGainBrutto = etfPrizeGain + etfDividendGain + investmentGain + dividendPayout;

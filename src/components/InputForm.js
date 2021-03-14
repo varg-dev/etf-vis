@@ -1,5 +1,5 @@
 import React from 'react';
-import ForecastModel from '../model/ForecastModel';
+import ForecastModelSingleton from '../model/ForecastModel';
 import VisualizationModel from '../model/VisualizationModel';
 import LineChart3D from '../renderer/LineChartd3';
 
@@ -36,10 +36,9 @@ class InputForm extends React.Component {
             [AGE_IDENTIFIER]: { value: 30, type: 'text' },
             [TAX_FREE_AMOUNT_IDENTIFIER]: { value: 801, type: 'text' },
         };
-        this.forecastModel = new ForecastModel('demo');
-        this.handleChange = this.handleChange.bind(this);
 
         this.ref = React.createRef();
+        this.handleChange = this.handleChange.bind(this);
     }
 
     handleChange(changedValue, changedStateIdentifier) {
@@ -49,7 +48,7 @@ class InputForm extends React.Component {
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
-    getVisulaizationModel(){
+    getVisualizationModel(){
         return new VisualizationModel(
             this.state[STARTING_CAPITAL_IDENTIFIER].value,
             this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,
@@ -61,13 +60,16 @@ class InputForm extends React.Component {
         );
     }
 
-    componentDidMount() {
+    async componentDidMount() {
+        ForecastModelSingleton.configure('demo');
+        this.forecastModel = ForecastModelSingleton.getInstance();
+        await this.forecastModel.loadAndCacheHistoricalETFData('IBM');
         
-        new LineChart3D().render(this.getVisulaizationModel(), this.ref.current);
+        new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
     }
 
     componentDidUpdate(){
-        new LineChart3D().render(this.getVisulaizationModel(), this.ref.current);
+        new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
     }
 
     render() {

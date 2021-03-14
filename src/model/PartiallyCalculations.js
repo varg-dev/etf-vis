@@ -1,8 +1,8 @@
-import { numberOfMonthsOfAYear, intervalIsEndOfYear } from '../helpers/utils';
+import { numberOfMonthsOfAYear, intervalIsEndOfYear, roundToMoneyAmount } from '../helpers/utils';
+import { ForecastModelSingleton } from '../model/ForecastModel';
 
 const corporateTaxRatio = 0.26375;
 const basicRateOfInterest = 0.09;
-const prizeGainRate = 0.025;
 const inflationRate = 0.01;
 
 export function calculateInflation(value, initialDate, endDate) {
@@ -14,16 +14,20 @@ export function calculateInflation(value, initialDate, endDate) {
     return value - value * Math.pow(1 - inflationRate, timeFactor);
 }
 
-export function calculatePrizeGain(amount, numberOfMonths = numberOfMonthsOfAYear) {
-    // TODO add forecast.
-    return amount * prizeGainRate;
+export function calculatePrizeGain(amount, startDate, endDate, etfIdentifier) {
+    const forecastModel = ForecastModelSingleton.getInstance();
+    const startCourse = forecastModel.predictCourse(etfIdentifier, startDate);
+    const endCourse = forecastModel.predictCourse(etfIdentifier, endDate);
+    const courseChangeRatio = endCourse / startCourse;
+    return roundToMoneyAmount(amount * courseChangeRatio - amount);
 }
 
 export function calculateNewDividendPayout(etfIdentifier, startDate, endDate) {
     // Only pay out dividend if a year has passed.
     if (intervalIsEndOfYear(startDate, endDate)) {
-        // TODO add forecasting
-        return 500;
+        // TODO look up the dividend value definition.
+        const forecastModel = ForecastModelSingleton.getInstance();
+        return roundToMoneyAmount(forecastModel.predictDividend(etfIdentifier, startDate.getFullYear()));
     }
     return 0;
 }
@@ -49,9 +53,9 @@ export function calculateTaxesOnThesaurierer(totalGain, taxFreeAmount, amountAtB
         return [0, taxFreeAmount];
     }
     const amountToApplyTaxes = calculateVorabpauschale(amountAtBeginningOfYear, totalGain);
-    const [leftoverToApplyTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToApplyTaxes, taxFreeAmount)
+    const [leftoverToApplyTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToApplyTaxes, taxFreeAmount);
     const taxAmount = calculateTaxesOnAmount(leftoverToApplyTaxes);
-    return [taxAmount, leftoverTaxFreeAmount]
+    return [taxAmount, leftoverTaxFreeAmount];
 }
 
 export function calculateTaxesOnAmount(amount) {
@@ -60,10 +64,15 @@ export function calculateTaxesOnAmount(amount) {
 
 export function calculateNewInvestmentOfETFAndCosts(
     etfInvestmentAmount,
-    compoundInterestTimeFactor,
-    costConfiguration
+    costConfiguration,
+    etfIdentifier,
+    startDate,
+    endDate
 ) {
-    const numberOfInvestmentSteps = Math.round(compoundInterestTimeFactor * numberOfMonthsOfAYear);
+    const numberOfInvestmentSteps =
+        (endDate.getFullYear() - startDate.getFullYear()) * numberOfMonthsOfAYear +
+        endDate.getMonth() -
+        startDate.getMonth();
     const monthlyInvestmentBrutto = etfInvestmentAmount / numberOfInvestmentSteps;
     const [monthlyInvestmentNetto, monthlyCosts] = calculateCosts(monthlyInvestmentBrutto, costConfiguration);
     const costs = monthlyCosts * numberOfInvestmentSteps;
@@ -71,7 +80,7 @@ export function calculateNewInvestmentOfETFAndCosts(
     let gain = 0;
     for (let i = numberOfInvestmentSteps; i > 0.0; i--) {
         invested += monthlyInvestmentNetto;
-        gain += calculatePrizeGain(monthlyInvestmentNetto, i);
+        gain += calculatePrizeGain(monthlyInvestmentNetto, startDate, endDate, etfIdentifier);
     }
     return [invested, gain, costs];
 }

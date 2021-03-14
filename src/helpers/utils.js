@@ -16,23 +16,44 @@ export function intervalIsEndOfYear(startDate, endDate){
     return startDate.getFullYear() < endDate.getFullYear();
 }
 
+export function roundToMoneyAmount(amount){
+    return Math.round(amount * 100.0) / 100.0;
+}
+
 export async function loadHistoricalETFData(etfIdentifier, apiKey) {
     const historicalData = await d3.csv(
         `https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol=${etfIdentifier}&apikey=${apiKey}&datatype=csv`,
         entry => {
             return {
-                timestamp: new Date(entry.timestamp.toString()),
+                date: new Date(entry.timestamp.toString()),
                 dividend: parseFloat(entry['dividend amount']),
                 course: parseFloat(entry['adjusted close']),
             };
         }
     );
-    historicalData.sort((a, b) => a.timestamp - b.timestamp);
+    historicalData.sort((a, b) => a.date - b.date);
     return historicalData;
 }
 
-export function etfHistoricalToForecastArray(historicalData) {
-    return historicalData.map(entry => [dateToTimestamp(entry.timestamp), entry.course]);
+export function etfHistoricalToCourseForecastArray(historicalData) {
+    return historicalData.map(entry => [dateToTimestamp(entry.date), entry.course]);
+}
+
+// Requires sorted historical data. Note it is sorted by default. Do not change the order.
+export function etfHistoricalToDividendForecastArray(historicalData) {
+    let currentYear = historicalData[0].date.getFullYear();
+    const dividendForecastArray = [[currentYear, 0]];
+    historicalData.forEach(entry => {
+        if(entry.date.getFullYear() === currentYear) {
+            dividendForecastArray[dividendForecastArray.length - 1][courseIndexOfForecastArray] += entry.dividend;
+        }
+        else {
+            currentYear = entry.date.getFullYear();
+            dividendForecastArray.push([currentYear, entry.dividend]);
+        }
+    });
+    dividendForecastArray.sort((a, b) => a[timestampIndexOfForecastArray] - b[timestampIndexOfForecastArray]);
+    return dividendForecastArray;
 }
 
 export function dateToTimestamp(date) {

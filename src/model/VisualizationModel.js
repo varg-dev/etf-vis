@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { interval } from 'd3';
 import { numberOfMonthsOfAYear } from '../helpers/utils';
 import AccumulateModel from './AccumulateModel';
 
