@@ -2,7 +2,7 @@ import { numberOfMonthsOfAYear, intervalIsEndOfYear, roundToMoneyAmount } from '
 import { ForecastModelSingleton } from '../model/ForecastModel';
 
 const corporateTaxRatio = 0.26375;
-const basicRateOfInterest = 0.09;
+const basicRateOfInterest = 0.005;
 const inflationRate = 0.01;
 
 export function calculateInflation(value, initialDate, endDate) {
@@ -76,10 +76,9 @@ export function calculateNewInvestmentOfETFAndCosts(
     const monthlyInvestmentBrutto = etfInvestmentAmount / numberOfInvestmentSteps;
     const [monthlyInvestmentNetto, monthlyCosts] = calculateCosts(monthlyInvestmentBrutto, costConfiguration);
     const costs = monthlyCosts * numberOfInvestmentSteps;
-    let invested = 0;
+    let invested = monthlyInvestmentNetto * numberOfInvestmentSteps;
     let gain = 0;
     for (let i = numberOfInvestmentSteps; i > 0.0; i--) {
-        invested += monthlyInvestmentNetto;
         gain += calculatePrizeGain(monthlyInvestmentNetto, startDate, endDate, etfIdentifier);
     }
     return [invested, gain, costs];

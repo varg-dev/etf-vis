@@ -65,13 +65,14 @@ export class AccumulateModel {
     }
 
     calculate() {
+        let newInvestmentAmountNetto = 0;
         for (const etfIdentifier in this.lastYearModelValues.etfs) {
             const etfInvestmentAmount = this.etfIdentifierToRatio[etfIdentifier] * this.newInvestmentAmount;
             this.etfs[etfIdentifier] = {};
-            this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
+            newInvestmentAmountNetto += this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
         }
-        const [newInvestmentAmountNetto] = calculateCosts(this.newInvestmentAmount, this.costConfiguration);
         const totalGain = this.totalAmount - this.yearBeginningCapital - newInvestmentAmountNetto;
+        // TODO the gain decreases => never pay taxes????
         const [taxes, leftoverTaxFreeAmount] = calculateTaxesOnThesaurierer(
             totalGain,
             this.leftoverTaxFreeAmount,
@@ -105,6 +106,7 @@ export class AccumulateModel {
 
         this.totalAmount += etfValueBrutto;
         this.costs += investmentCosts;
+        return investment;
     }
 }
 
