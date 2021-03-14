@@ -138,7 +138,7 @@ export class ForecastModelSingleton {
         const filteredForecastArray = forecastArray.filter(
             entry => entry[timestampIndexOfForecastArray] >= lastYearToIncludeInPrediction
         );
-        this.dividendPredictors[etfIdentifier][year] = regression.linear(filteredForecastArray,{
+        this.dividendPredictors[etfIdentifier][year] = regression.linear(filteredForecastArray, {
             order: 2,
             precision: 20,
         });
@@ -152,7 +152,7 @@ export class ForecastModelSingleton {
 
     predictCourse(etfIdentifier, date) {
         if (!(etfIdentifier in this.coursePredictors)) {
-            throw 'First call loadHistoricalDataIfNotPresent() before predicting';
+            throw `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
         }
         const [predictorTimestamp, timestamp] = this._courseDateToPredictorTimestampAndDateTimestamp(
             date,
@@ -164,7 +164,7 @@ export class ForecastModelSingleton {
 
     predictDividend(etfIdentifier, year) {
         if (!(etfIdentifier in this.dividendPredictors)) {
-            throw 'First call loadHistoricalDataIfNotPresent() before predicting';
+            throw `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
         }
         const predictorYear = this._dividendYearToPredictorYear(etfIdentifier, year);
         this._createDividendPredictorIfNotPresent(etfIdentifier, predictorYear);

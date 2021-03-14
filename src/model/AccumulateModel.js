@@ -1,7 +1,6 @@
-import { isStartOfTheYear } from '../helpers/utils';
+import { isStartOfTheYear, numberOfMonthsOfAYear } from '../helpers/utils';
 import {
     calculatePrizeGain,
-    calculateNewInvestmentOfETFAndCosts,
     calculateNewDividendPayout,
     calculateTaxesOnThesaurierer,
     calculateCosts,
@@ -37,6 +36,8 @@ export class AccumulateModel {
         this.leftoverTaxFreeAmount = isStartOfTheYear(this.startDate)
             ? taxFreeAmountForAYear
             : lastYearModelValues.leftoverTaxFreeAmount;
+        this.investmentSteps = {};
+        this.alreadyPaidTaxesForAmount = 0;
         this.calculate();
     }
 
@@ -53,12 +54,14 @@ export class AccumulateModel {
             leftoverTaxFreeAmount: taxFreeAmount,
             startDate: initialDate,
             endDate: initialDate,
+            investmentSteps: { [initialDate]: {} },
         };
         for (const [etfIdentifier, etfRatio] of Object.entries(etfIdentifierToRatio)) {
             values.etfs[etfIdentifier] = {
                 capital: etfRatio * subtractedStartCapital,
                 dividend: 0,
             };
+            values.investmentSteps[initialDate][etfIdentifier] = etfRatio * subtractedStartCapital;
         }
         return values;
     }
@@ -71,13 +74,14 @@ export class AccumulateModel {
             newInvestmentAmountNetto += this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
         }
         const totalGain = this.totalAmount - this.yearBeginningCapital - newInvestmentAmountNetto;
-        const [taxes, leftoverTaxFreeAmount] = calculateTaxesOnThesaurierer(
+        const [taxes, leftoverTaxFreeAmount, alreadyPaidTaxesForAmount] = calculateTaxesOnThesaurierer(
             totalGain,
             this.leftoverTaxFreeAmount,
             this.yearBeginningCapital,
             this.startDate,
             this.endDate
         );
+        this.alreadyPaidTaxesForAmount = alreadyPaidTaxesForAmount;
         this.taxes += taxes;
         this.leftoverTaxFreeAmount = leftoverTaxFreeAmount;
         this.inflation = calculateInflation(this.totalAmount, this.initialDate, this.endDate);
@@ -86,13 +90,10 @@ export class AccumulateModel {
     calculateNextEtfValueAndCosts(etfIdentifier, investmentAmount) {
         const prevETFData = this.lastYearModelValues.etfs[etfIdentifier];
         const etfPrizeGain = calculatePrizeGain(prevETFData.capital, this.startDate, this.endDate, etfIdentifier);
-        const etfDividendGain = calculatePrizeGain(prevETFData.dividend, this.startDate,this.endDate, etfIdentifier);
-        const [investment, investmentGain, investmentCosts] = calculateNewInvestmentOfETFAndCosts(
+        const etfDividendGain = calculatePrizeGain(prevETFData.dividend, this.startDate, this.endDate, etfIdentifier);
+        const [investment, investmentGain, investmentCosts] = this._calculateNewInvestmentOfETFAndCosts(
             investmentAmount,
-            this.costConfiguration,
             etfIdentifier,
-            this.startDate,
-            this.endDate
         );
         const dividendPayout = calculateNewDividendPayout(etfIdentifier, this.startDate, this.endDate);
         const totalGainBrutto = etfPrizeGain + etfDividendGain + investmentGain + dividendPayout;
@@ -104,6 +105,39 @@ export class AccumulateModel {
         this.totalAmount += etfValueBrutto;
         this.costs += investmentCosts;
         return investment;
+    }
+
+    _calculateNewInvestmentOfETFAndCosts(etfInvestmentAmount, etfIdentifier) {
+        const numberOfInvestmentSteps =
+            (this.endDate.getFullYear() - this.startDate.getFullYear()) * numberOfMonthsOfAYear +
+            this.endDate.getMonth() -
+            this.startDate.getMonth();
+        const monthlyInvestmentBrutto = etfInvestmentAmount / numberOfInvestmentSteps;
+        const [monthlyInvestmentNetto, monthlyCosts] = calculateCosts(monthlyInvestmentBrutto, this.costConfiguration);
+        const costs = monthlyCosts * numberOfInvestmentSteps;
+        let invested = monthlyInvestmentNetto * numberOfInvestmentSteps;
+        let gain = 0;
+        for (let i = numberOfInvestmentSteps; i > 0.0; i--) {
+            const currentDate = new Date(this.startDate);
+            currentDate.setMonth(currentDate.getMonth() + i);
+            gain += calculatePrizeGain(monthlyInvestmentNetto, currentDate, this.endDate, etfIdentifier);
+            this._addInvestmentStep(monthlyInvestmentNetto, etfIdentifier, currentDate);
+        }
+        return [invested, gain, costs];
+    }
+
+    _addInvestmentStep(amount, etfIdentifier, date = null) {
+        if (date == null) {
+            date = this.startDate;
+        }
+        if (!(date in this.investmentSteps)) {
+            this.investmentSteps[date] = {};
+        }
+        if (etfIdentifier in this.investmentSteps[date]) {
+            this.investmentSteps[date][etfIdentifier] += amount;
+        } else {
+            this.investmentSteps[date][etfIdentifier] = amount;
+        }
     }
 }
 

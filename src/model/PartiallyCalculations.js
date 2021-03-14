@@ -55,31 +55,9 @@ export function calculateTaxesOnThesaurierer(totalGain, taxFreeAmount, amountAtB
     const amountToApplyTaxes = calculateVorabpauschale(amountAtBeginningOfYear, totalGain);
     const [leftoverToApplyTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToApplyTaxes, taxFreeAmount);
     const taxAmount = calculateTaxesOnAmount(leftoverToApplyTaxes);
-    return [taxAmount, leftoverTaxFreeAmount];
+    return [taxAmount, leftoverTaxFreeAmount, amountToApplyTaxes];
 }
 
 export function calculateTaxesOnAmount(amount) {
     return amount * 0.7 * corporateTaxRatio;
-}
-
-export function calculateNewInvestmentOfETFAndCosts(
-    etfInvestmentAmount,
-    costConfiguration,
-    etfIdentifier,
-    startDate,
-    endDate
-) {
-    const numberOfInvestmentSteps =
-        (endDate.getFullYear() - startDate.getFullYear()) * numberOfMonthsOfAYear +
-        endDate.getMonth() -
-        startDate.getMonth();
-    const monthlyInvestmentBrutto = etfInvestmentAmount / numberOfInvestmentSteps;
-    const [monthlyInvestmentNetto, monthlyCosts] = calculateCosts(monthlyInvestmentBrutto, costConfiguration);
-    const costs = monthlyCosts * numberOfInvestmentSteps;
-    let invested = monthlyInvestmentNetto * numberOfInvestmentSteps;
-    let gain = 0;
-    for (let i = numberOfInvestmentSteps; i > 0.0; i--) {
-        gain += calculatePrizeGain(monthlyInvestmentNetto, startDate, endDate, etfIdentifier);
-    }
-    return [invested, gain, costs];
 }
