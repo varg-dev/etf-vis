@@ -50,15 +50,6 @@ class InputForm extends React.Component {
     }
 
     getVisulaizationModel(){
-        /*return new VisualizationModel(
-            10000,
-            100,
-            40,
-            { IBM: 1.0 },
-            { percentageCosts: 0.0, fixedCosts: 5.0 },
-            30,
-            801
-        );*/
         return new VisualizationModel(
             this.state[STARTING_CAPITAL_IDENTIFIER].value,
             this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,

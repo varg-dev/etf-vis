@@ -122,61 +122,6 @@ export class LineChart3D {
                         .y(d => yScale(d.value))
                 );
         }
-
-        /*const xWidth = (width / this.dates.length) * 0.9;
-
-        for (let i = 0; i < this.yearModels.length; i++) {
-            const yearModel = this.yearModels[i];
-            const x = yearModel.date;
-            const currentYearClass = x.toDateString().split(' ').join('_');
-            const data = yearModel.getD3Representation().bars;
-            svg.selectAll(`rect.${currentYearClass}`)
-                .append('g')
-                .attr('class', currentYearClass)
-                .data(data)
-                .enter()
-                .append('rect')
-                .attr('x', xScale(x))
-                .attr('y', d => yScale(d.yStart))
-                .attr('width', xWidth)
-                .attr('height', d => yScale(d.yEnd) - yScale(d.yStart))
-                .attr('class', d => d.class);
-        }
-        // Draw axis
-        svg.append('g')
-            .style('font-size', '20px')
-            .call(d3.axisLeft(yScale).tickFormat(d => `${d.toLocaleString()} EUR`));
-
-        svg.append('g')
-            .style('font-size', '20px')
-            .attr('transform', `translate(0, ${height})`)
-            .call(d3.axisBottom(xScale));
-
-        svg.append('g')
-            .append('line')
-            .attr('x1', xScale(this.dates[0]))
-            .attr('y1', yScale(0))
-            .attr('x2', xScale(this.nextFutureDate))
-            .attr('y2', yScale(0))
-            .attr('stroke-width', zeroLineStrokeWidth)
-            .attr('stroke', 'black');
-
-        // Draw invested Money line.
-        const moneyDataArray = renderData.map(e => e.investedMoney);
-        moneyDataArray.unshift({ date: this.dates[0], money: this.startCapital });
-
-        svg.append('path')
-            .datum(moneyDataArray)
-            .attr('fill', 'none')
-            .attr('id', investedMoneyLineID)
-            .attr('stroke-width', 3)
-            .attr(
-                'd',
-                d3
-                    .line()
-                    .x(d => xScale(d.date))
-                    .y(d => yScale(d.money))
-            );*/
     }
 }
 

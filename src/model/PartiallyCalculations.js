@@ -5,10 +5,6 @@ const basicRateOfInterest = 0.09;
 const prizeGainRate = 0.025;
 const inflationRate = 0.01;
 
-/*export function calculateTaxesOnDividend(dividendAmount) {
-    return [dividendAmount * (1 - corporateTaxRatio), dividendAmount * corporateTaxRatio];
-}*/
-
 export function calculateInflation(value, initialDate, endDate) {
     // TODO predict inflationRate??? if so how should I calculate it?
     const timeFactor =
@@ -79,21 +75,3 @@ export function calculateNewInvestmentOfETFAndCosts(
     }
     return [invested, gain, costs];
 }
-
-/*export function calculateDividendPayoutAndTaxesForThesaurierer(etfIdentifier, startDate, endDate, taxFreeAmount, amountAtBeginningOfYear, totalGainBrutto) {
-    const numberOfYearsPassed = startDate.getFullYear() - endDate.getFullYear();
-    if (numberOfYearsPassed > 1) {
-        throw 'Time interval larger than 12 Months not supported';
-    }
-    else if( numberOfYearsPassed == 0) {
-        // no divided payout
-        // end etf value, taxes, leftoverTaxFreeAmount, dividendAmount
-        return [0, taxFreeAmount, 0];
-    }
-    else {
-        const dividendAmount = calculateNewDividendPayout(etfIdentifier, this.date.getFullYear() + i);
-        const [leftoverTaxes, leftoverTaxFreeAmount] = calculateTaxesOnThesaurierer(totalGainBrutto, taxFreeAmount, amountAtBeginningOfYear);
-        // taxes, leftoverTaxFreeAmount, dividendAmount
-        return [leftoverTaxes, leftoverTaxFreeAmount, dividendAmount];
-    }
-}*/
