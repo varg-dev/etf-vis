@@ -108,7 +108,10 @@ export class ForecastModelSingleton {
         const filteredForecastArray = forecastArray.filter(
             entry => entry[timestampIndexOfForecastArray] >= lastTimestampToIncludeInPrediction
         );
-        this.coursePredictors[etfIdentifier][timestamp] = regression.linear(filteredForecastArray);
+        this.coursePredictors[etfIdentifier][timestamp] = regression.linear(filteredForecastArray, {
+            order: 2,
+            precision: 20,
+        });
     }
 
     _courseDateToPredictorTimestampAndDateTimestamp(date, etfIdentifier) {
@@ -135,7 +138,10 @@ export class ForecastModelSingleton {
         const filteredForecastArray = forecastArray.filter(
             entry => entry[timestampIndexOfForecastArray] >= lastYearToIncludeInPrediction
         );
-        this.dividendPredictors[etfIdentifier][year] = regression.linear(filteredForecastArray);
+        this.dividendPredictors[etfIdentifier][year] = regression.linear(filteredForecastArray,{
+            order: 2,
+            precision: 20,
+        });
     }
 
     _dividendYearToPredictorYear(etfIdentifier, year) {
@@ -162,7 +168,10 @@ export class ForecastModelSingleton {
         }
         const predictorYear = this._dividendYearToPredictorYear(etfIdentifier, year);
         this._createDividendPredictorIfNotPresent(etfIdentifier, predictorYear);
-        return Math.max(0, this.dividendPredictors[etfIdentifier][predictorYear].predict(year)[courseIndexOfForecastArray]);
+        return Math.max(
+            0,
+            this.dividendPredictors[etfIdentifier][predictorYear].predict(year)[courseIndexOfForecastArray]
+        );
     }
 }
 

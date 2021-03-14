@@ -27,7 +27,6 @@ export class AccumulateModel {
         this.etfIdentifierToRatio = etfIdentifierToRatio;
         this.costConfiguration = costConfiguration;
         this.costs = lastYearModelValues.costs;
-        this.costs = lastYearModelValues.costs;
         this.taxes = lastYearModelValues.taxes;
         this.etfs = {};
         this.yearBeginningCapital = isStartOfTheYear(this.startDate)

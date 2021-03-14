@@ -2,7 +2,7 @@ import { numberOfMonthsOfAYear, intervalIsEndOfYear, roundToMoneyAmount } from '
 import { ForecastModelSingleton } from '../model/ForecastModel';
 
 const corporateTaxRatio = 0.26375;
-const basicRateOfInterest = 0.005;
+const basicRateOfInterest = 0.015;
 const inflationRate = 0.01;
 
 export function calculateInflation(value, initialDate, endDate) {

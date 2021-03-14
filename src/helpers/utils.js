@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 // Ignore milliseconds, seconds, minutes.
-const timeDiffIgnoreDivisor = 1000 * 60 * 60;
+const timeDiffIgnoreDivisor = 1000 * 60 * 60 * 24;
 
 export const timestampIndexOfForecastArray = 0;
 export const courseIndexOfForecastArray = 1;
