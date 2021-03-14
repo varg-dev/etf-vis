@@ -45,26 +45,26 @@ export class LineChart3D {
             lineData.push([]);
         }
         for (const yearModel of visualizationModel.yearModels) {
-            lineData[dataToIndex.costs].push({ value: -yearModel.values.costs, date: yearModel.endDate });
+            lineData[dataToIndex.costs].push({ value: -yearModel.costs, date: yearModel.endDate });
             lineData[dataToIndex.taxes].push({
-                value: -yearModel.values.taxes - yearModel.values.costs,
+                value: -yearModel.taxes - yearModel.costs,
                 date: yearModel.endDate,
             });
             lineData[dataToIndex.inflation].push({
-                value: -yearModel.values.inflation - yearModel.values.taxes - yearModel.values.costs,
+                value: -yearModel.inflation - yearModel.taxes - yearModel.costs,
                 date: yearModel.endDate,
             });
             let heightOffset = 0;
             for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
                 lineData[dataToIndex[etfIdentifier + capitalIdentifier]].push({
-                    value: yearModel.values.etfs[etfIdentifier].capital + heightOffset,
+                    value: yearModel.etfs[etfIdentifier].capital + heightOffset,
                     date: yearModel.endDate,
                 });
                 lineData[dataToIndex[etfIdentifier + dividendIdentifier]].push({
-                    value: yearModel.values.etfs[etfIdentifier].capital - yearModel.values.etfs[etfIdentifier].dividend + heightOffset,
+                    value: yearModel.etfs[etfIdentifier].capital - yearModel.etfs[etfIdentifier].dividend + heightOffset,
                     date: yearModel.endDate,
                 });
-                heightOffset += yearModel.values.etfs[etfIdentifier].capital;
+                heightOffset += yearModel.etfs[etfIdentifier].capital;
             }
         }
 

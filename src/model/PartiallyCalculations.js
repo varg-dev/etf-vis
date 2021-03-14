@@ -53,8 +53,9 @@ export function calculateTaxesOnThesaurierer(totalGain, taxFreeAmount, amountAtB
         return [0, taxFreeAmount];
     }
     const amountToApplyTaxes = calculateVorabpauschale(amountAtBeginningOfYear, totalGain);
-    const taxAmount = calculateTaxesOnAmount(amountToApplyTaxes);
-    return subtractTaxFreeGain(taxAmount, taxFreeAmount);
+    const [leftoverToApplyTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToApplyTaxes, taxFreeAmount)
+    const taxAmount = calculateTaxesOnAmount(leftoverToApplyTaxes);
+    return [taxAmount, leftoverTaxFreeAmount]
 }
 
 export function calculateTaxesOnAmount(amount) {

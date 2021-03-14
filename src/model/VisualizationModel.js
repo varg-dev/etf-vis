@@ -66,7 +66,7 @@ export class VisualizationModel {
             this.dates[0]
         )];
         for (let i = 0; i < this.dates.length - 1; i++) {
-            const previousYearValues = yearModels[yearModels.length - 1].values;
+            const previousYearValues = yearModels[yearModels.length - 1];
             yearModels.push(
                 new AccumulateModel(
                     this.dates[0],
@@ -89,7 +89,7 @@ export class VisualizationModel {
                     this.investmentPerPeriod,
                     this.etfIdentifierToRatio,
                     this.costConfiguration,
-                    yearModels[yearModels.length - 1].values,
+                    yearModels[yearModels.length - 1],
                     this.taxFreeAmount
                 )
             );

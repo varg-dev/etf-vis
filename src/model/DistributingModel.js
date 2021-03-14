@@ -60,7 +60,7 @@ c_neu = c_split + costs * costs_sum
 
 
 
-// TODO: 1. accumulation model with non 1 year periods., dividend not visible, add missing ui elements.
+// TODO: 1. accumulation model with non 1 year periods., add missing ui elements, 
 
 
 // Ausschuettungsmodell
