@@ -5,7 +5,12 @@ import {
     calculateTaxesOnThesaurierer,
     calculateCosts,
     calculateInflation,
+    calculateVorabpauschale,
 } from './PartiallyCalculations';
+
+
+export const dateTupleIndex = 0;
+export const etfTupleIndex = 1;
 
 export class AccumulateModel {
     constructor(
@@ -36,7 +41,7 @@ export class AccumulateModel {
         this.leftoverTaxFreeAmount = isStartOfTheYear(this.startDate)
             ? taxFreeAmountForAYear
             : lastYearModelValues.leftoverTaxFreeAmount;
-        this.investmentSteps = {};
+        this.investmentStepsOfThisYear = isStartOfTheYear(this.startDate) ? [] : lastYearModelValues.investmentStepsOfThisYear;
         this.alreadyPaidTaxesForAmount = 0;
         this.calculate();
     }
@@ -54,14 +59,14 @@ export class AccumulateModel {
             leftoverTaxFreeAmount: taxFreeAmount,
             startDate: initialDate,
             endDate: initialDate,
-            investmentSteps: { [initialDate]: {} },
+            investmentSteps: [[initialDate, {}]],
         };
         for (const [etfIdentifier, etfRatio] of Object.entries(etfIdentifierToRatio)) {
             values.etfs[etfIdentifier] = {
                 capital: etfRatio * subtractedStartCapital,
                 dividend: 0,
             };
-            values.investmentSteps[initialDate][etfIdentifier] = etfRatio * subtractedStartCapital;
+            values.investmentSteps[0][dateTupleIndex][etfIdentifier] = etfRatio * subtractedStartCapital;
         }
         return values;
     }
@@ -74,14 +79,14 @@ export class AccumulateModel {
             newInvestmentAmountNetto += this.calculateNextEtfValueAndCosts(etfIdentifier, etfInvestmentAmount);
         }
         const totalGain = this.totalAmount - this.yearBeginningCapital - newInvestmentAmountNetto;
-        const [taxes, leftoverTaxFreeAmount, alreadyPaidTaxesForAmount] = calculateTaxesOnThesaurierer(
-            totalGain,
+        const vorabpauschale = calculateVorabpauschale(this.investmentStepsOfThisYear, totalGain, this.yearBeginningCapital);
+        const [taxes, leftoverTaxFreeAmount] = calculateTaxesOnThesaurierer(
+            vorabpauschale,
             this.leftoverTaxFreeAmount,
-            this.yearBeginningCapital,
             this.startDate,
             this.endDate
         );
-        this.alreadyPaidTaxesForAmount = alreadyPaidTaxesForAmount;
+        this.alreadyPaidTaxesForAmount = vorabpauschale;
         this.taxes += taxes;
         this.leftoverTaxFreeAmount = leftoverTaxFreeAmount;
         this.inflation = calculateInflation(this.totalAmount, this.initialDate, this.endDate);
@@ -130,13 +135,15 @@ export class AccumulateModel {
         if (date == null) {
             date = this.startDate;
         }
-        if (!(date in this.investmentSteps)) {
-            this.investmentSteps[date] = {};
+        let dateIndex = this.investmentStepsOfThisYear.findIndex(e => e[0] == date);
+        if (dateIndex < 0){
+            dateIndex = this.investmentStepsOfThisYear.length;
+            this.investmentStepsOfThisYear.push([date, {}])
         }
-        if (etfIdentifier in this.investmentSteps[date]) {
-            this.investmentSteps[date][etfIdentifier] += amount;
+        if (etfIdentifier in this.investmentStepsOfThisYear[dateIndex]) {
+            this.investmentStepsOfThisYear[dateIndex][etfTupleIndex][etfIdentifier] += amount;
         } else {
-            this.investmentSteps[date][etfIdentifier] = amount;
+            this.investmentStepsOfThisYear[dateIndex][etfTupleIndex][etfIdentifier] = amount;
         }
     }
 }
