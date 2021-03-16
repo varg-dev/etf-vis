@@ -8,15 +8,23 @@ export const courseIndexOfForecastArray = 1;
 export const numberOfMonthsOfAYear = 12;
 export const inflationRate = 0.01;
 
+export function isLastMonthOfAYear(date) {
+    return date.getMonth() === numberOfMonthsOfAYear - 1;
+}
+
+export function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
+
 export function isStartOfTheYear(date) {
     return date.getMonth() === 0;
 }
 
-export function intervalIsEndOfYear(startDate, endDate){
+export function intervalIsEndOfYear(startDate, endDate) {
     return startDate.getFullYear() < endDate.getFullYear();
 }
 
-export function roundToMoneyAmount(amount){
+export function roundToMoneyAmount(amount) {
     return Math.round(amount * 100.0) / 100.0;
 }
 
@@ -44,10 +52,9 @@ export function etfHistoricalToDividendForecastArray(historicalData) {
     let currentYear = historicalData[0].date.getFullYear();
     const dividendForecastArray = [[currentYear, 0]];
     historicalData.forEach(entry => {
-        if(entry.date.getFullYear() === currentYear) {
+        if (entry.date.getFullYear() === currentYear) {
             dividendForecastArray[dividendForecastArray.length - 1][courseIndexOfForecastArray] += entry.dividend;
-        }
-        else {
+        } else {
             currentYear = entry.date.getFullYear();
             dividendForecastArray.push([currentYear, entry.dividend]);
         }

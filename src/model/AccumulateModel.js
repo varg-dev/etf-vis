@@ -23,6 +23,9 @@ export class AccumulateModel {
         lastYearModelValues,
         taxFreeAmountForAYear
     ) {
+        // TODO fix dividendenberechnung. add the already paid taxes to the investmentSteps
+        // akkumulieren von vorabpauschalen.
+        // etfs verkauufen kosten
         this.initialDate = initialDate; // required for inflation later on.
         this.lastYearModelValues = lastYearModelValues;
         this.startDate = date;
