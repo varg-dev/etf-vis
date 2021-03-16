@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/ETF-Pension-Plan-Visualization/static/css/main.34b85fa1.chunk.css",
-    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.f424ead3.chunk.js",
-    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.f424ead3.chunk.js.map",
+    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.57171bd7.chunk.js",
+    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.57171bd7.chunk.js.map",
     "runtime-main.js": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.e8799a4b.js",
     "runtime-main.js.map": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.e8799a4b.js.map",
     "static/js/2.b327644a.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/2.b327644a.chunk.js",
@@ -17,6 +17,6 @@
     "static/js/runtime-main.e8799a4b.js",
     "static/js/2.b327644a.chunk.js",
     "static/css/main.34b85fa1.chunk.css",
-    "static/js/main.f424ead3.chunk.js"
+    "static/js/main.57171bd7.chunk.js"
   ]
 }
