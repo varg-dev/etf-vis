@@ -1,6 +1,7 @@
 import React from 'react';
 import ForecastModelSingleton from '../model/ForecastModel';
 import VisualizationModel from '../model/VisualizationModel';
+import { InvestmentModel } from '../model/InvestmentModel';
 import LineChart3D from '../renderer/LineChartd3';
 
 const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
@@ -11,6 +12,8 @@ const SAVING_PHASE_IDENTIFIER = 'savingPhase';
 const PAYOUT_PHASE_IDENTIFIER = 'payoutPhase';
 const AGE_IDENTIFIER = 'age';
 const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
+const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
+const LIFE_EXPECTATION = 'lifeExpectation';
 
 const identifierToLabel = {
     [STARTING_CAPITAL_IDENTIFIER]: 'Starting Capital',
@@ -21,6 +24,8 @@ const identifierToLabel = {
     [PAYOUT_PHASE_IDENTIFIER]: 'Payout Phase',
     [AGE_IDENTIFIER]: 'Your Age',
     [TAX_FREE_AMOUNT_IDENTIFIER]: 'Tax Free Amount',
+    [MONTHLY_INVESTMENT_IDENTIFIER]: 'Monthly Payout',
+    [LIFE_EXPECTATION]: 'Life Expectation',
 };
 
 class InputForm extends React.Component {
@@ -29,12 +34,14 @@ class InputForm extends React.Component {
         this.state = {
             [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text' },
             [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text' },
+            [MONTHLY_PAYOUT_IDENTIFIER]: { value: 1000, type: 'text' },
             [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text' },
             [TRANSACTION_COSTS_TYPE_IDENTIFIER]: { value: false, type: 'checkbox' },
             [SAVING_PHASE_IDENTIFIER]: { value: 40, type: 'text' },
             [PAYOUT_PHASE_IDENTIFIER]: { value: 20, type: 'text' },
             [AGE_IDENTIFIER]: { value: 30, type: 'text' },
             [TAX_FREE_AMOUNT_IDENTIFIER]: { value: 801, type: 'text' },
+            [LIFE_EXPECTATION]: {value: 80, type: 'text'}
         };
 
         this.ref = React.createRef();
@@ -48,15 +55,19 @@ class InputForm extends React.Component {
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
-    getVisualizationModel(){
-        return new VisualizationModel(
+    getVisualizationModel() {
+        return new InvestmentModel(
             this.state[STARTING_CAPITAL_IDENTIFIER].value,
             this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,
+            this.state[MONTHLY_PAYOUT_IDENTIFIER].value,
             this.state[SAVING_PHASE_IDENTIFIER].value,
             { IBM: 1.0 },
-            { percentageCosts: 0.0, fixedCosts: 5.0 },
+            {
+                taxFreAmount: this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
+                costConfig: { percentageCosts: 0.0, fixedCosts: 5.0 },
+            },
             this.state[AGE_IDENTIFIER].value,
-            this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
+            this.state[LIFE_EXPECTATION].value,
         );
     }
 
@@ -64,11 +75,11 @@ class InputForm extends React.Component {
         ForecastModelSingleton.configure('demo');
         this.forecastModel = ForecastModelSingleton.getInstance();
         await this.forecastModel.loadAndCacheHistoricalETFData('IBM');
-        
+
         new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
     }
 
-    componentDidUpdate(){
+    componentDidUpdate() {
         new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
     }
 

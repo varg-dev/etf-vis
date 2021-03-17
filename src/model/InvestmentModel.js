@@ -1,8 +1,15 @@
 import ForecastModelSingleton from './ForecastModel';
-import { calculateCosts, numberOfMonthsOfAYear, isLastMonthOfAYear, clamp } from '../helpers/utils';
+import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isStartOfTheYear } from '../helpers/utils';
+
 const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
 const corporateTaxRatio = 0.26375;
+
+function getNextMonthDate(date) {
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() + 1);
+    return newDate;
+}
 
 function calculateDividend(etfIdentifier, date) {
     if (isLastMonthOfAYear(date)) {
@@ -11,6 +18,11 @@ function calculateDividend(etfIdentifier, date) {
         const forecast = ForecastModelSingleton.getInstance();
         return forecast.predictDividend(etfIdentifier, date.getFullYear());
     }
+}
+
+function calculateCosts(amount, costConfiguration) {
+    const costs = amount * costConfiguration.percentageCosts + costConfiguration.fixedCosts;
+    return [amount - costs, costs];
 }
 
 function subtractTaxFreeGain(taxAmount, taxFreeAmount) {
@@ -25,6 +37,19 @@ function getTotalShareValue(etfIdentifier, investmentStep) {
 
 function getNewShareValue(etfIdentifier, investmentStep) {
     return investmentStep.newShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+}
+
+function calculateForecastInterval(age, lifeExpectation, savingPhaseLength, fadeOutYears = 10) {
+    const yearsLeft = lifeExpectation - age;
+    const now = new Date();
+    const beginningDate = new Date(now.getFullYear(), now.getMonth());
+    // start next month.
+    beginningDate.setMonth(beginningDate.getMonth() + 1);
+    const endSavingPhaseDate = new Date(beginningDate);
+    endSavingPhaseDate.setFullYear(beginningDate.getFullYear() + savingPhaseLength);
+    const endDate = new Date(beginningDate);
+    endDate.setFullYear(beginningDate.getFullYear() + yearsLeft + fadeOutYears);
+    return [beginningDate, endSavingPhaseDate, endDate];
 }
 
 function calculateTaxes(investmentSteps, date, configOptions, etfIdentifiers) {
@@ -62,7 +87,7 @@ function calculateTaxes(investmentSteps, date, configOptions, etfIdentifiers) {
         leftoverTaxFreeAmount = updatedLeftoverTaxFreeAmount;
         summedTaxes += leftoverAmountToApplyTaxes * partialExemption * corporateTaxRatio;
     }
-    return summedTaxes;
+    return [summedTaxes, leftoverTaxFreeAmount];
 }
 
 export function addAccumulationMonth(investmentSteps, investment, date, etfToRatio, configOptions) {
@@ -79,6 +104,8 @@ export function addAccumulationMonth(investmentSteps, investment, date, etfToRat
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
         totalTaxes: prevInvestmentStep.totalTaxes,
+        totalPayout: { ...prevInvestmentStep.totalPayout },
+        newPayout: {},
     };
     for (const etfIdentifier in etfToRatio) {
         const investmentOfEtfWithCosts = etfToRatio[etfIdentifier] * investment;
@@ -95,21 +122,216 @@ export function addAccumulationMonth(investmentSteps, investment, date, etfToRat
         newInvestmentStep.newShares[etfIdentifier] = newShares;
         newInvestmentStep.totalShares[etfIdentifier] += newShares;
 
-        const dividendPayoutMoney = newInvestmentStep.total[etfIdentifier] * calculateDividend(etfIdentifier, date);
+        const dividendPayoutMoney =
+            newInvestmentStep.totalShares[etfIdentifier] * calculateDividend(etfIdentifier, date);
         const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
         newInvestmentStep.newShares[etfIdentifier] = newSharesByDividend;
         newInvestmentStep.totalShares[etfIdentifier] += newSharesByDividend;
         newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
         newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
+
+        newInvestmentStep.newPayout[etfIdentifier] = 0;
     }
     newInvestmentStep.totalCosts += costs;
-    const newTaxes = calculateTaxes(investmentSteps, date, configOptions, Object.keys(etfToRatio));
+    const [newTaxes, newLeftoverTaxFreeAmount] = calculateTaxes(
+        investmentSteps,
+        date,
+        configOptions,
+        Object.keys(etfToRatio)
+    );
     newInvestmentStep.totalTaxes += newTaxes;
 
     investmentSteps.push(newInvestmentStep);
+    return newLeftoverTaxFreeAmount;
 }
 
+function addPayoutMonth(
+    investmentSteps,
+    sellingAmount,
+    etfToRatio,
+    date,
+    configOptions,
+    leftoverAlreadyPaidTaxes,
+    leftoverTaxFreeAmount,
+    payoutStats
+) {
+    if (isStartOfTheYear(date)) {
+        leftoverTaxFreeAmount = configOptions;
+    }
+    // TODO dividend
+    const forecast = ForecastModelSingleton.getInstance();
+    let costs = 0;
+    let taxes = 0;
+    const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
+    const newInvestmentStep = {
+        date: date,
+        newShares: {},
+        totalShares: { ...prevInvestmentStep.total },
+        dividendNewShares: {},
+        dividendTotalShares: {},
+        totalCosts: prevInvestmentStep.totalCosts,
+        sharePrizes: {},
+        totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
+        totalTaxes: prevInvestmentStep.totalTaxes,
+        totalPayout: { ...prevInvestmentStep.totalPayout },
+        newPayout: {},
+    };
+    for (const etfIdentifier in etfToRatio) {
+        // handle payout.
+        newInvestmentStep.newPayout[etfIdentifier] = 0;
+        const amountToSell = sellingAmount * etfToRatio[etfIdentifier];
+        const amountAlreadySold = 0;
+        const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
+        let payoutInvestmentStepIdxForFIFO = payoutStats[etfIdentifier].investmentStepsIdx;
+        let currentSharesLeft = investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] -
+        payoutStats[etfIdentifier].alreadySoldShares;
+        for (
+            ;
+            payoutInvestmentStepIdxForFIFO < investmentSteps.length && amountAlreadySold < amountToSell;
+            payoutInvestmentStepIdxForFIFO++
+        ) {
+            const leftoverAmountToSell = amountToSell - amountAlreadySold;
+            const currentInvestmentStepForFIFO = investmentSteps[payoutInvestmentStepIdxForFIFO];
 
-function addPayoutMonth(investmentSteps, sellingAmount, etfToRatio, date, configOptions){
-    
+            const currentValueOfShares =
+                payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifiers].investmentStepsIdx
+                    ? (currentInvestmentStepForFIFO.newShares[etfIdentifier] -
+                          payoutStats[etfIdentifier].alreadySoldShares) *
+                      currentInvestmentStepForFIFO.sharePrizes[etfIdentifier]
+                    : currentInvestmentStepForFIFO.newShares[etfIdentifier] * etfSharePrize;
+            const amountToSellWithCosts = Math.min(currentValueOfShares, leftoverAmountToSell);
+            const amountOfSharesToSell = amountToSellWithCosts / etfSharePrize;
+            currentSharesLeft = currentInvestmentStepForFIFO.newShares[etfIdentifier] - amountOfSharesToSell;
+            currentSharesLeft -= payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifiers].investmentStepsIdx ? payoutStats[etfIdentifier].alreadySoldShares : 0;
+
+            const buyValuesOfAmountOfSharesToSell =
+                amountOfSharesToSell * currentValueOfShares.sharePrizes[etfSharePrize];
+            const [amountToSellWithoutCosts, newCosts] = calculateCosts(
+                amountToSellWithCosts,
+                configOptions.costConfig
+            );
+            costs += newCosts;
+            let amountToPayTaxes = Math.max(0, amountToSellWithoutCosts - buyValuesOfAmountOfSharesToSell);
+
+            [amountToPayTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToPayTaxes, leftoverTaxFreeAmount);
+            let taxesToPay = amountToPayTaxes * partialExemption * corporateTaxRatio;
+            [taxesToPay, leftoverAlreadyPaidTaxes] = subtractTaxFreeGain(taxesToPay, leftoverAlreadyPaidTaxes);
+            taxes += taxesToPay;
+            const payoutAmount = amountToSellWithoutCosts - taxesToPay;
+
+            newInvestmentStep.newPayout[etfIdentifier] += payoutAmount;
+            newInvestmentStep.totalPayout[etfIdentifier] += payoutAmount;
+
+            newInvestmentStep.totalShares[etfIdentifier] -= amountOfSharesToSell;
+        }
+        // handle update payoutStats.
+        payoutStats[etfIdentifier].investmentStepsIdx = payoutInvestmentStepIdxForFIFO;
+        payoutStats[etfIdentifier].investmentStepsIdx += currentSharesLeft === 0 ? 1 : 0;
+        payoutStats[etfIdentifier].alreadySoldShares = investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] - currentSharesLeft;
+
+        // handle dividend.
+        const dividendPayoutMoney =
+            newInvestmentStep.totalShares[etfIdentifier] * calculateDividend(etfIdentifier, date);
+        const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
+        newInvestmentStep.newShares[etfIdentifier] = newSharesByDividend;
+        newInvestmentStep.totalShares[etfIdentifier] += newSharesByDividend;
+    }
+
+    newInvestmentStep.totalCosts += costs;
+    newInvestmentStep.totalTaxes += taxes;
+    investmentSteps.push(newInvestmentStep);
+    return [leftoverAlreadyPaidTaxes, leftoverTaxFreeAmount];
+}
+
+function generateEmptyInvestmentStep(etfToRatio, date) {
+    const forecast = ForecastModelSingleton.getInstance();
+    const emptyInvestmentStep = { date: date, totalCosts: 0, totalTaxe: 0 };
+    for (const etfIdentifier in etfToRatio) {
+        emptyInvestmentStep.newShares[etfIdentifier] = 0;
+        emptyInvestmentStep.totalShares[etfIdentifier] = 0;
+        emptyInvestmentStep.dividendNewShares[etfIdentifier] = 0;
+        emptyInvestmentStep.dividendTotalShares[etfIdentifier] = 0;
+        emptyInvestmentStep.totalInvestedMoney[etfIdentifier] = 0;
+        emptyInvestmentStep.totalPayout[etfIdentifier] = 0;
+        emptyInvestmentStep.newPayout[etfIdentifier] = 0;
+        emptyInvestmentStep.sharePrizes[etfIdentifier] = forecast.predictCourse(etfIdentifier, date);
+    }
+    return emptyInvestmentStep;
+}
+
+export class InvestmentModel {
+    constructor(
+        startCapital,
+        monthlyInvestment,
+        monthlyPayout,
+        savingPhaseLength,
+        etfIdentifierToRatio,
+        configOptions,
+        age,
+        expectationOfLife,
+    ) {
+        this.startCapital = startCapital;
+        this.monthlyInvestment = monthlyInvestment;
+        this.monthlyPayout = monthlyPayout;
+        this.savingPhaseLength = savingPhaseLength;
+        this.etfIdentifierToRatio = etfIdentifierToRatio;
+        this.configOptions = configOptions;
+        this.expectationOfLife = expectationOfLife;
+        this.age = age;
+        this._calculateTimestampsForModel();
+        this._calculateModel();
+    }
+
+    _calculateTimestampsForVisualization() {
+        const [startDate, endSavingPhaseDate, endDate] = calculateForecastInterval(
+            this.age,
+            this.expectationOfLife,
+            this.savingPhaseLength
+        );
+        const savingDates = [];
+        for (
+            let currentDate = startDate;
+            currentDate < endSavingPhaseDate;
+            currentDate = getNextMonthDate(currentDate)
+        ) {
+            savingDates.push(currentForecast);
+        }
+        this.savingDates = savingDates;
+        const payoutDates = [];
+        for (let currentDate = endSavingPhaseDate; currentDate < endDate; currentDate = getNextMonthDate(currentDate)) {
+            payoutDates.push(currentForecast);
+        }
+        this.payoutDates = payoutDates;
+    }
+
+    _calculateModel() {
+        const investmentSteps = [generateEmptyInvestmentStep(this.etfToRatio, date)];
+        let leftoverTaxFreeAmount = this.configOptions.taxFreeAmount;
+        for (const savingDate in this.savingDates) {
+            leftoverTaxFreeAmount = addAccumulationMonth(
+                investmentSteps,
+                this.monthlyInvestment,
+                savingDate,
+                this.etfToRatio,
+                this.configOptions
+            );
+        }
+        let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
+        const payoutStats = {};
+        for (const etfIdentifier in this.etfToRatio) {
+            payoutStats[etfIdentifier] = { investmentStepsIdx: 0 };
+        }
+        for (const payoutDate in this.payoutDates) {
+            [leftoverAlreadyPaidTaxes, leftoverTaxFreeAmount] = addPayoutMonth(
+                investmentSteps,
+                this.monthlyPayout,
+                this.etfToRatio,
+                payoutDate,
+                this.configOptions,
+                leftoverAlreadyPaidTaxes,
+                leftoverTaxFreeAmount,
+                payoutStats
+            );
+        }
+    }
 }
