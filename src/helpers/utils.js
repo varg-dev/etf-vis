@@ -16,7 +16,7 @@ export function clamp(value, min, max) {
     return Math.max(min, Math.min(value, max));
 }
 
-export function isStartOfTheYear(date) {
+export function isFirstMonthOfAYear(date) {
     return date.getMonth() === 0;
 }
 

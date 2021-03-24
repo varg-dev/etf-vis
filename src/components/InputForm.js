@@ -9,7 +9,6 @@ const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
 const TRANSACTION_COSTS_IDENTIFIER = 'transactionCosts';
 const TRANSACTION_COSTS_TYPE_IDENTIFIER = 'transactionCostsType';
 const SAVING_PHASE_IDENTIFIER = 'savingPhase';
-const PAYOUT_PHASE_IDENTIFIER = 'payoutPhase';
 const AGE_IDENTIFIER = 'age';
 const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
 const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
@@ -21,27 +20,37 @@ const identifierToLabel = {
     [TRANSACTION_COSTS_IDENTIFIER]: 'Transaction Costs',
     [TRANSACTION_COSTS_TYPE_IDENTIFIER]: 'Fixes Amount ?',
     [SAVING_PHASE_IDENTIFIER]: 'Saving Phase',
-    [PAYOUT_PHASE_IDENTIFIER]: 'Payout Phase',
     [AGE_IDENTIFIER]: 'Your Age',
     [TAX_FREE_AMOUNT_IDENTIFIER]: 'Tax Free Amount',
-    [MONTHLY_INVESTMENT_IDENTIFIER]: 'Monthly Payout',
+    [MONTHLY_PAYOUT_IDENTIFIER]: 'Monthly Payout',
     [LIFE_EXPECTATION]: 'Life Expectation',
 };
+
+function transformInputToInt(e, caller) {
+    return parseInt(e.target.value);
+}
+
+function transformCheckboxInput(e, caller) {
+    return !caller.props.value;
+}
 
 class InputForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text' },
-            [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text' },
-            [MONTHLY_PAYOUT_IDENTIFIER]: { value: 1000, type: 'text' },
-            [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text' },
-            [TRANSACTION_COSTS_TYPE_IDENTIFIER]: { value: false, type: 'checkbox' },
-            [SAVING_PHASE_IDENTIFIER]: { value: 40, type: 'text' },
-            [PAYOUT_PHASE_IDENTIFIER]: { value: 20, type: 'text' },
-            [AGE_IDENTIFIER]: { value: 30, type: 'text' },
-            [TAX_FREE_AMOUNT_IDENTIFIER]: { value: 801, type: 'text' },
-            [LIFE_EXPECTATION]: {value: 80, type: 'text'}
+            [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text', transformFunction: transformInputToInt },
+            [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text', transformFunction: transformInputToInt },
+            [MONTHLY_PAYOUT_IDENTIFIER]: { value: 1000, type: 'text', transformFunction: transformInputToInt },
+            [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text', transformFunction: transformInputToInt },
+            [TRANSACTION_COSTS_TYPE_IDENTIFIER]: {
+                value: false,
+                type: 'checkbox',
+                transformFunction: transformCheckboxInput,
+            },
+            [SAVING_PHASE_IDENTIFIER]: { value: 40, type: 'text', transformFunction: transformInputToInt },
+            [AGE_IDENTIFIER]: { value: 30, type: 'text', transformFunction: transformInputToInt },
+            [TAX_FREE_AMOUNT_IDENTIFIER]: { value: 801, type: 'text', transformFunction: transformInputToInt },
+            [LIFE_EXPECTATION]: { value: 80, type: 'text', transformFunction: transformInputToInt },
         };
 
         this.ref = React.createRef();
@@ -49,9 +58,8 @@ class InputForm extends React.Component {
     }
 
     handleChange(changedValue, changedStateIdentifier) {
-        this.setState({
-            [changedStateIdentifier]: { value: changedValue, type: this.state[changedStateIdentifier].type },
-        });
+        this.state[changedStateIdentifier].value = changedValue;
+        this.setState(this.state);
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
@@ -63,11 +71,11 @@ class InputForm extends React.Component {
             this.state[SAVING_PHASE_IDENTIFIER].value,
             { IBM: 1.0 },
             {
-                taxFreAmount: this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
+                taxFreeAmount: this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
                 costConfig: { percentageCosts: 0.0, fixedCosts: 5.0 },
             },
             this.state[AGE_IDENTIFIER].value,
-            this.state[LIFE_EXPECTATION].value,
+            this.state[LIFE_EXPECTATION].value
         );
     }
 
@@ -76,11 +84,11 @@ class InputForm extends React.Component {
         this.forecastModel = ForecastModelSingleton.getInstance();
         await this.forecastModel.loadAndCacheHistoricalETFData('IBM');
 
-        new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
+        new LineChart3D().render(this.getVisualizationModel().investmentSteps, this.ref.current);
     }
 
     componentDidUpdate() {
-        new LineChart3D().render(this.getVisualizationModel(), this.ref.current);
+        new LineChart3D().render(this.getVisualizationModel().investmentSteps, this.ref.current);
     }
 
     render() {
@@ -95,6 +103,7 @@ class InputForm extends React.Component {
                             type={this.state[stateIdentifier].type}
                             onValueChange={this.handleChange}
                             stateIdentifier={stateIdentifier}
+                            transformFunction={this.state[stateIdentifier].transformFunction}
                         />
                     ))}
                 </form>
@@ -115,7 +124,7 @@ class InputFormElement extends React.Component {
         if (this.props.type === 'checkbox') {
             newValue = !this.props.value;
         }
-        this.props.onValueChange(newValue, this.props.stateIdentifier);
+        this.props.onValueChange(this.props.transformFunction(e, this), this.props.stateIdentifier);
     }
 
     render() {

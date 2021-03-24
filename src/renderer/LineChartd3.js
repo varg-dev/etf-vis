@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
+import { getTotalShareValue } from '../model/InvestmentModel';
 
 export class LineChart3D {
-    render(visualizationModel, renderDivRef) {
+    render(investmentSteps, renderDivRef) {
         const svgID = 'firstSVG';
-        const investedMoneyLineID = 'investedMoney';
 
         const marginW = 150,
             marginH = 40,
@@ -25,8 +25,7 @@ export class LineChart3D {
             .append('g')
             .attr('transform', `translate(${[marginW, marginH]})`);
 
-        // create line array
-
+        // Create line array.
         const dataToIndex = {
             costs: 0,
             taxes: 1,
@@ -35,7 +34,7 @@ export class LineChart3D {
         let currentIdx = 3;
         const capitalIdentifier = 'capital';
         const dividendIdentifier = 'dividend';
-        for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
+        for (const etfIdentifier in investmentSteps[0].totalShares) {
             dataToIndex[etfIdentifier + dividendIdentifier] = currentIdx++;
             dataToIndex[etfIdentifier + capitalIdentifier] = currentIdx++;
         }
@@ -44,27 +43,30 @@ export class LineChart3D {
         for (let i = 0; i < currentIdx; i++) {
             lineData.push([]);
         }
-        for (const yearModel of visualizationModel.yearModels) {
-            lineData[dataToIndex.costs].push({ value: -yearModel.costs, date: yearModel.endDate });
+        for (const investmentStep of investmentSteps) {
+            lineData[dataToIndex.costs].push({ value: -investmentStep.totalCosts, date: investmentStep.date });
             lineData[dataToIndex.taxes].push({
-                value: -yearModel.taxes - yearModel.costs,
-                date: yearModel.endDate,
+                value: -investmentStep.totalCosts - investmentStep.totalTaxes,
+                date: investmentStep.date,
             });
             lineData[dataToIndex.inflation].push({
-                value: -yearModel.inflation - yearModel.taxes - yearModel.costs,
-                date: yearModel.endDate,
+                value: -investmentStep.totalCosts - investmentStep.totalTaxes,
+                date: investmentStep.date,
             });
             let heightOffset = 0;
-            for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
+            for (const etfIdentifier in investmentStep.totalShares) {
+                const totalShareValue = getTotalShareValue(etfIdentifier, investmentStep);
+                const totalDividendShareValue =
+                    investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
                 lineData[dataToIndex[etfIdentifier + capitalIdentifier]].push({
-                    value: yearModel.etfs[etfIdentifier].capital + heightOffset,
-                    date: yearModel.endDate,
+                    value: totalShareValue + heightOffset,
+                    date: investmentStep.date,
                 });
                 lineData[dataToIndex[etfIdentifier + dividendIdentifier]].push({
-                    value: yearModel.etfs[etfIdentifier].capital - yearModel.etfs[etfIdentifier].dividend + heightOffset,
-                    date: yearModel.endDate,
+                    value: totalShareValue - totalDividendShareValue + heightOffset,
+                    date: investmentStep.date,
                 });
-                heightOffset += yearModel.etfs[etfIdentifier].capital;
+                heightOffset += totalShareValue;
             }
         }
 
@@ -72,23 +74,20 @@ export class LineChart3D {
         lineData[dataToIndex.inflation].cssClass = 'inflation';
         lineData[dataToIndex.taxes].cssClass = 'taxes';
         lineData[dataToIndex.costs].cssClass = 'costs';
-        for (const etfIdentifier in visualizationModel.etfIdentifierToRatio) {
+        for (const etfIdentifier in investmentSteps[0].totalShares) {
             lineData[dataToIndex[etfIdentifier + dividendIdentifier]].cssClass = `${etfIdentifier}_dividend`;
             lineData[dataToIndex[etfIdentifier + capitalIdentifier]].cssClass = `${etfIdentifier}_total_amount`;
         }
 
-        // create scales
+        // Create scales.
         const minVal = d3.min(lineData[dataToIndex.inflation].map(e => e.value));
         const maxVal = d3.max(lineData[lineData.length - 1].map(e => e.value));
 
         const yScale = d3.scaleLinear().domain([minVal, maxVal]).range([height, 0]);
+        const dateExtent = d3.extent(lineData[0], d => d.date);
+        const xScale = d3.scaleTime().domain(dateExtent).range([0, width]);
 
-        const xScale = d3
-            .scaleTime()
-            .domain([visualizationModel.dates[0], visualizationModel.nextFutureDate])
-            .range([0, width]);
-
-        // Draw axis
+        // Draw axis.
         svg.append('g')
             .style('font-size', '20px')
             .call(d3.axisLeft(yScale).tickFormat(d => `${d.toLocaleString()} EUR`));
@@ -101,9 +100,9 @@ export class LineChart3D {
         // Draw zero line.
         svg.append('g')
             .append('line')
-            .attr('x1', xScale(visualizationModel.dates[0]))
+            .attr('x1', xScale(dateExtent[0]))
             .attr('y1', yScale(0))
-            .attr('x2', xScale(visualizationModel.nextFutureDate))
+            .attr('x2', xScale(dateExtent[1]))
             .attr('y2', yScale(0))
             .attr('stroke-width', zeroLineStrokeWidth)
             .attr('stroke', 'black');

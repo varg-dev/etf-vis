@@ -1,4 +1,4 @@
-import { isStartOfTheYear, numberOfMonthsOfAYear } from '../helpers/utils';
+import { isFirstMonthOfAYear, numberOfMonthsOfAYear } from '../helpers/utils';
 import {
     calculatePrizeGain,
     calculateNewDividendPayout,
@@ -36,15 +36,15 @@ export class AccumulateModel {
         this.costs = lastYearModelValues.costs;
         this.taxes = lastYearModelValues.taxes;
         this.etfs = {};
-        this.yearBeginningCapital = isStartOfTheYear(this.startDate)
+        this.yearBeginningCapital = isFirstMonthOfAYear(this.startDate)
             ? lastYearModelValues.totalAmount
             : lastYearModelValues.yearBeginningCapital;
         this.totalAmount = 0;
         this.investedMoney = lastYearModelValues.investedMoney + newInvestmentAmount;
-        this.leftoverTaxFreeAmount = isStartOfTheYear(this.startDate)
+        this.leftoverTaxFreeAmount = isFirstMonthOfAYear(this.startDate)
             ? taxFreeAmountForAYear
             : lastYearModelValues.leftoverTaxFreeAmount;
-        this.investmentStepsOfThisYear = isStartOfTheYear(this.startDate) ? [] : lastYearModelValues.investmentStepsOfThisYear;
+        this.investmentStepsOfThisYear = isFirstMonthOfAYear(this.startDate) ? [] : lastYearModelValues.investmentStepsOfThisYear;
         this.alreadyPaidTaxesForAmount = 0;
         this.calculate();
     }
