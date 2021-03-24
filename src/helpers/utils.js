@@ -20,14 +20,6 @@ export function isFirstMonthOfAYear(date) {
     return date.getMonth() === 0;
 }
 
-export function intervalIsEndOfYear(startDate, endDate) {
-    return startDate.getFullYear() < endDate.getFullYear();
-}
-
-export function roundToMoneyAmount(amount) {
-    return Math.round(amount * 100.0) / 100.0;
-}
-
 export async function loadHistoricalETFData(etfIdentifier, apiKey) {
     const historicalData = await d3.csv(
         `https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol=${etfIdentifier}&apikey=${apiKey}&datatype=csv`,
@@ -71,4 +63,7 @@ export function timestampToDate(timestamp) {
     return new Date(timestamp * timeDiffIgnoreDivisor);
 }
 
-export default numberOfMonthsOfAYear;
+export function HistoricalDataNotPresentException(etfIdentifier) {
+    this.message = `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
+    this.name = 'HistoricalDataNotPresentException';
+}

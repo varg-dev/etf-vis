@@ -1,11 +1,8 @@
 // Niemals mit Anteilen rechnen
 
-
 // dividende immer nur eine ausschuettung am ende des jahres
 
-
 // costfunction ersetzten mir parametern
-
 
 // accumulating model
 // Thesaurierend
@@ -51,17 +48,9 @@ c_neu = c_split + costs * costs_sum
 
 // distributing model
 
-
-
 // UI: keine animation redraw is ok.
 
-
-
-
-
-
-// TODO: 1. accumulation model with non 1 year periods., add missing ui elements, 
-
+// TODO: 1. accumulation model with non 1 year periods., add missing ui elements,
 
 // Ausschuettungsmodell
 
@@ -69,4 +58,4 @@ c_neu = c_split + costs * costs_sum
 
 // einfach etf anteile verkaufen mit zielbetrag
 
-// steuerfrei, 
+// steuerfrei,

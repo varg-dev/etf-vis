@@ -47,6 +47,13 @@ function generateCostConfig(state) {
     }
 }
 
+async function loadHistoricData(){
+    ForecastModelSingleton.configure('demo');
+    const forecast = ForecastModelSingleton.getInstance();
+    await forecast.loadAndCacheHistoricalETFData('IBM');
+    console.log('Finished loading the historic data.');
+}
+
 class InputForm extends React.Component {
     constructor(props) {
         super(props);
@@ -71,8 +78,9 @@ class InputForm extends React.Component {
     }
 
     handleChange(changedValue, changedStateIdentifier) {
-        this.state[changedStateIdentifier].value = changedValue;
-        this.setState(this.state);
+        const currentValues = {...this.state[changedStateIdentifier]};
+        currentValues.value = changedValue;
+        this.setState({[changedStateIdentifier]: currentValues});
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
@@ -93,10 +101,7 @@ class InputForm extends React.Component {
     }
 
     async componentDidMount() {
-        ForecastModelSingleton.configure('demo');
-        this.forecastModel = ForecastModelSingleton.getInstance();
-        await this.forecastModel.loadAndCacheHistoricalETFData('IBM');
-
+        await loadHistoricData();
         new LineChart3D().render(this.getVisualizationModel().investmentSteps, this.ref.current);
     }
 
@@ -133,10 +138,6 @@ class InputFormElement extends React.Component {
     }
 
     handleChange(e) {
-        let newValue = e.target.value;
-        if (this.props.type === 'checkbox') {
-            newValue = !this.props.value;
-        }
         this.props.onValueChange(this.props.transformFunction(e, this), this.props.stateIdentifier);
     }
 

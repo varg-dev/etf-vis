@@ -4,9 +4,9 @@ import {
     etfHistoricalToCourseForecastArray,
     etfHistoricalToDividendForecastArray,
     loadHistoricalETFData,
-    timestampToDate,
     timestampIndexOfForecastArray,
     courseIndexOfForecastArray,
+    HistoricalDataNotPresentException,
 } from '../helpers/utils';
 
 // USAGE: first call configure to set required static vars. Then the singleton can be accessed via getInstance. Never call the Constructor on your own.
@@ -152,7 +152,7 @@ export class ForecastModelSingleton {
 
     predictCourse(etfIdentifier, date) {
         if (!(etfIdentifier in this.coursePredictors)) {
-            throw `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
+            throw new HistoricalDataNotPresentException(etfIdentifier);
         }
         const [predictorTimestamp, timestamp] = this._courseDateToPredictorTimestampAndDateTimestamp(
             date,
@@ -164,7 +164,7 @@ export class ForecastModelSingleton {
 
     predictDividend(etfIdentifier, year) {
         if (!(etfIdentifier in this.dividendPredictors)) {
-            throw `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
+            throw new HistoricalDataNotPresentException(etfIdentifier);
         }
         const predictorYear = this._dividendYearToPredictorYear(etfIdentifier, year);
         this._createDividendPredictorIfNotPresent(etfIdentifier, predictorYear);
