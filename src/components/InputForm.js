@@ -1,6 +1,5 @@
 import React from 'react';
 import ForecastModelSingleton from '../model/ForecastModel';
-import VisualizationModel from '../model/VisualizationModel';
 import { InvestmentModel } from '../model/InvestmentModel';
 import LineChart3D from '../renderer/LineChartd3';
 
@@ -27,11 +26,25 @@ const identifierToLabel = {
 };
 
 function transformInputToInt(e, caller) {
-    return parseInt(e.target.value);
+    const intVal = parseInt(e.target.value);
+    return isNaN(intVal) ? 0 : intVal;
+}
+
+function transformInputToFloat(e, caller) {
+    const intVal = parseFloat(e.target.value);
+    return isNaN(intVal) ? 0 : intVal;
 }
 
 function transformCheckboxInput(e, caller) {
     return !caller.props.value;
+}
+
+function generateCostConfig(state) {
+    if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
+        return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
+    } else {
+        return { percentageCosts: state[TRANSACTION_COSTS_IDENTIFIER].value, fixedCosts: 0.0 };
+    }
 }
 
 class InputForm extends React.Component {
@@ -41,7 +54,7 @@ class InputForm extends React.Component {
             [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text', transformFunction: transformInputToInt },
             [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text', transformFunction: transformInputToInt },
             [MONTHLY_PAYOUT_IDENTIFIER]: { value: 1000, type: 'text', transformFunction: transformInputToInt },
-            [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text', transformFunction: transformInputToInt },
+            [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text', transformFunction: transformInputToFloat },
             [TRANSACTION_COSTS_TYPE_IDENTIFIER]: {
                 value: false,
                 type: 'checkbox',
@@ -72,7 +85,7 @@ class InputForm extends React.Component {
             { IBM: 1.0 },
             {
                 taxFreeAmount: this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
-                costConfig: { percentageCosts: 0.0, fixedCosts: 5.0 },
+                costConfig: generateCostConfig(this.state),
             },
             this.state[AGE_IDENTIFIER].value,
             this.state[LIFE_EXPECTATION].value

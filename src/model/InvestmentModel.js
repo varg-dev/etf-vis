@@ -185,67 +185,91 @@ function addPayoutMonth(
         newPayout: {},
     };
     for (const etfIdentifier in etfToRatio) {
-        // handle payout.
-        newInvestmentStep.newPayout[etfIdentifier] = 0;
-        const amountToSell = sellingAmount * etfToRatio[etfIdentifier];
-        let amountAlreadySold = 0;
-        const costsToPay = calculateCosts(amountToSell, configOptions.costConfig)[1];
-        let alreadyPaidCosts = 0;
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
-        let payoutInvestmentStepIdxForFIFO = payoutStats[etfIdentifier].investmentStepsIdx;
-        let currentSharesLeft =
-            investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] -
-            payoutStats[etfIdentifier].alreadySoldShares;
-        payoutLoop: for (; payoutInvestmentStepIdxForFIFO < investmentSteps.length; payoutInvestmentStepIdxForFIFO++) {
-            const leftoverAmountToSell = amountToSell - amountAlreadySold;
-            const currentInvestmentStepForFIFO = investmentSteps[payoutInvestmentStepIdxForFIFO];
+        newInvestmentStep.newPayout[etfIdentifier] = 0;
+        // Skip payout if there are no shares left to sell.
+        if (payoutStats[etfIdentifier].investmentStepsIdx < investmentSteps.length) {
+            // Handle payout.
+            const amountToSell = sellingAmount * etfToRatio[etfIdentifier];
+            let amountAlreadySold = 0;
+            const costsToPay = calculateCosts(amountToSell, configOptions.costConfig)[1];
+            let alreadyPaidCosts = 0;
+            let payoutInvestmentStepIdxForFIFO = payoutStats[etfIdentifier].investmentStepsIdx;
+            let currentSharesLeft =
+                investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] -
+                payoutStats[etfIdentifier].alreadySoldShares;
+            for (; payoutInvestmentStepIdxForFIFO < investmentSteps.length; payoutInvestmentStepIdxForFIFO++) {
+                const leftoverAmountToSell = amountToSell - amountAlreadySold;
+                const currentInvestmentStepForFIFO = investmentSteps[payoutInvestmentStepIdxForFIFO];
 
-            const currentValueOfShares =
-                etfSharePrize *
-                (payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
-                    ? currentInvestmentStepForFIFO.newShares[etfIdentifier] -
-                      payoutStats[etfIdentifier].alreadySoldShares
-                    : currentInvestmentStepForFIFO.newShares[etfIdentifier]);
-            const amountToSellWithCosts = Math.min(currentValueOfShares, leftoverAmountToSell);
-            const amountOfSharesToSell = amountToSellWithCosts / etfSharePrize;
-            currentSharesLeft = currentInvestmentStepForFIFO.newShares[etfIdentifier] - amountOfSharesToSell;
-            currentSharesLeft -=
-                payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
-                    ? payoutStats[etfIdentifier].alreadySoldShares
-                    : 0;
+                const currentValueOfShares =
+                    etfSharePrize *
+                    (payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
+                        ? currentInvestmentStepForFIFO.newShares[etfIdentifier] -
+                          payoutStats[etfIdentifier].alreadySoldShares
+                        : currentInvestmentStepForFIFO.newShares[etfIdentifier]);
+                const amountToSellWithCosts = Math.min(currentValueOfShares, leftoverAmountToSell);
+                const amountOfSharesToSell = amountToSellWithCosts / etfSharePrize;
+                currentSharesLeft = currentInvestmentStepForFIFO.newShares[etfIdentifier] - amountOfSharesToSell;
+                currentSharesLeft -=
+                    payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
+                        ? payoutStats[etfIdentifier].alreadySoldShares
+                        : 0;
 
-            const amountToSellWithoutCosts = Math.max(0, amountToSellWithCosts - (costsToPay - alreadyPaidCosts));
-            alreadyPaidCosts += Math.max(0, amountToSellWithCosts - amountToSellWithoutCosts);
+                const amountToSellWithoutCosts = Math.max(0, amountToSellWithCosts - (costsToPay - alreadyPaidCosts));
+                alreadyPaidCosts += Math.max(0, amountToSellWithCosts - amountToSellWithoutCosts);
 
-            const initialValueOfShares = amountOfSharesToSell * currentInvestmentStepForFIFO.sharePrizes[etfIdentifier];
-            let amountToPayTaxes = Math.max(0, amountToSellWithoutCosts - initialValueOfShares);
+                const initialValueOfShares =
+                    amountOfSharesToSell * currentInvestmentStepForFIFO.sharePrizes[etfIdentifier];
+                let amountToPayTaxes = Math.max(0, amountToSellWithoutCosts - initialValueOfShares);
 
-            [amountToPayTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(amountToPayTaxes, leftoverTaxFreeAmount);
-            let taxesToPay = amountToPayTaxes * partialExemption * corporateTaxRatio;
-            [taxesToPay, leftoverAlreadyPaidTaxes] = subtractTaxFreeGain(taxesToPay, leftoverAlreadyPaidTaxes);
-            taxes += taxesToPay;
-            const payoutAmount = amountToSellWithoutCosts - taxesToPay;
+                [amountToPayTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(
+                    amountToPayTaxes,
+                    leftoverTaxFreeAmount
+                );
+                let taxesToPay = amountToPayTaxes * partialExemption * corporateTaxRatio;
+                [taxesToPay, leftoverAlreadyPaidTaxes] = subtractTaxFreeGain(taxesToPay, leftoverAlreadyPaidTaxes);
+                taxes += taxesToPay;
+                const payoutAmount = amountToSellWithoutCosts - taxesToPay;
 
-            newInvestmentStep.newPayout[etfIdentifier] += payoutAmount;
-            newInvestmentStep.totalPayout[etfIdentifier] += payoutAmount;
+                newInvestmentStep.newPayout[etfIdentifier] += payoutAmount;
+                newInvestmentStep.totalPayout[etfIdentifier] += payoutAmount;
 
-            newInvestmentStep.totalShares[etfIdentifier] -= amountOfSharesToSell;
-            amountAlreadySold += amountToSellWithCosts;
+                newInvestmentStep.totalShares[etfIdentifier] -= amountOfSharesToSell;
+                amountAlreadySold += amountToSellWithCosts;
 
-            // Use break in order to not change the value of payoutInvestmentStepIdxForFIFO.
-            if (amountAlreadySold >= amountToSellWithCosts) {
-                break payoutLoop;
+                // Handle the decrease of the dividendShares.
+                let amountOfDividendSharesLeft = 0;
+                if (payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx) {
+                    amountOfDividendSharesLeft = Math.max(
+                        0,
+                        currentInvestmentStepForFIFO.dividendNewShares[etfIdentifier] -
+                            payoutStats[etfIdentifier].alreadySoldShares
+                    );
+                } else {
+                    amountOfDividendSharesLeft = currentInvestmentStepForFIFO.dividendNewShares[etfIdentifier];
+                }
+                const amountOfDividendSharesSold = Math.min(amountOfDividendSharesLeft, amountOfSharesToSell);
+                newInvestmentStep.dividendTotalShares[etfIdentifier] -= amountOfDividendSharesSold;
+
+                // Use break in order to not change the value of payoutInvestmentStepIdxForFIFO.
+                if (amountAlreadySold >= amountToSell) {
+                    break;
+                }
             }
-        }
-        costs += alreadyPaidCosts;
-        // handle update payoutStats.
-        payoutStats[etfIdentifier].investmentStepsIdx = payoutInvestmentStepIdxForFIFO;
-        payoutStats[etfIdentifier].investmentStepsIdx += currentSharesLeft === 0 ? 1 : 0;
-        payoutStats[etfIdentifier].alreadySoldShares =
-            investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] - currentSharesLeft;
+            costs += alreadyPaidCosts;
+            // Handle update payoutStats.
+            payoutStats[etfIdentifier].investmentStepsIdx = payoutInvestmentStepIdxForFIFO;
+            payoutStats[etfIdentifier].investmentStepsIdx += currentSharesLeft === 0 ? 1 : 0;
 
-        // handle dividend.
+            payoutStats[etfIdentifier].alreadySoldShares =
+                payoutInvestmentStepIdxForFIFO < investmentSteps.length
+                    ? investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] - currentSharesLeft
+                    : 0;
+        }
+
+        // Handle dividend.
         const dividendPayoutMoney =
             newInvestmentStep.totalShares[etfIdentifier] * calculateDividend(etfIdentifier, date);
         const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
@@ -335,7 +359,6 @@ export class InvestmentModel {
     }
 
     _calculateModel() {
-        console.log(this);
         let investmentSteps = [generateEmptyInvestmentStep(this.etfToRatio, this.savingDates[0])];
         let leftoverTaxFreeAmount = addAccumulationMonth(
             investmentSteps,
@@ -356,7 +379,7 @@ export class InvestmentModel {
         // Discard the empty investment step.
         investmentSteps = investmentSteps.slice(1);
 
-        /*let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
+        let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
         const payoutStats = {};
         for (const etfIdentifier in this.etfToRatio) {
             payoutStats[etfIdentifier] = { investmentStepsIdx: 0, alreadySoldShares: 0 };
@@ -372,7 +395,7 @@ export class InvestmentModel {
                 leftoverTaxFreeAmount,
                 payoutStats
             );
-        }*/
+        }
         this.investmentSteps = investmentSteps;
     }
 }
