@@ -75,3 +75,7 @@ rect.payout {
 path#investedMoney {
     stroke: rgb(242, 252, 110);
 }
+
+path {
+    opacity: 0.7;
+}

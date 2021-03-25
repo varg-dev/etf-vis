@@ -50,7 +50,7 @@ export class LineChart3D {
                 date: investmentStep.date,
             });
             lineData[dataToIndex.inflation].push({
-                value: -investmentStep.totalCosts - investmentStep.totalTaxes,
+                value: -investmentStep.totalCosts - investmentStep.totalTaxes - investmentStep.inflation,
                 date: investmentStep.date,
             });
             let heightOffset = 0;

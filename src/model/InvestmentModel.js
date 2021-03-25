@@ -4,6 +4,7 @@ import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear }
 const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
 const corporateTaxRatio = 0.26375;
+const inflationRate = 0.01;
 
 function getNextMonthDate(date) {
     const newDate = new Date(date);
@@ -38,6 +39,24 @@ export function getTotalShareValue(etfIdentifier, investmentStep) {
 
 function getNewShareValue(etfIdentifier, investmentStep) {
     return investmentStep.newShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+}
+
+function sumOfTotalValues(investmentStep) {
+    let sum = 0;
+    for (const etfIdentifier in investmentStep.totalShares) {
+        sum += getTotalShareValue(etfIdentifier, investmentStep);
+    }
+    return sum;
+}
+
+function calculateAndAddInflation(investmentStep, initialDate, endDate) {
+    // TODO predict inflationRate??? if so how should I predict it?
+    const sumTotalValues = sumOfTotalValues(investmentStep);
+    const timeFactor =
+        endDate.getFullYear() -
+        initialDate.getFullYear() +
+        (endDate.getMonth() - initialDate.getMonth()) / numberOfMonthsOfAYear;
+    investmentStep.inflation = sumTotalValues - sumTotalValues * Math.pow(1 - inflationRate, timeFactor);
 }
 
 function calculateForecastInterval(age, lifeExpectation, savingPhaseLength, fadeOutYears = 10) {
@@ -100,7 +119,7 @@ function calculateTaxes(investmentSteps, date, leftoverTaxFreeAmount, etfToRatio
     return [summedTaxes, leftoverTaxFreeAmount];
 }
 
-export function addAccumulationMonth(investmentSteps, investment, date, etfToRatio, configOptions) {
+export function addAccumulationMonth(investmentSteps, investment, date, initialDate, etfToRatio, configOptions) {
     const forecast = ForecastModelSingleton.getInstance();
     let costs = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
@@ -151,6 +170,7 @@ export function addAccumulationMonth(investmentSteps, investment, date, etfToRat
         etfToRatio
     );
     newInvestmentStep.totalTaxes += newTaxes;
+    calculateAndAddInflation(newInvestmentStep, initialDate, date);
     investmentSteps.push(newInvestmentStep);
 
     return newLeftoverTaxFreeAmount;
@@ -161,6 +181,7 @@ function addPayoutMonth(
     sellingAmount,
     etfToRatio,
     date,
+    initialDate,
     configOptions,
     leftoverAlreadyPaidTaxes,
     leftoverTaxFreeAmount,
@@ -285,6 +306,7 @@ function addPayoutMonth(
 
     newInvestmentStep.totalCosts += costs;
     newInvestmentStep.totalTaxes += taxes;
+    calculateAndAddInflation(newInvestmentStep, initialDate, date);
     investmentSteps.push(newInvestmentStep);
     return [leftoverAlreadyPaidTaxes, leftoverTaxFreeAmount];
 }
@@ -360,6 +382,7 @@ export class InvestmentModel {
             payoutDates.push(currentDate);
         }
         this.payoutDates = payoutDates;
+        this.initialDate = startDate;
     }
 
     _calculateModel() {
@@ -368,6 +391,7 @@ export class InvestmentModel {
             investmentSteps,
             this.monthlyInvestment + this.startCapital,
             this.savingDates[0],
+            this.initialDate,
             this.etfToRatio,
             this.configOptions
         );
@@ -376,6 +400,7 @@ export class InvestmentModel {
                 investmentSteps,
                 this.monthlyInvestment,
                 savingDate,
+                this.initialDate,
                 this.etfToRatio,
                 this.configOptions
             );
@@ -394,6 +419,7 @@ export class InvestmentModel {
                 this.monthlyPayout,
                 this.etfToRatio,
                 payoutDate,
+                this.initialDate,
                 this.configOptions,
                 leftoverAlreadyPaidTaxes,
                 leftoverTaxFreeAmount,
