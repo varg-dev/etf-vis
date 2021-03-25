@@ -64,7 +64,14 @@
     stroke: #002e4d;
 }
 
+rect.invested {
+    fill: #b4291f;
+}
+
+rect.payout {
+    fill: #0562a0;
+}
 
 path#investedMoney {
-    stroke: rgb(242, 252, 110);;
+    stroke: rgb(242, 252, 110);
 }

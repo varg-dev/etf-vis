@@ -113,6 +113,7 @@ export function addAccumulationMonth(investmentSteps, investment, date, etfToRat
         totalCosts: prevInvestmentStep.totalCosts,
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
+        newInvestedMoney: {},
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
@@ -124,6 +125,7 @@ export function addAccumulationMonth(investmentSteps, investment, date, etfToRat
             configOptions.costConfig
         );
         costs += newCosts;
+        newInvestmentStep.newInvestedMoney[etfIdentifier] = investmentOfEtfWithoutCosts;
         newInvestmentStep.totalInvestedMoney[etfIdentifier] += investmentOfEtfWithoutCosts;
 
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
@@ -180,6 +182,7 @@ function addPayoutMonth(
         totalCosts: prevInvestmentStep.totalCosts,
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
+        newInvestedMoney: {},
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
@@ -188,6 +191,7 @@ function addPayoutMonth(
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
         newInvestmentStep.newPayout[etfIdentifier] = 0;
+        newInvestmentStep.newInvestedMoney[etfIdentifier] = 0;
         // Skip payout if there are no shares left to sell.
         if (payoutStats[etfIdentifier].investmentStepsIdx < investmentSteps.length) {
             // Handle payout.

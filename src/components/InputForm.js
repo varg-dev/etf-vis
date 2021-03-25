@@ -2,6 +2,7 @@ import React from 'react';
 import ForecastModelSingleton from '../model/ForecastModel';
 import { InvestmentModel } from '../model/InvestmentModel';
 import LineChart3D from '../renderer/LineChartd3';
+import CashflowBarChart from '../renderer/CashflowBarChartd3'
 
 const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -58,7 +59,7 @@ class InputForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            [STARTING_CAPITAL_IDENTIFIER]: { value: 10000, type: 'text', transformFunction: transformInputToInt },
+            [STARTING_CAPITAL_IDENTIFIER]: { value: 1000, type: 'text', transformFunction: transformInputToInt },
             [MONTHLY_INVESTMENT_IDENTIFIER]: { value: 100, type: 'text', transformFunction: transformInputToInt },
             [MONTHLY_PAYOUT_IDENTIFIER]: { value: 1000, type: 'text', transformFunction: transformInputToInt },
             [TRANSACTION_COSTS_IDENTIFIER]: { value: 0.005, type: 'text', transformFunction: transformInputToFloat },
@@ -73,7 +74,8 @@ class InputForm extends React.Component {
             [LIFE_EXPECTATION]: { value: 80, type: 'text', transformFunction: transformInputToInt },
         };
 
-        this.ref = React.createRef();
+        this.firstSVGRef = React.createRef();
+        this.secondSVGRef = React.createRef();
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -84,7 +86,7 @@ class InputForm extends React.Component {
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
-    getVisualizationModel() {
+    getInvestmentModel() {
         return new InvestmentModel(
             this.state[STARTING_CAPITAL_IDENTIFIER].value,
             this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,
@@ -100,13 +102,19 @@ class InputForm extends React.Component {
         );
     }
 
+    drawVisualization(){
+        const investmentModel = this.getInvestmentModel();
+        new LineChart3D().render(investmentModel.investmentSteps, this.firstSVGRef.current);
+        new CashflowBarChart().render(investmentModel.investmentSteps, this.secondSVGRef.current);
+    }
+
     async componentDidMount() {
         await loadHistoricData();
-        new LineChart3D().render(this.getVisualizationModel().investmentSteps, this.ref.current);
+        this.drawVisualization();
     }
 
     componentDidUpdate() {
-        new LineChart3D().render(this.getVisualizationModel().investmentSteps, this.ref.current);
+        this.drawVisualization();
     }
 
     render() {
@@ -125,7 +133,8 @@ class InputForm extends React.Component {
                         />
                     ))}
                 </form>
-                <div ref={this.ref}></div>
+                <div ref={this.firstSVGRef}></div>
+                <div ref={this.secondSVGRef}></div>
             </React.Fragment>
         );
     }
