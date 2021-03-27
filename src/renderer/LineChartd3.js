@@ -7,8 +7,8 @@ export class LineChart3D {
 
         const marginW = 150,
             marginH = 40,
-            width = 1000,
-            height = 400;
+            width = 1100,
+            height = 300;
 
         const etfLineColors = { IBM: { total: '#0562a0', dividend: '#71c1f7' } };
         const lineOpacity = 0.7;
@@ -21,8 +21,7 @@ export class LineChart3D {
             .select(renderDivRef)
             .append('svg')
             .attr('id', svgID)
-            .attr('height', '100%')
-            .attr('width', '100%')
+            .style('height', '100%')
             .attr('viewBox', `0 0 ${width + 2 * marginW} ${height + 2 * marginH}`)
             .append('g')
             .attr('transform', `translate(${[marginW, marginH]})`);

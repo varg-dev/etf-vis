@@ -6,8 +6,8 @@ export class CashflowBarChart {
 
         const marginW = 150,
             marginH = 40,
-            width = 1000,
-            height = 400;
+            width = 1100,
+            height = 300;
         const barPaddingPercentage = 0.9;
 
         const zeroLineStrokeWidth = 3;
@@ -19,8 +19,6 @@ export class CashflowBarChart {
             .select(renderDivRef)
             .append('svg')
             .attr('id', svgID)
-            .attr('height', '100%')
-            .attr('width', '100%')
             .attr('viewBox', `0 0 ${width + 2 * marginW} ${height + 2 * marginH}`)
             .append('g')
             .attr('transform', `translate(${[marginW, marginH]})`);

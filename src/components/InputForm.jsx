@@ -66,12 +66,9 @@ class InputForm extends React.Component {
         return (
             <div className="container-fluid">
                 <div className="row">
-                    <nav
-                        id="sidebarMenu"
-                        className="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
-                        style={{ width: '280px' }}>
-                        {/* Money Options */}
-                        <form className="position-sticky pt-3">
+                    <nav id="sidebarMenu" className="col-md-3 col-lg-2 bg-light sidebar">
+                        <form className="position-sticky">
+                            {/* Money Options */}
                             <SidebarSectionHeading title="Money Options" />
                             <TextInputElement
                                 key={STARTING_CAPITAL_IDENTIFIER}
@@ -106,8 +103,8 @@ class InputForm extends React.Component {
                             />
                         </form>
                     </nav>
-                    <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                        <h1 style={{ textAlign: 'center' }}>Etf Pension Plan Visualization</h1>
+                    <main className="col-md-9 col-lg-10 ms-sm-auto">
+                        <h1>Etf Pension Plan Visualization</h1>
                         <Visualization {...visualizationProps} />
                     </main>
                 </div>
