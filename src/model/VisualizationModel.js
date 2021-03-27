@@ -182,8 +182,6 @@ export class VisualizationModel {
                     .y(d => yScale(d.money))
             );
     }
-
-    updateVisualization() {}
 }
 
 export default VisualizationModel;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Visualization } from './Visualization';
+import Visualization from './Visualization';
+import InputElement from './InputElement';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -80,39 +81,17 @@ class InputForm extends React.Component {
             <React.Fragment>
                 <form>
                     {Object.keys(this.state).map(stateIdentifier => (
-                        <InputFormElement
+                        <InputElement
                             key={stateIdentifier}
                             label={identifierToLabel[stateIdentifier]}
-                            value={this.state[stateIdentifier].value}
-                            type={this.state[stateIdentifier].type}
                             onValueChange={this.handleChange}
                             stateIdentifier={stateIdentifier}
-                            transformFunction={this.state[stateIdentifier].transformFunction}
+                            {...this.state[stateIdentifier]}
                         />
                     ))}
                 </form>
                 <Visualization {...visualizationProps} />
             </React.Fragment>
-        );
-    }
-}
-
-class InputFormElement extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    handleChange(e) {
-        this.props.onValueChange(this.props.transformFunction(e, this), this.props.stateIdentifier);
-    }
-
-    render() {
-        return (
-            <label>
-                {this.props.label}
-                <input type={this.props.type} value={this.props.value} onChange={this.handleChange} />
-            </label>
         );
     }
 }
