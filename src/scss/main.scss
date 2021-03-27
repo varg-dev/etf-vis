@@ -1,1 +1,26 @@
 @import '~bootstrap/scss/bootstrap';
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 100; /* Behind the navbar */
+    padding-top: 1%; /* Height of navbar */
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+
+.sidebar-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.checkbox-element {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+input.form-check-input {
+    margin-right: 0.5em;
+}

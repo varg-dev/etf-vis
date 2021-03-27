@@ -71,8 +71,8 @@ export class Visualization extends React.Component {
     render() {
         return (
             <React.Fragment>
-                <div ref={this.firstSVGRef}></div>
                 <div ref={this.secondSVGRef}></div>
+                <div ref={this.firstSVGRef}></div>
             </React.Fragment>
         );
     }
