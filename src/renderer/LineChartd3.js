@@ -10,7 +10,9 @@ export class LineChart3D {
             width = 1000,
             height = 400;
 
-        const zeroLineStrokeWidth = 3;
+        const etfLineColors = { IBM: { total: '#0562a0', dividend: '#71c1f7' } };
+        const lineOpacity = 0.7;
+        const lineStrokeWidth = 3;
 
         // Reset diagram by deletion.
         renderDivRef.innerHTML = '';
@@ -71,12 +73,12 @@ export class LineChart3D {
         }
 
         // Append miscellaneous data to array.
-        lineData[dataToIndex.inflation].cssClass = 'inflation';
-        lineData[dataToIndex.taxes].cssClass = 'taxes';
-        lineData[dataToIndex.costs].cssClass = 'costs';
+        lineData[dataToIndex.inflation].color = '#ff7f00';
+        lineData[dataToIndex.taxes].color = '#e31a1c';
+        lineData[dataToIndex.costs].color = '#be3bff';
         for (const etfIdentifier in investmentSteps[0].totalShares) {
-            lineData[dataToIndex[etfIdentifier + dividendIdentifier]].cssClass = `${etfIdentifier}_dividend`;
-            lineData[dataToIndex[etfIdentifier + capitalIdentifier]].cssClass = `${etfIdentifier}_total_amount`;
+            lineData[dataToIndex[etfIdentifier + dividendIdentifier]].color = etfLineColors[etfIdentifier].dividend;
+            lineData[dataToIndex[etfIdentifier + capitalIdentifier]].color = etfLineColors[etfIdentifier].total;
         }
 
         // Create scales.
@@ -104,15 +106,16 @@ export class LineChart3D {
             .attr('y1', yScale(0))
             .attr('x2', xScale(dateExtent[1]))
             .attr('y2', yScale(0))
-            .attr('stroke-width', zeroLineStrokeWidth)
-            .attr('stroke', 'black');
+            .style('stroke-width', lineStrokeWidth)
+            .style('stroke', 'black');
 
         for (let i = 0; i < lineData.length; i++) {
             svg.append('path')
                 .datum(lineData[i])
-                .attr('fill', 'none')
-                .attr('class', d => d.cssClass)
-                .attr('stroke-width', 3)
+                .style('stroke', d => d.color)
+                .style('stroke-width', lineStrokeWidth)
+                .style('opacity', lineOpacity)
+                .style('fill', 'none')
                 .attr(
                     'd',
                     d3

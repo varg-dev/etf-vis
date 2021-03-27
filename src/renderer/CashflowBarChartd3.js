@@ -31,7 +31,7 @@ export class CashflowBarChart {
             payout: 1,
         };
 
-        const lineData = [[], []];
+        const rectData = [[], []];
         for (const investmentStep of investmentSteps) {
             let sumNewInvestedMoney = 0;
             let sumNewPayout = 0;
@@ -39,28 +39,28 @@ export class CashflowBarChart {
                 sumNewInvestedMoney += investmentStep.newInvestedMoney[etfIdentifier];
                 sumNewPayout += investmentStep.newPayout[etfIdentifier];
             }
-            lineData[dataToIndex.invested].push({
+            rectData[dataToIndex.invested].push({
                 yStart: 0,
                 yEnd: -sumNewInvestedMoney,
                 date: investmentStep.date,
-                cssClass: 'invested',
+                color: '#b4291f',
             });
-            lineData[dataToIndex.payout].push({
+            rectData[dataToIndex.payout].push({
                 yStart: sumNewPayout,
                 yEnd: 0,
                 date: investmentStep.date,
-                cssClass: 'payout',
+                color: '#0562a0',
             });
         }
 
         // Create scales.
-        const minVal = d3.min(lineData[dataToIndex.invested].map(e => e.yEnd));
-        const maxVal = d3.max(lineData[dataToIndex.payout].map(e => e.yStart));
+        const minVal = d3.min(rectData[dataToIndex.invested].map(e => e.yEnd));
+        const maxVal = d3.max(rectData[dataToIndex.payout].map(e => e.yStart));
 
         const yScale = d3.scaleLinear().domain([minVal, maxVal]).range([height, 0]);
-        const dateExtent = d3.extent(lineData[dataToIndex.invested], d => d.date);
+        const dateExtent = d3.extent(rectData[dataToIndex.invested], d => d.date);
         const xScale = d3.scaleTime().domain(dateExtent).range([0, width]);
-        const rectWidth = (width / lineData[dataToIndex.invested].length) * barPaddingPercentage;
+        const rectWidth = (width / rectData[dataToIndex.invested].length) * barPaddingPercentage;
 
         // Draw axis.
         svg.append('g')
@@ -82,20 +82,16 @@ export class CashflowBarChart {
             .attr('stroke-width', zeroLineStrokeWidth)
             .attr('stroke', 'black');
 
-        for (const barArray of lineData) {
-            svg.selectAll(`rect.${barArray[0].cssClass}`)
+        for (const barArray of rectData) {
+            svg.selectAll(`rect.none`)
                 .data(barArray)
                 .enter()
                 .append('rect')
-                .attr('class', d => d.cssClass)
+                .style('fill', d => d.color)
                 .attr('x', d => xScale(d.date))
                 .attr('width', rectWidth)
                 .attr('y', d => yScale(d.yStart))
-                .attr('height', d => {
-                    const a = yScale(d.yEnd) - yScale(d.yStart);
-                    console.log(yScale(d.yStart), yScale(d.yEnd) - yScale(d.yStart), d.cssClass, d);
-                    return a;
-                });
+                .attr('height', d => yScale(d.yEnd) - yScale(d.yStart));
         }
     }
 }

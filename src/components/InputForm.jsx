@@ -1,24 +1,21 @@
 import React from 'react';
-import ForecastModelSingleton from '../model/ForecastModel';
-import { InvestmentModel } from '../model/InvestmentModel';
-import LineChart3D from '../renderer/LineChartd3';
-import CashflowBarChart from '../renderer/CashflowBarChartd3'
+import { Visualization } from './Visualization';
 
-const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
-const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
-const TRANSACTION_COSTS_IDENTIFIER = 'transactionCosts';
-const TRANSACTION_COSTS_TYPE_IDENTIFIER = 'transactionCostsType';
-const SAVING_PHASE_IDENTIFIER = 'savingPhase';
-const AGE_IDENTIFIER = 'age';
-const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
-const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
-const LIFE_EXPECTATION = 'lifeExpectation';
+export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
+export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
+export const TRANSACTION_COSTS_IDENTIFIER = 'transactionCosts';
+export const TRANSACTION_COSTS_TYPE_IDENTIFIER = 'transactionCostsType';
+export const SAVING_PHASE_IDENTIFIER = 'savingPhase';
+export const AGE_IDENTIFIER = 'age';
+export const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
+export const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
+export const LIFE_EXPECTATION = 'lifeExpectation';
 
 const identifierToLabel = {
     [STARTING_CAPITAL_IDENTIFIER]: 'Starting Capital',
     [MONTHLY_INVESTMENT_IDENTIFIER]: 'Monthly Investment',
     [TRANSACTION_COSTS_IDENTIFIER]: 'Transaction Costs',
-    [TRANSACTION_COSTS_TYPE_IDENTIFIER]: 'Fixes Amount ?',
+    [TRANSACTION_COSTS_TYPE_IDENTIFIER]: 'Fixes Amount',
     [SAVING_PHASE_IDENTIFIER]: 'Saving Phase',
     [AGE_IDENTIFIER]: 'Your Age',
     [TAX_FREE_AMOUNT_IDENTIFIER]: 'Tax Free Amount',
@@ -40,19 +37,12 @@ function transformCheckboxInput(e, caller) {
     return !caller.props.value;
 }
 
-function generateCostConfig(state) {
-    if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
-        return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
-    } else {
-        return { percentageCosts: state[TRANSACTION_COSTS_IDENTIFIER].value, fixedCosts: 0.0 };
+function constructVisualizationProps(state) {
+    const props = {};
+    for (const identifier in state) {
+        props[identifier] = state[identifier].value;
     }
-}
-
-async function loadHistoricData(){
-    ForecastModelSingleton.configure('demo');
-    const forecast = ForecastModelSingleton.getInstance();
-    await forecast.loadAndCacheHistoricalETFData('IBM');
-    console.log('Finished loading the historic data.');
+    return props;
 }
 
 class InputForm extends React.Component {
@@ -74,50 +64,18 @@ class InputForm extends React.Component {
             [LIFE_EXPECTATION]: { value: 80, type: 'text', transformFunction: transformInputToInt },
         };
 
-        this.firstSVGRef = React.createRef();
-        this.secondSVGRef = React.createRef();
         this.handleChange = this.handleChange.bind(this);
     }
 
     handleChange(changedValue, changedStateIdentifier) {
-        const currentValues = {...this.state[changedStateIdentifier]};
+        const currentValues = { ...this.state[changedStateIdentifier] };
         currentValues.value = changedValue;
-        this.setState({[changedStateIdentifier]: currentValues});
+        this.setState({ [changedStateIdentifier]: currentValues });
         console.log(`State ${changedStateIdentifier} changed value to ${changedValue}.`);
     }
 
-    getInvestmentModel() {
-        return new InvestmentModel(
-            this.state[STARTING_CAPITAL_IDENTIFIER].value,
-            this.state[MONTHLY_INVESTMENT_IDENTIFIER].value,
-            this.state[MONTHLY_PAYOUT_IDENTIFIER].value,
-            this.state[SAVING_PHASE_IDENTIFIER].value,
-            { IBM: 1.0 },
-            {
-                taxFreeAmount: this.state[TAX_FREE_AMOUNT_IDENTIFIER].value,
-                costConfig: generateCostConfig(this.state),
-            },
-            this.state[AGE_IDENTIFIER].value,
-            this.state[LIFE_EXPECTATION].value
-        );
-    }
-
-    drawVisualization(){
-        const investmentModel = this.getInvestmentModel();
-        new LineChart3D().render(investmentModel.investmentSteps, this.firstSVGRef.current);
-        new CashflowBarChart().render(investmentModel.investmentSteps, this.secondSVGRef.current);
-    }
-
-    async componentDidMount() {
-        await loadHistoricData();
-        this.drawVisualization();
-    }
-
-    componentDidUpdate() {
-        this.drawVisualization();
-    }
-
     render() {
+        const visualizationProps = constructVisualizationProps(this.state);
         return (
             <React.Fragment>
                 <form>
@@ -133,8 +91,7 @@ class InputForm extends React.Component {
                         />
                     ))}
                 </form>
-                <div ref={this.firstSVGRef}></div>
-                <div ref={this.secondSVGRef}></div>
+                <Visualization {...visualizationProps} />
             </React.Fragment>
         );
     }

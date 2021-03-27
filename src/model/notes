@@ -59,3 +59,33 @@ c_neu = c_split + costs * costs_sum
 // einfach etf anteile verkaufen mit zielbetrag
 
 // steuerfrei,
+
+
+neue todos:
+
+- stacked area chart
+- dynamisierung der sparrate (payout)
+- architektur verbessern
+- dokumentation
+- linien interpolieren
+- vertikale streifen fuer unterteilung der phase
+- fate out fuer den tod
+- y achse skalieren  / max aufgrund des beginn des renten auszahlungtages.
+- oder achsen min max als input.
+- vllt doch die inflation als erster negativer punkt???
+- vllt vertikales grid zwischen beiden graphen.
+- cashflow diagramm balkenfarbe pro jahr alternierend
+- achsen: number of ticks, euro zeichen , tausender zeichen- haloed line effekt
+- svg css direkt in den renderer reinpacken.
+
+- interactions: vertikale linie ma ausrobieren
+- 
+
+vllt:
+- alternative ansparphase
+
+
+orga:
+- 16. vortrag
+- code abgabe darf auch nach dem 16.
+- 
