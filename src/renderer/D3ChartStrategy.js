@@ -120,7 +120,11 @@ export class D3ChartStrategy {
         const interactionClass = 'interaction';
         const tooltipLineClass = 'tooltipLine';
 
-        this.interaction = this.svg.append('g').attr('class', interactionClass).style('display', 'none');
+        this.interaction = this.svg
+            .append('g')
+            .attr('class', interactionClass)
+            .style('display', 'none')
+            .attr('transform', `translate(${[0, -this.marginH]})`);
 
         this.hoverLine = this.interaction
             .append('line')
@@ -128,14 +132,13 @@ export class D3ChartStrategy {
             .style('stroke', 'blue')
             .style('stroke-dasharray', '3,3')
             .style('opacity', 0.5)
-            .attr('y1', this.yScale(this.yExtent[0]))
-            .attr('y2', this.yScale(this.yExtent[1]));
+            .attr('y1', this.height + 2 * this.marginH)
+            .attr('y2', 0);
 
         // Add rectangle to catch mouse events.
         this.svg
             .append('rect')
             .attr('class', 'mouseEvent')
-            .attr('transform', `translate(${[0, -this.marginH]})`)
             .attr('height', this.height + 2 * this.marginH)
             .attr('width', this.width)
             .attr('fill', 'none')
