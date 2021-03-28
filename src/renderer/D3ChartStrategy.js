@@ -139,6 +139,7 @@ export class D3ChartStrategy {
         this.svg
             .append('rect')
             .attr('class', 'mouseEvent')
+            .attr('transform', `translate(${[0, -this.marginH]})`)
             .attr('height', this.height + 2 * this.marginH)
             .attr('width', this.width)
             .attr('fill', 'none')
