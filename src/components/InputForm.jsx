@@ -12,7 +12,8 @@ export const SAVING_PHASE_IDENTIFIER = 'savingPhase';
 export const AGE_IDENTIFIER = 'age';
 export const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
 export const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
-export const LIFE_EXPECTATION = 'lifeExpectation';
+export const LIFE_EXPECTATION_IDENTIFIER = 'lifeExpectation';
+export const DETAILED_GRAPH_IDENTIFIER = 'detailedGraph';
 
 function transformInputToInt(e, caller) {
     const intVal = parseInt(e.target.value.split(' ', 1));
@@ -89,7 +90,10 @@ class InputForm extends React.Component {
                             {/* Time Options */}
                             <SidebarSectionHeading title="Time Options" />
                             <TextInputElement key={AGE_IDENTIFIER} {...this.state[AGE_IDENTIFIER]} />
-                            <TextInputElement key={LIFE_EXPECTATION} {...this.state[LIFE_EXPECTATION]} />
+                            <TextInputElement
+                                key={LIFE_EXPECTATION_IDENTIFIER}
+                                {...this.state[LIFE_EXPECTATION_IDENTIFIER]}
+                            />
                             <TextInputElement key={SAVING_PHASE_IDENTIFIER} {...this.state[SAVING_PHASE_IDENTIFIER]} />
                             {/* Cost Options */}
                             <SidebarSectionHeading title="Cost Options" />
@@ -100,6 +104,12 @@ class InputForm extends React.Component {
                             <CheckboxInputElement
                                 key={TRANSACTION_COSTS_TYPE_IDENTIFIER}
                                 {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]}
+                            />
+                            {/* Visualization Options */}
+                            <SidebarSectionHeading title="Visualization Options" />
+                            <CheckboxInputElement
+                                key={DETAILED_GRAPH_IDENTIFIER}
+                                {...this.state[DETAILED_GRAPH_IDENTIFIER]}
                             />
                         </form>
                     </nav>
@@ -186,14 +196,22 @@ function getInitialInputFormState(caller) {
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
         },
-        [LIFE_EXPECTATION]: {
+        [LIFE_EXPECTATION_IDENTIFIER]: {
             value: 80,
             type: 'text',
             label: 'Life Expectation',
             textAppending: 'Y',
-            identifier: LIFE_EXPECTATION,
+            identifier: LIFE_EXPECTATION_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+        },
+        [DETAILED_GRAPH_IDENTIFIER]: {
+            value: false,
+            type: 'checkbox',
+            label: 'Detailed Graph',
+            textAppending: '',
+            identifier: DETAILED_GRAPH_IDENTIFIER,
+            onValueChange: caller.handleCheckBoxChange,
         },
     };
 }

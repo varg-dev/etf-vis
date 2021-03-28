@@ -8,12 +8,14 @@ import {
     AGE_IDENTIFIER,
     TAX_FREE_AMOUNT_IDENTIFIER,
     MONTHLY_PAYOUT_IDENTIFIER,
-    LIFE_EXPECTATION,
+    LIFE_EXPECTATION_IDENTIFIER,
+    DETAILED_GRAPH_IDENTIFIER,
 } from './InputForm';
 import ForecastModelSingleton from '../model/ForecastModel';
 import { InvestmentModel } from '../model/InvestmentModel';
-import LineChart3D from '../renderer/LineChartd3';
-import CashflowBarChart from '../renderer/CashflowBarChartd3';
+import LineChartD3 from '../renderer/LineChartD3';
+import CashflowBarChart from '../renderer/CashflowBarChartD3';
+import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
 
 function generateCostConfig(state) {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER]) {
@@ -50,14 +52,31 @@ export class Visualization extends React.Component {
                 costConfig: generateCostConfig(this.props),
             },
             this.props[AGE_IDENTIFIER],
-            this.props[LIFE_EXPECTATION]
+            this.props[LIFE_EXPECTATION_IDENTIFIER]
         );
     }
 
+    adjustInvestmentStepsToLevelOfDetail(investmentSteps) {
+        if (this.props[DETAILED_GRAPH_IDENTIFIER]) {
+            return investmentSteps;
+        }
+        const onlyViableMonth = investmentSteps[0].date.getMonth();
+        return investmentSteps.filter(e => e.date.getMonth() === onlyViableMonth);
+    }
+
     drawVisualization() {
+        D3ChartStrategy.reset();
         const investmentModel = this.getInvestmentModel();
-        new LineChart3D().render(investmentModel.investmentSteps, this.firstSVGRef.current);
-        new CashflowBarChart().render(investmentModel.investmentSteps, this.secondSVGRef.current);
+        const firstPayoutPhaseDate = investmentModel.payoutDates[0];
+        const correctLevelOfDetailInvestmentSteps = this.adjustInvestmentStepsToLevelOfDetail(
+            investmentModel.investmentSteps
+        );
+        new LineChartD3(correctLevelOfDetailInvestmentSteps, this.firstSVGRef.current, firstPayoutPhaseDate).render();
+        new CashflowBarChart(
+            correctLevelOfDetailInvestmentSteps,
+            this.secondSVGRef.current,
+            firstPayoutPhaseDate
+        ).render();
     }
 
     async componentDidMount() {

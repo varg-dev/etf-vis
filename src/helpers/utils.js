@@ -67,3 +67,15 @@ export function HistoricalDataNotPresentException(etfIdentifier) {
     this.message = `First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`;
     this.name = 'HistoricalDataNotPresentException';
 }
+
+// Slightly manipulated. Original: https://stackoverflow.com/a/315767
+function daysInMonth(month, year) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+export function roundDateToBeginningOfMonth(date) {
+    const currentDayOfMonth = date.getDate();
+    const maxDayOfMonth = daysInMonth(date.getMonth(), date.getFullYear());
+    const monthOffset = Math.round(currentDayOfMonth / maxDayOfMonth);
+    return new Date(date.getFullYear(), date.getMonth() + monthOffset);
+}
