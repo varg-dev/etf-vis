@@ -11,7 +11,6 @@ import {
     LIFE_EXPECTATION_IDENTIFIER,
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
 } from './App';
-import ForecastModelSingleton from '../model/ForecastModel';
 import { InvestmentModel } from '../model/InvestmentModel';
 import LineChartD3 from '../renderer/LineChartD3';
 import CashflowBarChart from '../renderer/CashflowBarChartD3';
@@ -25,13 +24,6 @@ function generateCostConfig(state) {
     }
 }
 
-async function loadHistoricData() {
-    ForecastModelSingleton.configure('demo');
-    const forecast = ForecastModelSingleton.getInstance();
-    await forecast.loadAndCacheHistoricalETFData('IBM');
-    console.log('Finished loading the historic data.');
-}
-
 export class Visualization extends React.Component {
     constructor(props) {
         super(props);
@@ -41,12 +33,21 @@ export class Visualization extends React.Component {
     }
 
     getInvestmentModel() {
+        const etfIdentifierToRatio = {};
+        for (const etfIdentifier in this.props.etfProperties) {
+            if (this.props.etfProperties[etfIdentifier].selected) {
+                etfIdentifierToRatio[this.props.etfProperties[etfIdentifier].symbol] = this.props.etfProperties[
+                    etfIdentifier
+                ].percentage;
+            }
+        }
+
         return new InvestmentModel(
             this.props[STARTING_CAPITAL_IDENTIFIER],
             this.props[MONTHLY_INVESTMENT_IDENTIFIER],
             this.props[MONTHLY_PAYOUT_IDENTIFIER],
             this.props[SAVING_PHASE_IDENTIFIER],
-            { IBM: 1.0 },
+            etfIdentifierToRatio,
             {
                 taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER],
                 costConfig: generateCostConfig(this.props),
@@ -58,21 +59,28 @@ export class Visualization extends React.Component {
 
     drawVisualization() {
         D3ChartStrategy.reset();
-        const investmentModel = this.getInvestmentModel();
-        const firstPayoutPhaseDate = investmentModel.payoutDates[0];
-        const correctLevelOfDetailInvestmentSteps = investmentModel.getInvestmentSteps(
-            this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]
-        );
-        new LineChartD3(correctLevelOfDetailInvestmentSteps, this.firstSVGRef.current, firstPayoutPhaseDate).render();
-        new CashflowBarChart(
-            correctLevelOfDetailInvestmentSteps,
-            this.secondSVGRef.current,
-            firstPayoutPhaseDate
-        ).render();
+        try {
+            const investmentModel = this.getInvestmentModel();
+            const firstPayoutPhaseDate = investmentModel.payoutDates[0];
+            const correctLevelOfDetailInvestmentSteps = investmentModel.getInvestmentSteps(
+                this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]
+            );
+            new LineChartD3(
+                correctLevelOfDetailInvestmentSteps,
+                this.firstSVGRef.current,
+                firstPayoutPhaseDate
+            ).render();
+            new CashflowBarChart(
+                correctLevelOfDetailInvestmentSteps,
+                this.secondSVGRef.current,
+                firstPayoutPhaseDate
+            ).render();
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     async componentDidMount() {
-        await loadHistoricData();
         this.drawVisualization();
     }
 

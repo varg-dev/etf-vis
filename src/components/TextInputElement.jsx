@@ -9,8 +9,8 @@ export function TextInputElement(props) {
             <input
                 className="form-control"
                 id={props.identifier}
-                type='text'
-                value={props.value.toString() + ' ' + props.textAppending}
+                type="text"
+                value={props.value.toString() + (props.textAppending !== '' ? ' ' + props.textAppending : '')}
                 onChange={e => props.onValueChange(props.transformFunction(e), props.identifier)}
                 disabled={props.disabled}
             />

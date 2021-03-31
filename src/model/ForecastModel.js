@@ -52,6 +52,15 @@ export class ForecastModelSingleton {
         }
     }
 
+    static async loadHistoricData(apiKey, etfProperties) {
+        ForecastModelSingleton.configure(apiKey);
+        const forecast = ForecastModelSingleton.getInstance();
+        for (const etfIdentifier in etfProperties) {
+            await forecast.loadAndCacheHistoricalETFData(etfProperties[etfIdentifier].symbol);
+        }
+        console.log('Finished loading the historic data.');
+    }
+
     static getInstance() {
         if (ForecastModelSingleton.instance == null) {
             ForecastModelSingleton.instance = new ForecastModelSingleton();

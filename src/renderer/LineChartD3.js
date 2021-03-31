@@ -6,7 +6,7 @@ export class LineChartD3 extends D3ChartStrategy {
     constructor(investmentSteps, renderDivRef, payoutPhaseStartDate) {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG');
 
-        this.etfLineColors = { IBM: { total: '#0562a0', dividend: '#71c1f7' } };
+        this.etfLineColors = { 'SP5C.PAR': { total: '#0562a0', dividend: '#71c1f7' } };
         this.colors = { inflation: '#ff7f00', costs: '#be3bff', taxes: '#e31a1c' };
         this.lineOpacity = 0.7;
     }

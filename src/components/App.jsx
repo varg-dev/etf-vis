@@ -4,10 +4,11 @@ import { Dropdown } from 'bootstrap'; // eslint-disable-line no-unused-vars
 import Visualization from './Visualization';
 import TextInputElement from './TextInputElement';
 import CheckboxInputElement from './CheckboxInputElement';
-import { SidebarSectionHeading } from './MinimalBootstrapComponents';
+import { SidebarSectionHeading, Overlay } from './MinimalBootstrapComponents';
 import { BrokerDropDown } from './BrokerDropDown';
 import { GraphDetailDropDown } from './GraphDetailDropDown';
 import { ETFSelectionDropDown } from './ETFSelectionDropDown';
+import ForecastModelSingleton from '../model/ForecastModel';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -20,6 +21,7 @@ export const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
 export const LIFE_EXPECTATION_IDENTIFIER = 'lifeExpectation';
 export const DETAILED_GRAPH_DROPDOWN_IDENTIFIER = 'detailedGraph';
 export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
+export const API_KEY_IDENTIFIER = 'apiKey';
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
 
@@ -67,6 +69,7 @@ export class App extends React.Component {
         this.handleGraphDetailChange = this.handleGraphDetailChange.bind(this);
         this.handleETFSelectionChange = this.handleETFSelectionChange.bind(this);
         this.handleETFShareChange = this.handleETFShareChange.bind(this);
+        this.handleAPIKeyConfirm = this.handleAPIKeyConfirm.bind(this);
 
         this.state = getInitialInputFormState(this);
     }
@@ -124,10 +127,26 @@ export class App extends React.Component {
         this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
     }
 
+    async handleAPIKeyConfirm() {
+        const apiKey = this.state[API_KEY_IDENTIFIER].value;
+        const apiValues = { ...this.state[API_KEY_IDENTIFIER] };
+        try {
+            await ForecastModelSingleton.loadHistoricData(apiKey, this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements);
+            apiValues.error = false;
+            apiValues.displayOverlay = false;
+        } catch (e) {
+            apiValues.error = true;
+        }
+        this.setState({ [API_KEY_IDENTIFIER]: apiValues });
+        console.log('force update');
+        this.forceUpdate();
+    }
+
     render() {
         const visualizationProps = constructVisualizationProps(this.state);
         return (
             <div className="container-fluid">
+                <Overlay {...this.state[API_KEY_IDENTIFIER]} />
                 <div className="row">
                     <nav id="sidebarMenu" className="col-md-3 col-lg-2 bg-light sidebar">
                         <form className="position-sticky">
@@ -292,6 +311,17 @@ function getInitialInputFormState(caller) {
             label: 'Automatic ETF Ratio',
             identifier: ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER,
             onValueChange: caller.handleCheckBoxChange,
+        },
+        [API_KEY_IDENTIFIER]: {
+            displayOverlay: true,
+            value: '',
+            label: '',
+            textAppending: '',
+            error: false,
+            identifier: API_KEY_IDENTIFIER,
+            transformFunction: e => e.target.value,
+            onValueChange: caller.handleTextChange,
+            handleAPIKeyConfirm: caller.handleAPIKeyConfirm,
         },
         // Complex UI elements.
         [DETAILED_GRAPH_DROPDOWN_IDENTIFIER]: {
