@@ -8,7 +8,6 @@ function percentageTransformFunction(e) {
 }
 
 export function ETFSelectionDropDown(props) {
-    console.log(props);
     return (
         <div className="dropdown">
             <button

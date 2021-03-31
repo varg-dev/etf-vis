@@ -38,24 +38,21 @@ function constructVisualizationProps(state) {
     for (const identifier in state) {
         props[identifier] = state[identifier].value;
     }
-    Object.assign(props, { etfProperties: this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements });
+    Object.assign(props, { etfProperties: state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements });
     return props;
 }
 
 function recalculateETFPercentages(state) {
     const etfValues = { ...state[ETF_DROPDOWN_SELECTION_IDENTIFIER] };
-    // Recalculate all percentages when the auto function is active.
-    if (state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value) {
-        let numberOfSelectedETFs = 0;
-        for (const etfIdentifier in etfValues.elements) {
-            if (etfValues.elements[etfIdentifier].selected) {
-                numberOfSelectedETFs++;
-            }
+    let numberOfSelectedETFs = 0;
+    for (const etfIdentifier in etfValues.elements) {
+        if (etfValues.elements[etfIdentifier].selected) {
+            numberOfSelectedETFs++;
         }
-        const newPercentage = 1.0 / Math.max(1, numberOfSelectedETFs);
-        for (const etfIdentifier in etfValues.elements) {
-            etfValues.elements[etfIdentifier].percentage = newPercentage;
-        }
+    }
+    const newPercentage = 1.0 / Math.max(1, numberOfSelectedETFs);
+    for (const etfIdentifier in etfValues.elements) {
+        etfValues.elements[etfIdentifier].percentage = newPercentage;
     }
     return etfValues;
 }
@@ -90,7 +87,7 @@ export class App extends React.Component {
             transactionCostValues.textAppending = currentValues.value ? '€' : '%';
             transactionCostValues.transformFunction = currentValues.value ? transformInputToInt : transformInputToFloat;
             this.setState({ [TRANSACTION_COSTS_IDENTIFIER]: transactionCostValues });
-        } else if (changedStateIdentifier === ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER) {
+        } else if (changedStateIdentifier === ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER && currentValues.value) {
             const etfValues = recalculateETFPercentages(this.state);
             this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
         }
@@ -114,7 +111,9 @@ export class App extends React.Component {
     }
 
     handleETFSelectionChange(etfProperties) {
-        const etfValues = recalculateETFPercentages(this.state);
+        const etfValues = this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value
+            ? recalculateETFPercentages(this.state)
+            : { ...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER] };
         etfValues.elements[etfProperties.identifier].selected = !etfValues.elements[etfProperties.identifier].selected;
         this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
     }
