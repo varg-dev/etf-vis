@@ -7,11 +7,12 @@ export class LineChartD3 extends D3ChartStrategy {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG');
 
         this.etfLineColors = { IBM: { total: '#0562a0', dividend: '#71c1f7' } };
+        this.colors = { inflation: '#ff7f00', costs: '#be3bff', taxes: '#e31a1c' };
         this.lineOpacity = 0.7;
     }
 
     _prepareData() {
-        const dataToIndex = {
+        this.dataToIndex = {
             costs: 0,
             taxes: 1,
             inflation: 2,
@@ -21,11 +22,11 @@ export class LineChartD3 extends D3ChartStrategy {
         const capitalIdentifier = 'capital';
         const dividendIdentifier = 'dividend';
         for (const etfIdentifier in this.investmentSteps[0].totalShares) {
-            dataToIndex[etfIdentifier + dividendIdentifier] = currentIdx++;
-            dataToIndex[etfIdentifier + capitalIdentifier] = currentIdx++;
+            this.dataToIndex[etfIdentifier + dividendIdentifier] = currentIdx++;
+            this.dataToIndex[etfIdentifier + capitalIdentifier] = currentIdx++;
         }
 
-        this.minIndex = dataToIndex.inflation;
+        this.minIndex = this.dataToIndex.inflation;
         this.maxIndex = currentIdx - 1;
 
         this.dataArray = [];
@@ -33,17 +34,17 @@ export class LineChartD3 extends D3ChartStrategy {
             this.dataArray.push([]);
         }
         for (const investmentStep of this.investmentSteps) {
-            this.dataArray[dataToIndex.costs].push({
+            this.dataArray[this.dataToIndex.costs].push({
                 yStart: 0,
                 yEnd: -investmentStep.totalCosts,
                 date: investmentStep.date,
             });
-            this.dataArray[dataToIndex.taxes].push({
+            this.dataArray[this.dataToIndex.taxes].push({
                 yStart: -investmentStep.totalCosts,
                 yEnd: -investmentStep.totalCosts - investmentStep.totalTaxes,
                 date: investmentStep.date,
             });
-            this.dataArray[dataToIndex.inflation].push({
+            this.dataArray[this.dataToIndex.inflation].push({
                 yStart: -investmentStep.totalCosts - investmentStep.totalTaxes,
                 yEnd: -investmentStep.totalCosts - investmentStep.totalTaxes - investmentStep.inflation,
                 date: investmentStep.date,
@@ -53,12 +54,12 @@ export class LineChartD3 extends D3ChartStrategy {
                 const totalShareValue = getTotalShareValue(etfIdentifier, investmentStep);
                 const totalDividendShareValue =
                     investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
-                this.dataArray[dataToIndex[etfIdentifier + capitalIdentifier]].push({
+                this.dataArray[this.dataToIndex[etfIdentifier + capitalIdentifier]].push({
                     yStart: totalShareValue + heightOffset,
                     yEnd: totalShareValue - totalDividendShareValue + heightOffset,
                     date: investmentStep.date,
                 });
-                this.dataArray[dataToIndex[etfIdentifier + dividendIdentifier]].push({
+                this.dataArray[this.dataToIndex[etfIdentifier + dividendIdentifier]].push({
                     yStart: totalShareValue - totalDividendShareValue + heightOffset,
                     yEnd: heightOffset,
                     date: investmentStep.date,
@@ -68,14 +69,14 @@ export class LineChartD3 extends D3ChartStrategy {
         }
 
         // Append miscellaneous data to array.
-        this.dataArray[dataToIndex.inflation].color = '#ff7f00';
-        this.dataArray[dataToIndex.taxes].color = '#e31a1c';
-        this.dataArray[dataToIndex.costs].color = '#be3bff';
+        this.dataArray[this.dataToIndex.inflation].color = this.colors.inflation;
+        this.dataArray[this.dataToIndex.taxes].color = this.colors.taxes;
+        this.dataArray[this.dataToIndex.costs].color = this.colors.costs;
         for (const etfIdentifier in this.investmentSteps[0].totalShares) {
-            this.dataArray[dataToIndex[etfIdentifier + dividendIdentifier]].color = this.etfLineColors[
+            this.dataArray[this.dataToIndex[etfIdentifier + dividendIdentifier]].color = this.etfLineColors[
                 etfIdentifier
             ].dividend;
-            this.dataArray[dataToIndex[etfIdentifier + capitalIdentifier]].color = this.etfLineColors[
+            this.dataArray[this.dataToIndex[etfIdentifier + capitalIdentifier]].color = this.etfLineColors[
                 etfIdentifier
             ].total;
         }
@@ -108,6 +109,8 @@ export class LineChartD3 extends D3ChartStrategy {
         // Draw stacked area chart.
         for (let i = 0; i < this.dataArray.length; i++) {
             this.svg
+                .append('g')
+                .attr('class', 'area')
                 .append('path')
                 .datum(this.dataArray[i])
                 .style('opacity', this.lineOpacity)
@@ -122,6 +125,46 @@ export class LineChartD3 extends D3ChartStrategy {
                         .y1(d => this.yScale(d.yStart))
                 );
         }
+    }
+
+    _prepareText() {
+        super._prepareText();
+
+        const costData = this.dataArray[this.dataToIndex.costs];
+        const maxCostsMiddlePosition =
+            this.yScale(0) + (this.yScale(costData[costData.length - 1].yStart) - this.yScale(0)) / 2;
+
+        this.textProperties.push(
+            ...[
+                {
+                    text: ' Inflation',
+                    x: this.xScale(this.dateExtent[0]) + this.width / 40,
+                    y: this.yScale(0) + (this.yScale(this.yExtent[0]) - this.yScale(0)) / 2,
+                    fontSize: this.standardFontSize,
+                    textAnchor: 'start',
+                    fontWeight: 'normal',
+                    color: this.colors.inflation,
+                },
+                {
+                    text: ' Costs',
+                    x: this.width * 1.005,
+                    y: maxCostsMiddlePosition + this.standardFontSize / 2,
+                    fontSize: this.standardFontSize,
+                    textAnchor: 'start',
+                    fontWeight: 'normal',
+                    color: this.colors.costs,
+                },
+                {
+                    text: ' Taxes',
+                    x: this.width * 1.005,
+                    y: maxCostsMiddlePosition + this.standardFontSize * 2,
+                    fontSize: this.standardFontSize,
+                    textAnchor: 'start',
+                    fontWeight: 'normal',
+                    color: this.colors.taxes,
+                },
+            ]
+        );
     }
 
     _updateTooltip() {}

@@ -24,15 +24,13 @@ export class CashflowBarChart extends D3ChartStrategy {
 
         this.dataArray = [[], []];
         for (const investmentStep of this.investmentSteps) {
-            let sumNewInvestedMoney = 0;
             let sumNewPayout = 0;
-            for (const etfIdentifier in investmentStep.newInvestedMoney) {
-                sumNewInvestedMoney += investmentStep.newInvestedMoney[etfIdentifier];
+            for (const etfIdentifier in investmentStep.newPayout) {
                 sumNewPayout += investmentStep.newPayout[etfIdentifier];
             }
             this.dataArray[dataToIndex.invested].push({
                 yStart: 0,
-                yEnd: -sumNewInvestedMoney,
+                yEnd: -investmentStep.newInvestment,
                 date: investmentStep.date,
                 color: '#b4291f',
             });
@@ -48,8 +46,16 @@ export class CashflowBarChart extends D3ChartStrategy {
     }
 
     _drawContent() {
-        for (const barArray of this.dataArray) {
+        // Skip the last bar if it is outside the graph.
+        const needToSkipLastBar = this.dataArray[0][this.dataArray[0].length - 1].date === this.dateExtent[1];
+        for (let barArray of this.dataArray) {
+            if (needToSkipLastBar) {
+                barArray = barArray.slice(0, -1);
+            }
+
             this.svg
+                .append('g')
+                .attr('class', 'bars')
                 .selectAll(`rect.none`)
                 .data(barArray)
                 .enter()

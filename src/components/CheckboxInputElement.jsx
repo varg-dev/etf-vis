@@ -1,31 +1,20 @@
 import React from 'react';
 
-export class CheckboxInputElement extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    handleChange(e) {
-        this.props.onValueChange(this.props.identifier);
-    }
-
-    render() {
-        return (
-            <div className="checkbox-element">
-                <input
-                    className="form-check-input"
-                    id={this.props.identifier}
-                    type={this.props.type}
-                    value={this.props.value}
-                    onChange={this.handleChange}
-                />
-                <label className="form-check-label" htmlFor={this.props.identifier}>
-                    {this.props.label}
-                </label>
-            </div>
-        );
-    }
+export function CheckboxInputElement(props) {
+    return (
+        <div className="checkbox-element">
+            <input
+                className="form-check-input"
+                id={props.identifier}
+                type="checkbox"
+                value={props.value}
+                onChange={() => props.onValueChange(props.identifier)}
+            />
+            <label className="form-check-label" htmlFor={props.identifier}>
+                {props.label}
+            </label>
+        </div>
+    );
 }
 
 export default CheckboxInputElement;

@@ -108,9 +108,9 @@ export class D3ChartStrategy {
         this.svg
             .append('g')
             .append('line')
-            .attr('x1', this.xScale(this.payoutPhaseStartDate))
+            .attr('x1', this.xScale(this.payoutPhaseStartDate) - this.lineStrokeWidth / 2)
             .attr('y1', this.yScale(this.yExtent[0]))
-            .attr('x2', this.xScale(this.payoutPhaseStartDate))
+            .attr('x2', this.xScale(this.payoutPhaseStartDate) - this.lineStrokeWidth / 2)
             .attr('y2', this.yScale(this.yExtent[1]))
             .style('stroke-width', this.lineStrokeWidth)
             .style('stroke', 'black');
@@ -172,7 +172,8 @@ export class D3ChartStrategy {
             .attr('y', d => d.y)
             .style('font-size', d => d.fontSize)
             .style('font-weight', d => d.fontWeight)
-            .style('text-anchor', d => d.textAnchor);
+            .style('text-anchor', d => d.textAnchor)
+            .style('fill', d => d.color);
     }
 
     _prepareText() {
@@ -184,39 +185,43 @@ export class D3ChartStrategy {
             this.xScale(this.payoutPhaseStartDate) +
             (this.xScale(this.dateExtent[1]) - this.xScale(this.payoutPhaseStartDate)) / 2;
         const yPos = -10;
-        const standardFontSize = '20px';
+        this.standardFontSize = 20;
         this.textProperties = [
             {
                 text: 'SAVING',
                 x: savingPhaseMid,
                 y: yPos,
-                fontSize: standardFontSize,
+                fontSize: this.standardFontSize,
                 textAnchor: 'end',
                 fontWeight: 'bold',
+                color: 'black',
             },
             {
                 text: 'Phase',
                 x: savingPhaseMid,
                 y: yPos,
-                fontSize: standardFontSize,
+                fontSize: this.standardFontSize,
                 textAnchor: 'start',
                 fontWeight: 'normal',
+                color: 'black',
             },
             {
                 text: 'PAYOUT',
                 x: payoutPhaseMid,
                 y: yPos,
-                fontSize: standardFontSize,
+                fontSize: this.standardFontSize,
                 textAnchor: 'end',
                 fontWeight: 'bold',
+                color: 'black',
             },
             {
                 text: 'Phase',
                 x: payoutPhaseMid,
                 y: yPos,
-                fontSize: standardFontSize,
+                fontSize: this.standardFontSize,
                 textAnchor: 'start',
                 fontWeight: 'normal',
+                color: 'black',
             },
         ];
     }

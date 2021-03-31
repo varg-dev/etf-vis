@@ -1,5 +1,6 @@
 import ForecastModelSingleton from './ForecastModel';
 import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear } from '../helpers/utils';
+import cloneDeep from 'lodash.clonedeep';
 
 const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
@@ -133,6 +134,7 @@ export function addAccumulationMonth(investmentSteps, investment, date, initialD
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
         newInvestedMoney: {},
+        newInvestment: investment,
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
@@ -204,6 +206,7 @@ function addPayoutMonth(
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
         newInvestedMoney: {},
+        newInvestment: 0,
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
@@ -325,6 +328,8 @@ function generateEmptyInvestmentStep(etfToRatio, date) {
         totalPayout: {},
         newPayout: {},
         sharePrizes: {},
+        newInvestedMoney: {},
+        newInvestment: 0,
     };
     for (const etfIdentifier in etfToRatio) {
         emptyInvestmentStep.newShares[etfIdentifier] = 0;
@@ -334,6 +339,7 @@ function generateEmptyInvestmentStep(etfToRatio, date) {
         emptyInvestmentStep.totalInvestedMoney[etfIdentifier] = 0;
         emptyInvestmentStep.totalPayout[etfIdentifier] = 0;
         emptyInvestmentStep.newPayout[etfIdentifier] = 0;
+        emptyInvestmentStep.newInvestedMoney[etfIdentifier] = 0;
         emptyInvestmentStep.sharePrizes[etfIdentifier] = forecast.predictCourse(etfIdentifier, date);
     }
     return emptyInvestmentStep;
@@ -427,5 +433,33 @@ export class InvestmentModel {
             );
         }
         this.investmentSteps = investmentSteps;
+    }
+
+    getInvestmentSteps(numberOfEntriesPerYear) {
+        if (!Number.isInteger(numberOfMonthsOfAYear / numberOfEntriesPerYear)) {
+            throw new Error(
+                `The numberOfEntriesPerYear need to be dividable by ${numberOfMonthsOfAYear} in order to make sense.`
+            );
+        }
+
+        if (numberOfEntriesPerYear === numberOfMonthsOfAYear) {
+            return this.investmentSteps;
+        }
+        const selectedInvestmentSteps = [];
+        const numberOfMonthsToMerge = numberOfMonthsOfAYear / numberOfEntriesPerYear;
+        for (let i = 0; i < this.investmentSteps.length; i += numberOfMonthsToMerge) {
+            // Take the start date as representative.
+            const adjustedInvestmentStep = cloneDeep(this.investmentSteps[i]);
+            for (let offset = 1; offset < numberOfMonthsToMerge; offset++) {
+                adjustedInvestmentStep.newInvestment += this.investmentSteps[i + offset].newInvestment;
+                for (const etfIdentifier in this.investmentSteps[i + offset].newPayout) {
+                    adjustedInvestmentStep.newPayout[etfIdentifier] += this.investmentSteps[i + offset].newPayout[
+                        etfIdentifier
+                    ];
+                }
+            }
+            selectedInvestmentSteps.push(adjustedInvestmentStep);
+        }
+        return selectedInvestmentSteps;
     }
 }

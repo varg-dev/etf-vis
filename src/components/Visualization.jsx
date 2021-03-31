@@ -9,8 +9,8 @@ import {
     TAX_FREE_AMOUNT_IDENTIFIER,
     MONTHLY_PAYOUT_IDENTIFIER,
     LIFE_EXPECTATION_IDENTIFIER,
-    DETAILED_GRAPH_IDENTIFIER,
-} from './InputForm';
+    DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
+} from './App';
 import ForecastModelSingleton from '../model/ForecastModel';
 import { InvestmentModel } from '../model/InvestmentModel';
 import LineChartD3 from '../renderer/LineChartD3';
@@ -56,20 +56,12 @@ export class Visualization extends React.Component {
         );
     }
 
-    adjustInvestmentStepsToLevelOfDetail(investmentSteps) {
-        if (this.props[DETAILED_GRAPH_IDENTIFIER]) {
-            return investmentSteps;
-        }
-        const onlyViableMonth = investmentSteps[0].date.getMonth();
-        return investmentSteps.filter(e => e.date.getMonth() === onlyViableMonth);
-    }
-
     drawVisualization() {
         D3ChartStrategy.reset();
         const investmentModel = this.getInvestmentModel();
         const firstPayoutPhaseDate = investmentModel.payoutDates[0];
-        const correctLevelOfDetailInvestmentSteps = this.adjustInvestmentStepsToLevelOfDetail(
-            investmentModel.investmentSteps
+        const correctLevelOfDetailInvestmentSteps = investmentModel.getInvestmentSteps(
+            this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]
         );
         new LineChartD3(correctLevelOfDetailInvestmentSteps, this.firstSVGRef.current, firstPayoutPhaseDate).render();
         new CashflowBarChart(
