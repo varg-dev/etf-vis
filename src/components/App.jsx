@@ -49,6 +49,7 @@ function constructVisualizationProps(state) {
         props[identifier] = state[identifier].value;
     }
     Object.assign(props, { etfProperties: state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements });
+    props.isValid = state.isValid;
     return props;
 }
 
@@ -163,6 +164,7 @@ export class App extends React.Component {
             SAVING_PHASE_IDENTIFIER,
             TAX_FREE_AMOUNT_IDENTIFIER,
         ];
+        state.isValid = true;
 
         for (const identifier of positiveIntIdentifier) {
             state[identifier].isValid = isPositiveInt(state[identifier].value);

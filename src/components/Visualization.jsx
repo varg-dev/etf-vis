@@ -60,9 +60,11 @@ export class Visualization extends React.Component {
     drawVisualization() {
         D3ChartStrategy.reset();
         try {
-            const investmentModel = this.getInvestmentModel();
-            const firstPayoutPhaseDate = investmentModel.payoutDates[0];
-            const correctLevelOfDetailInvestmentSteps = investmentModel.getInvestmentSteps(
+            if (this.props.isValid != null && this.props.isValid) {
+                this.investmentModel = this.getInvestmentModel();
+            }
+            const firstPayoutPhaseDate = this.investmentModel.payoutDates[0];
+            const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
                 this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]
             );
             new LineChartD3(
