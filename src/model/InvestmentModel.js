@@ -6,6 +6,7 @@ const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
 const corporateTaxRatio = 0.26375;
 const inflationRate = 0.01;
+const defaultDividendAmount = 0.025;
 
 function getNextMonthDate(date) {
     const newDate = new Date(date);
@@ -17,7 +18,9 @@ function calculateDividend(etfIdentifier, date) {
     if (!isLastMonthOfAYear(date)) {
         return 0;
     } else {
-        return ForecastModelSingleton.getInstance().predictDividend(etfIdentifier, date.getFullYear());
+        const dividendAmount = ForecastModelSingleton.getInstance().predictDividend(etfIdentifier, date.getFullYear());
+        const sharePrize = ForecastModelSingleton.getInstance().predictCourse(etfIdentifier, date);
+        return dividendAmount > 0 ? dividendAmount : defaultDividendAmount * sharePrize;
     }
 }
 
@@ -134,13 +137,14 @@ export function addAccumulationMonth(investmentSteps, investment, date, initialD
         sharePrizes: {},
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
         newInvestedMoney: {},
-        newInvestment: investment,
+        newInvestment: 0,
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
     };
     for (const etfIdentifier in etfToRatio) {
         const investmentOfEtfWithCosts = etfToRatio[etfIdentifier] * investment;
+        newInvestmentStep.newInvestment += investmentOfEtfWithCosts;
         const [investmentOfEtfWithoutCosts, newCosts] = calculateCosts(
             investmentOfEtfWithCosts,
             configOptions.costConfig

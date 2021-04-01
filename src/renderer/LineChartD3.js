@@ -6,7 +6,11 @@ export class LineChartD3 extends D3ChartStrategy {
     constructor(investmentSteps, renderDivRef, payoutPhaseStartDate) {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG');
 
-        this.etfLineColors = { 'SP5C.PAR': { total: '#0562a0', dividend: '#71c1f7' } };
+        this.etfLineColors = {
+            'SP5C.PAR': { total: '#0562a0', dividend: '#71c1f7' },
+            ESGE: { total: '#ff1eff', dividend: '#ff63ff' },
+            SUSA: { total: '#23ff01', dividend: '#7dff69' },
+        };
         this.colors = { inflation: '#ff7f00', costs: '#be3bff', taxes: '#e31a1c' };
         this.lineOpacity = 0.7;
     }

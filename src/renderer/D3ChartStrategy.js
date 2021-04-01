@@ -1,6 +1,11 @@
 import * as d3 from 'd3';
 import { roundDateToBeginningOfMonth, numberOfMonthsOfAYear } from '../helpers/utils';
 
+const FIVE_MILLION = 5000000;
+const ONE_THOUSAND = 1000;
+const ONE_MILLION = 1000000;
+const numberOfTicks = 7;
+
 function setInteractionDisplayForActiveDiagrams(displayOption) {
     for (const activeDiagram of D3ChartStrategy.activeStrategies) {
         activeDiagram.interaction.style('display', displayOption);
@@ -82,10 +87,18 @@ export class D3ChartStrategy {
     }
 
     _drawAxis() {
+        const labelDivisionFactor =
+            Math.max(-this.yExtent[0], this.yExtent[1]) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
+        const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
         this.svg
             .append('g')
             .style('font-size', '20px')
-            .call(d3.axisLeft(this.yScale).tickFormat(d => `${d.toLocaleString()} EUR`));
+            .call(
+                d3
+                    .axisLeft(this.yScale)
+                    .tickFormat(d => `${(d / labelDivisionFactor).toLocaleString()}${numberIndicator} €`)
+                    .ticks(numberOfTicks)
+            );
 
         this.svg
             .append('g')

@@ -1,6 +1,6 @@
 import React from 'react';
 // Needed to make the drop downs work.
-import { Dropdown } from 'bootstrap'; // eslint-disable-line no-unused-vars
+import { Dropdown, Tooltip } from 'bootstrap'; // eslint-disable-line no-unused-vars
 import Visualization from './Visualization';
 import TextInputElement from './TextInputElement';
 import CheckboxInputElement from './CheckboxInputElement';
@@ -35,6 +35,14 @@ function transformInputToFloat(e) {
     return isNaN(floatVal) ? 0 : floatVal;
 }
 
+function isPercentage(val) {
+    return !Number.isNaN(val) && val >= 0 && val <= 1;
+}
+
+function isPositiveInt(val) {
+    return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
+}
+
 function constructVisualizationProps(state) {
     const props = {};
     for (const identifier in state) {
@@ -45,18 +53,17 @@ function constructVisualizationProps(state) {
 }
 
 function recalculateETFPercentages(state) {
-    const etfValues = { ...state[ETF_DROPDOWN_SELECTION_IDENTIFIER] };
     let numberOfSelectedETFs = 0;
-    for (const etfIdentifier in etfValues.elements) {
-        if (etfValues.elements[etfIdentifier].selected) {
+    for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
+        if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
             numberOfSelectedETFs++;
         }
     }
     const newPercentage = 1.0 / Math.max(1, numberOfSelectedETFs);
-    for (const etfIdentifier in etfValues.elements) {
-        etfValues.elements[etfIdentifier].percentage = newPercentage;
+    for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].percentage = newPercentage;
     }
-    return etfValues;
+    return state;
 }
 
 export class App extends React.Component {
@@ -75,71 +82,139 @@ export class App extends React.Component {
     }
 
     handleTextChange(changedValue, changedStateIdentifier) {
-        const currentValues = { ...this.state[changedStateIdentifier] };
-        currentValues.value = changedValue;
-        this.setState({ [changedStateIdentifier]: currentValues });
+        const state = { ...this.state };
+        state[changedStateIdentifier].value = changedValue;
+        this.validateAndSetState(state);
     }
 
     handleCheckBoxChange(changedStateIdentifier) {
-        const currentValues = { ...this.state[changedStateIdentifier] };
-        currentValues.value = !currentValues.value;
-        this.setState({ [changedStateIdentifier]: currentValues });
+        const state = { ...this.state };
+        state[changedStateIdentifier].value = !state[changedStateIdentifier].value;
         if (changedStateIdentifier === TRANSACTION_COSTS_TYPE_IDENTIFIER) {
-            const transactionCostValues = { ...this.state[TRANSACTION_COSTS_IDENTIFIER] };
-            transactionCostValues.value = currentValues.value ? 5 : 0.005;
-            transactionCostValues.textAppending = currentValues.value ? '€' : '%';
-            transactionCostValues.transformFunction = currentValues.value ? transformInputToInt : transformInputToFloat;
-            this.setState({ [TRANSACTION_COSTS_IDENTIFIER]: transactionCostValues });
-        } else if (changedStateIdentifier === ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER && currentValues.value) {
-            const etfValues = recalculateETFPercentages(this.state);
-            this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
+            state[TRANSACTION_COSTS_IDENTIFIER].value = state[changedStateIdentifier].value ? 5 : 0.015;
+            state[TRANSACTION_COSTS_IDENTIFIER].textAppending = state[changedStateIdentifier].value ? '€' : '%';
+            state[TRANSACTION_COSTS_IDENTIFIER].transformFunction = state[changedStateIdentifier].value
+                ? transformInputToInt
+                : transformInputToFloat;
+        } else if (
+            changedStateIdentifier === ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER &&
+            state[changedStateIdentifier].value
+        ) {
+            recalculateETFPercentages(state);
         }
+        this.validateAndSetState(state);
     }
 
     handleBrokerChange(brokerProperties) {
-        const costValues = { ...this.state[TRANSACTION_COSTS_IDENTIFIER] };
-        costValues.value =
+        const state = { ...this.state };
+        state[TRANSACTION_COSTS_IDENTIFIER].value =
             brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts : brokerProperties.fixedCosts;
-        this.setState({ [TRANSACTION_COSTS_IDENTIFIER]: costValues });
-
-        const costTypeValues = { ...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER] };
-        costTypeValues.value = brokerProperties.percentageCosts > 0 ? false : true;
-        this.setState({ [TRANSACTION_COSTS_TYPE_IDENTIFIER]: costTypeValues });
+        state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value = brokerProperties.percentageCosts > 0 ? false : true;
+        this.validateAndSetState(state);
     }
 
     handleGraphDetailChange(detailProperties) {
-        const detailValues = { ...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER] };
-        detailValues.value = detailProperties.value;
-        this.setState({ [DETAILED_GRAPH_DROPDOWN_IDENTIFIER]: detailValues });
+        const state = { ...this.state };
+        state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value = detailProperties.value;
+        this.validateAndSetState(state);
     }
 
     handleETFSelectionChange(etfProperties) {
-        const etfValues = this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value
-            ? recalculateETFPercentages(this.state)
-            : { ...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER] };
-        etfValues.elements[etfProperties.identifier].selected = !etfValues.elements[etfProperties.identifier].selected;
-        this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
+        const state = { ...this.state };
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
+            ETF_DROPDOWN_SELECTION_IDENTIFIER
+        ].elements[etfProperties.identifier].selected;
+        if (state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value) {
+            recalculateETFPercentages(state);
+        }
+        this.validateAndSetState(state);
     }
 
     handleETFShareChange(changedValue, changedETFIdentifier) {
-        const etfValues = { ...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER] };
-        etfValues.elements[changedETFIdentifier].percentage = changedValue;
-        this.setState({ [ETF_DROPDOWN_SELECTION_IDENTIFIER]: etfValues });
+        const state = { ...this.state };
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].percentage = changedValue;
+        this.validateAndSetState(state);
     }
 
     async handleAPIKeyConfirm() {
         const apiKey = this.state[API_KEY_IDENTIFIER].value;
         const apiValues = { ...this.state[API_KEY_IDENTIFIER] };
         try {
-            await ForecastModelSingleton.loadHistoricData(apiKey, this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements);
+            await ForecastModelSingleton.loadHistoricData(
+                apiKey,
+                this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements
+            );
             apiValues.error = false;
             apiValues.displayOverlay = false;
         } catch (e) {
             apiValues.error = true;
         }
         this.setState({ [API_KEY_IDENTIFIER]: apiValues });
-        console.log('force update');
         this.forceUpdate();
+    }
+
+    validateAndSetState(state) {
+        const positiveIntIdentifier = [
+            MONTHLY_INVESTMENT_IDENTIFIER,
+            MONTHLY_PAYOUT_IDENTIFIER,
+            STARTING_CAPITAL_IDENTIFIER,
+            AGE_IDENTIFIER,
+            LIFE_EXPECTATION_IDENTIFIER,
+            SAVING_PHASE_IDENTIFIER,
+            TAX_FREE_AMOUNT_IDENTIFIER,
+        ];
+
+        for (const identifier of positiveIntIdentifier) {
+            state[identifier].isValid = isPositiveInt(state[identifier].value);
+            state[identifier].errorMessage = 'Please enter a positive number.';
+            state.isValid = state[identifier].isValid && state.isValid;
+        }
+
+        // Check the year values.
+        const leftoverYears = state[LIFE_EXPECTATION_IDENTIFIER].value - state[AGE_IDENTIFIER].value;
+        if (state[AGE_IDENTIFIER].value >= state[LIFE_EXPECTATION_IDENTIFIER].value) {
+            state[AGE_IDENTIFIER].errorMessage = 'You cannot be older than the life expectation';
+            state[AGE_IDENTIFIER].isValid = false;
+            state.isValid = false;
+        } else if (leftoverYears <= state[SAVING_PHASE_IDENTIFIER].value) {
+            state[SAVING_PHASE_IDENTIFIER].errorMessage =
+                'You cannot have a saving phase that lasts longer than your life.';
+            state[SAVING_PHASE_IDENTIFIER].isValid = false;
+            state.isValid = false;
+        }
+
+        // Check Cost values.
+        if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
+            state[TRANSACTION_COSTS_IDENTIFIER].isValid = isPositiveInt(state[TRANSACTION_COSTS_IDENTIFIER].value);
+            state[TRANSACTION_COSTS_IDENTIFIER].errorMessage = 'Please enter a positive number.';
+        } else {
+            state[TRANSACTION_COSTS_IDENTIFIER].isValid = isPercentage(state[TRANSACTION_COSTS_IDENTIFIER].value);
+            state[TRANSACTION_COSTS_IDENTIFIER].errorMessage = 'Please enter a valid percentage.';
+        }
+        state.isValid = state[TRANSACTION_COSTS_IDENTIFIER].isValid && state.isValid;
+
+        // Check the etf percentages.
+        let sumOfPercentages = 0;
+        let foundOneSelectedEtf = false;
+        for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
+            if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
+                sumOfPercentages += state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].percentage;
+                foundOneSelectedEtf = true;
+            }
+        }
+        if (!foundOneSelectedEtf) {
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].isValid = false;
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].errorMessage = 'Please select at least one ETF.';
+            state.isValid = false;
+        } else if (sumOfPercentages !== 1.0) {
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].isValid = false;
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].errorMessage = 'The sum of all selected ETF needs to be 100%';
+            state.isValid = false;
+        } else {
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].isValid = true;
+        }
+
+        this.setState(state);
     }
 
     render() {
@@ -149,7 +224,7 @@ export class App extends React.Component {
                 <Overlay {...this.state[API_KEY_IDENTIFIER]} />
                 <div className="row">
                     <nav id="sidebarMenu" className="col-md-3 col-lg-2 bg-light sidebar">
-                        <form className="position-sticky">
+                        <form className="position-sticky needs-validation" noValidate>
                             {/* Money Options */}
                             <SidebarSectionHeading title="Money Options" />
                             <TextInputElement
@@ -235,11 +310,14 @@ export class App extends React.Component {
 
 function getInitialInputFormState(caller) {
     return {
+        isValid: true,
         // simple ui elements.
         [STARTING_CAPITAL_IDENTIFIER]: {
             value: 1000,
             label: 'Starting Capital',
+            errorMessage: '',
             textAppending: '€',
+            isValid: true,
             identifier: STARTING_CAPITAL_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
@@ -247,7 +325,9 @@ function getInitialInputFormState(caller) {
         [MONTHLY_INVESTMENT_IDENTIFIER]: {
             value: 100,
             label: 'Monthly Investment',
+            errorMessage: 'Please enter a positive Money amount.',
             textAppending: '€',
+            isValid: true,
             identifier: MONTHLY_INVESTMENT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
@@ -255,7 +335,9 @@ function getInitialInputFormState(caller) {
         [MONTHLY_PAYOUT_IDENTIFIER]: {
             value: 1000,
             label: 'Monthly Payout',
+            errorMessage: '',
             textAppending: '€',
+            isValid: true,
             identifier: MONTHLY_PAYOUT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
@@ -263,7 +345,9 @@ function getInitialInputFormState(caller) {
         [TRANSACTION_COSTS_IDENTIFIER]: {
             value: 0.015,
             label: 'Transaction Costs',
+            errorMessage: '',
             textAppending: '%',
+            isValid: true,
             identifier: TRANSACTION_COSTS_IDENTIFIER,
             transformFunction: transformInputToFloat,
             onValueChange: caller.handleTextChange,
@@ -277,7 +361,9 @@ function getInitialInputFormState(caller) {
         [SAVING_PHASE_IDENTIFIER]: {
             value: 40,
             label: 'Saving Phase',
+            errorMessage: '',
             textAppending: 'Y',
+            isValid: true,
             identifier: SAVING_PHASE_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
@@ -286,23 +372,29 @@ function getInitialInputFormState(caller) {
             value: 30,
             label: 'Your Age',
             textAppending: 'Y',
+            errorMessage: '',
+            isValid: true,
             identifier: AGE_IDENTIFIER,
-            transformFunction: transformInputToInt,
-            onValueChange: caller.handleTextChange,
-        },
-        [TAX_FREE_AMOUNT_IDENTIFIER]: {
-            value: 801,
-            label: 'Tax Free Amount',
-            textAppending: '€',
-            identifier: TAX_FREE_AMOUNT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
         },
         [LIFE_EXPECTATION_IDENTIFIER]: {
             value: 80,
             label: 'Life Expectation',
+            errorMessage: '',
+            isValid: true,
             textAppending: 'Y',
             identifier: LIFE_EXPECTATION_IDENTIFIER,
+            transformFunction: transformInputToInt,
+            onValueChange: caller.handleTextChange,
+        },
+        [TAX_FREE_AMOUNT_IDENTIFIER]: {
+            value: 801,
+            label: 'Tax Free Amount',
+            errorMessage: '',
+            isValid: true,
+            textAppending: '€',
+            identifier: TAX_FREE_AMOUNT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
         },
@@ -316,8 +408,9 @@ function getInitialInputFormState(caller) {
             displayOverlay: true,
             value: '',
             label: '',
+            errorMessage: '',
+            isValid: true,
             textAppending: '',
-            error: false,
             identifier: API_KEY_IDENTIFIER,
             transformFunction: e => e.target.value,
             onValueChange: caller.handleTextChange,
@@ -327,12 +420,13 @@ function getInitialInputFormState(caller) {
         [DETAILED_GRAPH_DROPDOWN_IDENTIFIER]: {
             value: 1,
             label: 'Graph Detail Level',
+            isValid: true,
             handleChange: caller.handleGraphDetailChange,
             elements: [
                 {
                     identifier: '12',
                     value: 12,
-                    label: 'All Months a Year (high detail)',
+                    label: 'All Months a Year (highest detail)',
                 },
                 {
                     identifier: '6',
@@ -353,6 +447,7 @@ function getInitialInputFormState(caller) {
         },
         [BROKER_DROPDOWN_IDENTIFIER]: {
             label: 'Broker',
+            isValid: true,
             handleChange: caller.handleBrokerChange,
             elements: [
                 {
@@ -377,6 +472,9 @@ function getInitialInputFormState(caller) {
         },
         [ETF_DROPDOWN_SELECTION_IDENTIFIER]: {
             label: 'ETF Selection',
+            isValid: true,
+            identifier: ETF_DROPDOWN_SELECTION_IDENTIFIER,
+            errorMessage: '',
             handleSelectionChange: caller.handleETFSelectionChange,
             handleShareChange: caller.handleETFShareChange,
             elements: {
