@@ -32,13 +32,13 @@ export class CashflowBarChart extends D3ChartStrategy {
                 yStart: 0,
                 yEnd: -investmentStep.newInvestment,
                 date: investmentStep.date,
-                color: '#b4291f',
+                color: '#ff3e58',
             });
             this.dataArray[dataToIndex.payout].push({
                 yStart: sumNewPayout,
                 yEnd: 0,
                 date: investmentStep.date,
-                color: '#0562a0',
+                color: '#abff9e',
             });
         }
 

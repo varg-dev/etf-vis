@@ -25,6 +25,12 @@ export const API_KEY_IDENTIFIER = 'apiKey';
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
 
+export const ETF_SYMBOL_TO_NAME = {
+    'SP5C.PAR': 'S & P 500',
+    'ESGE': 'iShare',
+    'SUSA': 'MSCI USA ESG',
+};
+
 function transformInputToInt(e) {
     const intVal = parseInt(e.target.value.split(' ', 1));
     return isNaN(intVal) ? 0 : intVal;
@@ -483,22 +489,22 @@ function getInitialInputFormState(caller) {
                 S_and_P_500: {
                     identifier: 'S_and_P_500',
                     symbol: 'SP5C.PAR',
+                    label: ETF_SYMBOL_TO_NAME['SP5C.PAR'],
                     percentage: 1.0,
-                    label: 'S & P 500',
                     selected: true,
                 },
                 iShare: {
                     identifier: 'iShare',
                     symbol: 'ESGE',
+                    label: ETF_SYMBOL_TO_NAME['ESGE'],
                     percentage: 1.0,
-                    label: 'iShare',
                     selected: false,
                 },
                 msciUSA: {
                     identifier: 'msciUSA',
                     symbol: 'SUSA',
+                    label: ETF_SYMBOL_TO_NAME['SUSA'],
                     percentage: 1.0,
-                    label: 'MSCI USA ESG',
                     selected: false,
                 },
             },

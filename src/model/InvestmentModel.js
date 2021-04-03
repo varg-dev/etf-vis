@@ -41,6 +41,10 @@ export function getTotalShareValue(etfIdentifier, investmentStep) {
     return investmentStep.totalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
 
+export function getTotalDividenShareValue(etfIdentifier, investmentStep){
+    return investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+}
+
 function getNewShareValue(etfIdentifier, investmentStep) {
     return investmentStep.newShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
@@ -397,7 +401,7 @@ export class InvestmentModel {
 
     _calculateModel() {
         let investmentSteps = [generateEmptyInvestmentStep(this.etfToRatio, this.savingDates[0])];
-        let leftoverTaxFreeAmount = addAccumulationMonth(
+        addAccumulationMonth(
             investmentSteps,
             this.monthlyInvestment + this.startCapital,
             this.savingDates[0],
@@ -406,7 +410,7 @@ export class InvestmentModel {
             this.configOptions
         );
         for (const savingDate of this.savingDates.slice(1)) {
-            leftoverTaxFreeAmount = addAccumulationMonth(
+            addAccumulationMonth(
                 investmentSteps,
                 this.monthlyInvestment,
                 savingDate,
@@ -419,6 +423,7 @@ export class InvestmentModel {
         investmentSteps = investmentSteps.slice(1);
 
         let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
+        let leftoverTaxFreeAmount = this.configOptions.taxFreeAmount;
         const payoutStats = {};
         for (const etfIdentifier in this.etfToRatio) {
             payoutStats[etfIdentifier] = { investmentStepsIdx: 0, alreadySoldShares: 0 };

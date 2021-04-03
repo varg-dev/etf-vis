@@ -1,18 +1,34 @@
 import * as d3 from 'd3';
-import { getTotalShareValue } from '../model/InvestmentModel';
+import { getTotalShareValue, getTotalDividenShareValue } from '../model/InvestmentModel';
 import { D3ChartStrategy } from './D3ChartStrategy';
+import { ETF_SYMBOL_TO_NAME } from '../components/App';
+
+function generateEtfValueText(investmentValue = undefined, totalValue = undefined) {
+    return `Inv: ${investmentValue == null ? '-' : investmentValue}, Tot: ${totalValue == null ? '-' : totalValue}`;
+}
+
+function generateNegativeLabelText(name, value = undefined) {
+    return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
+}
+
+const negativeLabels = ['costs', 'taxes', 'inflation'];
+const negativeLabelsToInvestmentStepIdentifier = { costs: 'totalCosts', taxes: 'totalTaxes', inflation: 'inflation' };
+const capitalIdentifier = 'capital';
+const investedIdentifier = 'invested';
 
 export class LineChartD3 extends D3ChartStrategy {
     constructor(investmentSteps, renderDivRef, payoutPhaseStartDate) {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG');
 
         this.etfLineColors = {
-            'SP5C.PAR': { total: '#0562a0', dividend: '#71c1f7' },
-            ESGE: { total: '#ff1eff', dividend: '#ff63ff' },
-            SUSA: { total: '#23ff01', dividend: '#7dff69' },
+            'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },
+            ESGE: { total: '#ff1eff', invested: '#ff63ff' },
+            SUSA: { total: '#23ff01', invested: '#7dff69' },
         };
         this.colors = { inflation: '#ff7f00', costs: '#be3bff', taxes: '#e31a1c' };
         this.lineOpacity = 0.7;
+
+        this.etfIdentifiers = Object.keys(this.investmentSteps[0].totalShares);
     }
 
     _prepareData() {
@@ -23,10 +39,8 @@ export class LineChartD3 extends D3ChartStrategy {
         };
 
         let currentIdx = 3;
-        const capitalIdentifier = 'capital';
-        const dividendIdentifier = 'dividend';
-        for (const etfIdentifier in this.investmentSteps[0].totalShares) {
-            this.dataToIndex[etfIdentifier + dividendIdentifier] = currentIdx++;
+        for (const etfIdentifier of this.etfIdentifiers) {
+            this.dataToIndex[etfIdentifier + investedIdentifier] = currentIdx++;
             this.dataToIndex[etfIdentifier + capitalIdentifier] = currentIdx++;
         }
 
@@ -56,14 +70,13 @@ export class LineChartD3 extends D3ChartStrategy {
             let heightOffset = 0;
             for (const etfIdentifier in investmentStep.totalShares) {
                 const totalShareValue = getTotalShareValue(etfIdentifier, investmentStep);
-                const totalDividendShareValue =
-                    investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+                const totalDividendShareValue = getTotalDividenShareValue(etfIdentifier, investmentStep);
                 this.dataArray[this.dataToIndex[etfIdentifier + capitalIdentifier]].push({
                     yStart: totalShareValue + heightOffset,
                     yEnd: totalShareValue - totalDividendShareValue + heightOffset,
                     date: investmentStep.date,
                 });
-                this.dataArray[this.dataToIndex[etfIdentifier + dividendIdentifier]].push({
+                this.dataArray[this.dataToIndex[etfIdentifier + investedIdentifier]].push({
                     yStart: totalShareValue - totalDividendShareValue + heightOffset,
                     yEnd: heightOffset,
                     date: investmentStep.date,
@@ -77,9 +90,9 @@ export class LineChartD3 extends D3ChartStrategy {
         this.dataArray[this.dataToIndex.taxes].color = this.colors.taxes;
         this.dataArray[this.dataToIndex.costs].color = this.colors.costs;
         for (const etfIdentifier in this.investmentSteps[0].totalShares) {
-            this.dataArray[this.dataToIndex[etfIdentifier + dividendIdentifier]].color = this.etfLineColors[
+            this.dataArray[this.dataToIndex[etfIdentifier + investedIdentifier]].color = this.etfLineColors[
                 etfIdentifier
-            ].dividend;
+            ].invested;
             this.dataArray[this.dataToIndex[etfIdentifier + capitalIdentifier]].color = this.etfLineColors[
                 etfIdentifier
             ].total;
@@ -133,45 +146,71 @@ export class LineChartD3 extends D3ChartStrategy {
 
     _prepareText() {
         super._prepareText();
+        const paddingW = this.width * 0.005;
+        const paddingH = this.standardFontSize * 0.3;
 
-        const costData = this.dataArray[this.dataToIndex.costs];
-        const maxCostsMiddlePosition =
-            this.yScale(0) + (this.yScale(costData[costData.length - 1].yStart) - this.yScale(0)) / 2;
+        for (let i = 0; i < negativeLabels.length; i++) {
+            this.textProperties[negativeLabels[i]] = {
+                text: generateNegativeLabelText(negativeLabels[i]),
+                x: this.xScale(this.dateExtent[1]) + paddingW,
+                y: this.yScale(0) + (this.standardFontSize + paddingH) * i + this.standardFontSize,
+                fontSize: this.standardFontSize,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.colors[negativeLabels[i]],
+            };
+        }
 
-        this.textProperties.push(
-            ...[
-                {
-                    text: ' Inflation',
-                    x: this.xScale(this.dateExtent[0]) + this.width / 40,
-                    y: this.yScale(0) + (this.yScale(this.yExtent[0]) - this.yScale(0)) / 2,
-                    fontSize: this.standardFontSize,
-                    textAnchor: 'start',
-                    fontWeight: 'normal',
-                    color: this.colors.inflation,
-                },
-                {
-                    text: ' Costs',
-                    x: this.width * 1.005,
-                    y: maxCostsMiddlePosition + this.standardFontSize / 2,
-                    fontSize: this.standardFontSize,
-                    textAnchor: 'start',
-                    fontWeight: 'normal',
-                    color: this.colors.costs,
-                },
-                {
-                    text: ' Taxes',
-                    x: this.width * 1.005,
-                    y: maxCostsMiddlePosition + this.standardFontSize * 2,
-                    fontSize: this.standardFontSize,
-                    textAnchor: 'start',
-                    fontWeight: 'normal',
-                    color: this.colors.taxes,
-                },
-            ]
-        );
+        // Add ETF Labels.
+        for (let i = 0; i < this.etfIdentifiers.length; i++) {
+            this.textProperties[this.etfIdentifiers[i]] = {
+                text: ETF_SYMBOL_TO_NAME[this.etfIdentifiers[i]],
+                x: this.xScale(this.dateExtent[1]) + paddingW,
+                y: this.yScale(0) - (this.standardFontSize + paddingH) * i * 2 - 2 * this.standardFontSize,
+                fontSize: this.standardFontSize,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.etfLineColors[this.etfIdentifiers[i]].total,
+            };
+        }
+
+        // Add ETF values of Labels.
+        for (let i = 0; i < this.etfIdentifiers.length; i++) {
+            this.textProperties[this.etfIdentifiers[i] + this.labelValueIdentifier] = {
+                text: generateEtfValueText(),
+                x: this.xScale(this.dateExtent[1]) + paddingW,
+                y: this.yScale(0) - (this.standardFontSize + paddingH) * i * 2 - 1 * this.standardFontSize,
+                fontSize: this.standardFontSize,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.etfLineColors[this.etfIdentifiers[i]].total,
+            };
+        }
     }
 
-    _updateTooltip() {}
+    _updateTooltip(investmentStepIndex) {
+        console.log(this.investmentSteps);
+        for (const etfIdentifier of this.etfIdentifiers) {
+            const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
+            const totalDividendValue = getTotalDividenShareValue(
+                etfIdentifier,
+                this.investmentSteps[investmentStepIndex]
+            );
+            const investedValue = totalValue - totalDividendValue;
+            const updatedValueText = generateEtfValueText(
+                this.valueToDisplayText(investedValue, true),
+                this.valueToDisplayText(totalValue, true)
+            );
+            this.textProperties[etfIdentifier + this.labelValueIdentifier].text = updatedValueText;
+        }
+        for (const negativeLabel of negativeLabels) {
+            const value = this.investmentSteps[investmentStepIndex][
+                negativeLabelsToInvestmentStepIdentifier[negativeLabel]
+            ];
+            const updatedValueText = generateNegativeLabelText(negativeLabel, this.valueToDisplayText(value, true));
+            this.textProperties[negativeLabel].text = updatedValueText;
+        }
+    }
 }
 
 export default LineChartD3;

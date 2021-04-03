@@ -5,7 +5,7 @@ import { TextInputElement } from './TextInputElement';
 export function SidebarSectionHeading(props) {
     return (
         <div className="position-relative">
-            <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+            <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
                 <span>{props.title}</span>
             </h6>
             <ErrorMessage {...props} identifier={props.title} />
