@@ -13,8 +13,8 @@ const capitalIdentifier = 'capital';
 const investedIdentifier = 'invested';
 
 export class AreaChartD3 extends D3ChartStrategy {
-    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate) {
-        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate);
+    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate, yExtent) {
+        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate, yExtent);
 
         this.etfLineColors = {
             'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },

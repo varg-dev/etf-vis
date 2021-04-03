@@ -22,13 +22,15 @@ export const LIFE_EXPECTATION_IDENTIFIER = 'lifeExpectation';
 export const DETAILED_GRAPH_DROPDOWN_IDENTIFIER = 'detailedGraph';
 export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
 export const API_KEY_IDENTIFIER = 'apiKey';
+export const Y_AXIS_LOCK_IDENTIFIER = 'yAxisLock';
+
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
 
 export const ETF_SYMBOL_TO_NAME = {
     'SP5C.PAR': 'S & P 500',
-    'ESGE': 'iShare',
-    'SUSA': 'MSCI USA ESG',
+    ESGE: 'iShare',
+    SUSA: 'MSCI USA ESG',
 };
 
 function transformInputToInt(e) {
@@ -285,25 +287,23 @@ export class App extends React.Component {
                             />
                             {/* Visualization Options */}
                             <SidebarSectionHeading title="Visualization Options" />
-                            <div className="d-grid gap-0">
-                                <div className="p-1">
-                                    <GraphDetailDropDown
-                                        key={DETAILED_GRAPH_DROPDOWN_IDENTIFIER}
-                                        {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]}
-                                    />
-                                </div>
-                                <CheckboxInputElement
-                                    key={ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER}
-                                    {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]}
-                                />
-                                <div className="p-1">
-                                    <ETFSelectionDropDown
-                                        key={ETF_DROPDOWN_SELECTION_IDENTIFIER}
-                                        autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
-                                        {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
-                                    />
-                                </div>
-                            </div>
+                            <GraphDetailDropDown
+                                key={DETAILED_GRAPH_DROPDOWN_IDENTIFIER}
+                                {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]}
+                            />
+                            <CheckboxInputElement
+                                key={Y_AXIS_LOCK_IDENTIFIER}
+                                {...this.state[Y_AXIS_LOCK_IDENTIFIER]}
+                            />
+                            <CheckboxInputElement
+                                key={ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER}
+                                {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]}
+                            />
+                            <ETFSelectionDropDown
+                                key={ETF_DROPDOWN_SELECTION_IDENTIFIER}
+                                autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
+                                {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
+                            />
                         </form>
                     </nav>
                     <main className="col-md-9 col-lg-10 ms-sm-auto">
@@ -410,6 +410,12 @@ function getInitialInputFormState(caller) {
             value: false,
             label: 'Automatic ETF Ratio',
             identifier: ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER,
+            onValueChange: caller.handleCheckBoxChange,
+        },
+        [Y_AXIS_LOCK_IDENTIFIER]: {
+            value: false,
+            label: 'Lock Y Axis Extent',
+            identifier: Y_AXIS_LOCK_IDENTIFIER,
             onValueChange: caller.handleCheckBoxChange,
         },
         [API_KEY_IDENTIFIER]: {

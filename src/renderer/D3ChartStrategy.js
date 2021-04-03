@@ -37,6 +37,7 @@ export class D3ChartStrategy {
         payoutPhaseStartDate,
         svgID,
         tooltipDate,
+        yExtent,
         width = 1100,
         height = 300,
         marginW = 200,
@@ -49,6 +50,7 @@ export class D3ChartStrategy {
         this.investmentSteps = investmentSteps;
         this.payoutPhaseStartDate = payoutPhaseStartDate;
         this.tooltipDate = tooltipDate;
+        this.yExtent = yExtent;
 
         this.marginW = marginW;
         this.marginH = marginH;
@@ -84,7 +86,7 @@ export class D3ChartStrategy {
         this._drawAxis();
         this._addInteraction();
 
-        if(this.tooltipDate != null){
+        if (this.tooltipDate != null) {
             this._updateAllDiagrams();
         }
     }
@@ -94,15 +96,18 @@ export class D3ChartStrategy {
 
         const lastImportantDateForYScale = new Date(this.payoutPhaseStartDate);
         lastImportantDateForYScale.setMonth(lastImportantDateForYScale.getMonth() + numberOfMonthsOfAYear);
-        const filteredDataArrayForYMax = this.dataArray[this.maxIndex].filter(
-            e => e.date <= lastImportantDateForYScale && e.date > this.dateExtent[0]
-        );
-        const filteredDataArrayForYMin = this.dataArray[this.minIndex].filter(
-            e => e.date <= lastImportantDateForYScale
-        );
-        const maxVal = d3.max(filteredDataArrayForYMax.map(e => e.yStart));
-        const minVal = d3.min(filteredDataArrayForYMin.map(e => e.yEnd));
-        this.yExtent = [minVal, maxVal];
+        // Only calculate the y extent when it is undefined. Meaning the y axis is not locked.
+        if (this.yExtent == null) {
+            const filteredDataArrayForYMax = this.dataArray[this.maxIndex].filter(
+                e => e.date <= lastImportantDateForYScale && e.date > this.dateExtent[0]
+            );
+            const filteredDataArrayForYMin = this.dataArray[this.minIndex].filter(
+                e => e.date <= lastImportantDateForYScale
+            );
+            const maxVal = d3.max(filteredDataArrayForYMax.map(e => e.yStart));
+            const minVal = d3.min(filteredDataArrayForYMin.map(e => e.yEnd));
+            this.yExtent = [minVal, maxVal];
+        }
     }
 
     _createScales() {

@@ -10,9 +10,10 @@ import {
     MONTHLY_PAYOUT_IDENTIFIER,
     LIFE_EXPECTATION_IDENTIFIER,
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
+    Y_AXIS_LOCK_IDENTIFIER
 } from './App';
 import { InvestmentModel } from '../model/InvestmentModel';
-import AreaChartD3 from '../renderer/LineChartD3';
+import AreaChartD3 from '../renderer/AreaChartD3';
 import CashflowBarChart from '../renderer/CashflowBarChartD3';
 import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
 
@@ -67,6 +68,10 @@ export class Visualization extends React.Component {
         }
     }
 
+    getYAxisExtent(diagram){
+        return diagram != null && this.props[Y_AXIS_LOCK_IDENTIFIER] ? diagram.yExtent : undefined;
+    }
+
     drawVisualization() {
         D3ChartStrategy.reset();
         try {
@@ -82,14 +87,16 @@ export class Visualization extends React.Component {
                 correctLevelOfDetailInvestmentSteps,
                 this.firstSVGRef.current,
                 firstPayoutPhaseDate,
-                tooltipDate
+                tooltipDate,
+                this.getYAxisExtent(this.areaChart)
             );
             this.areaChart.render();
             this.barChart = new CashflowBarChart(
                 correctLevelOfDetailInvestmentSteps,
                 this.secondSVGRef.current,
                 firstPayoutPhaseDate,
-                tooltipDate
+                tooltipDate,
+                this.getYAxisExtent(this.barChart)
             );
             this.barChart.render();
         } catch (e) {

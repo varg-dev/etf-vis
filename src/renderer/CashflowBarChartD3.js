@@ -9,8 +9,8 @@ function getSumNewPayout(investmentStep) {
 }
 
 export class CashflowBarChart extends D3ChartStrategy {
-    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate) {
-        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'secondSVG', tooltipDate);
+    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate, yExtent) {
+        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'secondSVG', tooltipDate, yExtent);
         this.barPaddingPercentage = 0.9;
 
         this.zeroLineStrokeWidth = 3;
