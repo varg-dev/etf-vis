@@ -6,6 +6,10 @@ const ONE_THOUSAND = 1000;
 const ONE_MILLION = 1000000;
 const numberOfTicks = 7;
 
+export function generateLabelWithValueText(name, value = undefined) {
+    return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
+}
+
 function setInteractionDisplayForActiveDiagrams(displayOption) {
     for (const activeDiagram of D3ChartStrategy.activeStrategies) {
         activeDiagram.interaction.style('display', displayOption);
@@ -32,6 +36,7 @@ export class D3ChartStrategy {
         renderDivRef,
         payoutPhaseStartDate,
         svgID,
+        tooltipDate,
         width = 1100,
         height = 300,
         marginW = 200,
@@ -43,6 +48,7 @@ export class D3ChartStrategy {
         D3ChartStrategy.activeStrategies.push(this);
         this.investmentSteps = investmentSteps;
         this.payoutPhaseStartDate = payoutPhaseStartDate;
+        this.tooltipDate = tooltipDate;
 
         this.marginW = marginW;
         this.marginH = marginH;
@@ -77,6 +83,10 @@ export class D3ChartStrategy {
         this._drawText();
         this._drawAxis();
         this._addInteraction();
+
+        if(this.tooltipDate != null){
+            this._updateAllDiagrams();
+        }
     }
 
     _calculateExtents() {
@@ -104,7 +114,7 @@ export class D3ChartStrategy {
         const labelDivisionFactor =
             Math.max(-this.yExtent[0], this.yExtent[1]) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
         const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
-        if(hasToBePositive){
+        if (hasToBePositive) {
             value = Math.abs(value);
         }
         return `${(value / labelDivisionFactor).toLocaleString(undefined, {
@@ -189,12 +199,16 @@ export class D3ChartStrategy {
     _handleTooltipEvent(mouseEvent) {
         const x = d3.pointer(mouseEvent)[0];
         const date = this.xScale.invert(x);
-        const roundedDate = roundDateToBeginningOfMonth(date);
-        const investmentStepIndex = calculateInvestmentStepIndexForDate(roundedDate, this.investmentSteps);
+        this.tooltipDate = roundDateToBeginningOfMonth(date);
+        this._updateAllDiagrams();
+    }
+
+    _updateAllDiagrams() {
+        const investmentStepIndex = calculateInvestmentStepIndexForDate(this.tooltipDate, this.investmentSteps);
         for (const activeDiagram of D3ChartStrategy.activeStrategies) {
-            activeDiagram.hoverLine.attr('x1', this.xScale(roundedDate)).attr('x2', this.xScale(roundedDate));
+            activeDiagram.hoverLine.attr('x1', this.xScale(this.tooltipDate)).attr('x2', this.xScale(this.tooltipDate));
             activeDiagram._updateTooltip(investmentStepIndex);
-            activeDiagram._updateText();
+            activeDiagram._updateDiagram();
         }
     }
 
@@ -214,7 +228,7 @@ export class D3ChartStrategy {
             .style('fill', d => d.color);
     }
 
-    _updateText() {
+    _updateDiagram() {
         this.textGroup.selectAll('text').text(d => d.text);
     }
 
@@ -229,7 +243,7 @@ export class D3ChartStrategy {
         const yPos = -10;
         this.standardFontSize = 20;
         this.textProperties = {
-            saving: {
+            savingBold: {
                 text: 'SAVING',
                 x: savingPhaseMid,
                 y: yPos,
@@ -247,7 +261,7 @@ export class D3ChartStrategy {
                 fontWeight: 'normal',
                 color: 'black',
             },
-            payout: {
+            payoutBold: {
                 text: 'PAYOUT',
                 x: payoutPhaseMid,
                 y: yPos,

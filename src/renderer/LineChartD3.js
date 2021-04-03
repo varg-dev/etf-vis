@@ -1,14 +1,10 @@
 import * as d3 from 'd3';
 import { getTotalShareValue, getTotalDividenShareValue } from '../model/InvestmentModel';
-import { D3ChartStrategy } from './D3ChartStrategy';
+import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
 import { ETF_SYMBOL_TO_NAME } from '../components/App';
 
 function generateEtfValueText(investmentValue = undefined, totalValue = undefined) {
     return `Inv: ${investmentValue == null ? '-' : investmentValue}, Tot: ${totalValue == null ? '-' : totalValue}`;
-}
-
-function generateNegativeLabelText(name, value = undefined) {
-    return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
 }
 
 const negativeLabels = ['costs', 'taxes', 'inflation'];
@@ -16,9 +12,9 @@ const negativeLabelsToInvestmentStepIdentifier = { costs: 'totalCosts', taxes: '
 const capitalIdentifier = 'capital';
 const investedIdentifier = 'invested';
 
-export class LineChartD3 extends D3ChartStrategy {
-    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate) {
-        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG');
+export class AreaChartD3 extends D3ChartStrategy {
+    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate) {
+        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate);
 
         this.etfLineColors = {
             'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },
@@ -151,7 +147,7 @@ export class LineChartD3 extends D3ChartStrategy {
 
         for (let i = 0; i < negativeLabels.length; i++) {
             this.textProperties[negativeLabels[i]] = {
-                text: generateNegativeLabelText(negativeLabels[i]),
+                text: generateLabelWithValueText(negativeLabels[i]),
                 x: this.xScale(this.dateExtent[1]) + paddingW,
                 y: this.yScale(0) + (this.standardFontSize + paddingH) * i + this.standardFontSize,
                 fontSize: this.standardFontSize,
@@ -189,7 +185,6 @@ export class LineChartD3 extends D3ChartStrategy {
     }
 
     _updateTooltip(investmentStepIndex) {
-        console.log(this.investmentSteps);
         for (const etfIdentifier of this.etfIdentifiers) {
             const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
             const totalDividendValue = getTotalDividenShareValue(
@@ -207,10 +202,10 @@ export class LineChartD3 extends D3ChartStrategy {
             const value = this.investmentSteps[investmentStepIndex][
                 negativeLabelsToInvestmentStepIdentifier[negativeLabel]
             ];
-            const updatedValueText = generateNegativeLabelText(negativeLabel, this.valueToDisplayText(value, true));
+            const updatedValueText = generateLabelWithValueText(negativeLabel, this.valueToDisplayText(value, true));
             this.textProperties[negativeLabel].text = updatedValueText;
         }
     }
 }
 
-export default LineChartD3;
+export default AreaChartD3;

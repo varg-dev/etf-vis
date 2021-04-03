@@ -12,7 +12,7 @@ import {
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
 } from './App';
 import { InvestmentModel } from '../model/InvestmentModel';
-import LineChartD3 from '../renderer/LineChartD3';
+import AreaChartD3 from '../renderer/LineChartD3';
 import CashflowBarChart from '../renderer/CashflowBarChartD3';
 import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
 
@@ -57,6 +57,16 @@ export class Visualization extends React.Component {
         );
     }
 
+    getTooltipDate() {
+        if (this.areaChart != null) {
+            return this.areaChart.tooltipDate;
+        } else if (this.barChart != null) {
+            return this.barChart.tooltipDate;
+        } else {
+            return undefined;
+        }
+    }
+
     drawVisualization() {
         D3ChartStrategy.reset();
         try {
@@ -67,16 +77,21 @@ export class Visualization extends React.Component {
             const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
                 this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]
             );
-            new LineChartD3(
+            let tooltipDate = this.getTooltipDate();
+            this.areaChart = new AreaChartD3(
                 correctLevelOfDetailInvestmentSteps,
                 this.firstSVGRef.current,
-                firstPayoutPhaseDate
-            ).render();
-            new CashflowBarChart(
+                firstPayoutPhaseDate,
+                tooltipDate
+            );
+            this.areaChart.render();
+            this.barChart = new CashflowBarChart(
                 correctLevelOfDetailInvestmentSteps,
                 this.secondSVGRef.current,
-                firstPayoutPhaseDate
-            ).render();
+                firstPayoutPhaseDate,
+                tooltipDate
+            );
+            this.barChart.render();
         } catch (e) {
             console.error(e);
         }
