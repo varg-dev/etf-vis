@@ -1,13 +1,12 @@
-import React from 'react';
-// Needed to make the drop downs work.
-import { Dropdown, Tooltip } from 'bootstrap'; // eslint-disable-line no-unused-vars
-import Visualization from './Visualization';
-import TextInputElement from './TextInputElement';
-import CheckboxInputElement from './CheckboxInputElement';
-import { SidebarSectionHeading, Overlay } from './MinimalBootstrapComponents';
-import { BrokerDropDown } from './BrokerDropDown';
-import { GraphDetailDropDown } from './GraphDetailDropDown';
-import { ETFSelectionDropDown } from './ETFSelectionDropDown';
+import React, { ChangeEvent } from 'react';
+import { Visualization, CostConfiguration } from './Visualization';
+import { TextInputElement, TextInputState, TextInputStateIdentifier, NumberInputStateIdentifier } from './TextInputElement';
+import { CheckboxInputElement, CheckboxState, CheckBoxStateIdentifier } from './CheckboxInputElement';
+import { Overlay, APIKey } from './APIKeyOverlay';
+import { SidebarSectionHeading } from './MinimalBootstrapComponents';
+import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropDown';
+import { GraphDetailDropDown, IGraphDetailDropDown, GraphDetailLevel } from './GraphDetailDropDown';
+import { ETFSelectionDropDown, ETFProperties, ETFSelection } from './ETFSelectionDropDown';
 import ForecastModelSingleton from '../model/ForecastModel';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
@@ -33,35 +32,34 @@ export const ETF_SYMBOL_TO_NAME = {
     SUSA: 'MSCI USA ESG',
 };
 
-function transformInputToInt(e) {
-    const intVal = parseInt(e.target.value.split(' ', 1));
+function transformInputToInt(e: ChangeEvent<HTMLInputElement>) {
+    const valueWithoutTextAppending = e.target.value.split(' ')[0];
+    const intVal = parseInt(valueWithoutTextAppending);
     return isNaN(intVal) ? 0 : intVal;
 }
 
-function transformInputToFloat(e) {
+function transformInputToFloat(e: ChangeEvent<HTMLInputElement>) {
     const floatVal = parseFloat(e.target.value);
     return isNaN(floatVal) ? 0 : floatVal;
 }
 
-function isPercentage(val) {
+function isPercentage(val: number) {
     return !Number.isNaN(val) && val >= 0 && val <= 1;
 }
 
-function isPositiveInt(val) {
+function isPositiveInt(val: number) {
     return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
 }
 
-function constructVisualizationProps(state) {
-    const props = {};
-    for (const identifier in state) {
-        props[identifier] = state[identifier].value;
+export function generateCostConfig(state: AppState): CostConfiguration {
+    if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
+        return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
+    } else {
+        return { percentageCosts: state[TRANSACTION_COSTS_IDENTIFIER].value, fixedCosts: 0.0 };
     }
-    Object.assign(props, { etfProperties: state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements });
-    props.isValid = state.isValid;
-    return props;
 }
 
-function recalculateETFPercentages(state) {
+function recalculateETFPercentages(state: AppState) {
     let numberOfSelectedETFs = 0;
     for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
         if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
@@ -75,8 +73,8 @@ function recalculateETFPercentages(state) {
     return state;
 }
 
-export class App extends React.Component {
-    constructor(props) {
+export class App extends React.Component<{}, AppState> {
+    constructor(props: {}) {
         super(props);
 
         this.handleTextChange = this.handleTextChange.bind(this);
@@ -90,13 +88,13 @@ export class App extends React.Component {
         this.state = getInitialInputFormState(this);
     }
 
-    handleTextChange(changedValue, changedStateIdentifier) {
+    handleTextChange(changedValue: number | string, changedStateIdentifier: TextInputStateIdentifier) {
         const state = { ...this.state };
         state[changedStateIdentifier].value = changedValue;
         this.validateAndSetState(state);
     }
 
-    handleCheckBoxChange(changedStateIdentifier) {
+    handleCheckBoxChange(changedStateIdentifier: CheckBoxStateIdentifier) {
         const state = { ...this.state };
         state[changedStateIdentifier].value = !state[changedStateIdentifier].value;
         if (changedStateIdentifier === TRANSACTION_COSTS_TYPE_IDENTIFIER) {
@@ -114,7 +112,7 @@ export class App extends React.Component {
         this.validateAndSetState(state);
     }
 
-    handleBrokerChange(brokerProperties) {
+    handleBrokerChange(brokerProperties: BrokerProperties) {
         const state = { ...this.state };
         state[TRANSACTION_COSTS_IDENTIFIER].value =
             brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts : brokerProperties.fixedCosts;
@@ -122,13 +120,13 @@ export class App extends React.Component {
         this.validateAndSetState(state);
     }
 
-    handleGraphDetailChange(detailProperties) {
+    handleGraphDetailChange(detailProperties: GraphDetailLevel) {
         const state = { ...this.state };
         state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value = detailProperties.value;
         this.validateAndSetState(state);
     }
 
-    handleETFSelectionChange(etfProperties) {
+    handleETFSelectionChange(etfProperties: ETFProperties) {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
             ETF_DROPDOWN_SELECTION_IDENTIFIER
@@ -139,7 +137,7 @@ export class App extends React.Component {
         this.validateAndSetState(state);
     }
 
-    handleETFShareChange(changedValue, changedETFIdentifier) {
+    handleETFShareChange(changedValue: number, changedETFIdentifier: string) {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].percentage = changedValue;
         this.validateAndSetState(state);
@@ -162,8 +160,8 @@ export class App extends React.Component {
         this.forceUpdate();
     }
 
-    validateAndSetState(state) {
-        const positiveIntIdentifier = [
+    validateAndSetState(state: AppState) {
+        const positiveIntIdentifier: NumberInputStateIdentifier[] = [
             MONTHLY_INVESTMENT_IDENTIFIER,
             MONTHLY_PAYOUT_IDENTIFIER,
             STARTING_CAPITAL_IDENTIFIER,
@@ -228,7 +226,7 @@ export class App extends React.Component {
     }
 
     render() {
-        const visualizationProps = constructVisualizationProps(this.state);
+        const costConfig = generateCostConfig(this.state);
         return (
             <div className="container-fluid">
                 <Overlay {...this.state[API_KEY_IDENTIFIER]} />
@@ -237,70 +235,29 @@ export class App extends React.Component {
                         <form className="position-sticky needs-validation" noValidate>
                             {/* Money Options */}
                             <SidebarSectionHeading title="Money Options" />
-                            <TextInputElement
-                                key={STARTING_CAPITAL_IDENTIFIER}
-                                {...this.state[STARTING_CAPITAL_IDENTIFIER]}
-                            />
-                            <TextInputElement
-                                key={MONTHLY_INVESTMENT_IDENTIFIER}
-                                {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]}
-                            />
-                            <TextInputElement
-                                key={MONTHLY_PAYOUT_IDENTIFIER}
-                                {...this.state[MONTHLY_PAYOUT_IDENTIFIER]}
-                            />
-                            <TextInputElement
-                                key={TAX_FREE_AMOUNT_IDENTIFIER}
-                                {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]}
-                            />
+                            <TextInputElement {...this.state[STARTING_CAPITAL_IDENTIFIER]} />
+                            <TextInputElement {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]} />
+                            <TextInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
+                            <TextInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
                             {/* Time Options */}
                             <SidebarSectionHeading title="Time Options" />
-                            <TextInputElement key={AGE_IDENTIFIER} {...this.state[AGE_IDENTIFIER]} />
-                            <TextInputElement
-                                key={LIFE_EXPECTATION_IDENTIFIER}
-                                {...this.state[LIFE_EXPECTATION_IDENTIFIER]}
-                            />
-                            <TextInputElement key={SAVING_PHASE_IDENTIFIER} {...this.state[SAVING_PHASE_IDENTIFIER]} />
+                            <TextInputElement {...this.state[AGE_IDENTIFIER]} />
+                            <TextInputElement {...this.state[LIFE_EXPECTATION_IDENTIFIER]} />
+                            <TextInputElement {...this.state[SAVING_PHASE_IDENTIFIER]} />
                             {/* Cost Options */}
                             <SidebarSectionHeading title="Cost Options" />
                             <TextInputElement
                                 key={TRANSACTION_COSTS_IDENTIFIER}
                                 {...this.state[TRANSACTION_COSTS_IDENTIFIER]}
                             />
-                            <CheckboxInputElement
-                                key={TRANSACTION_COSTS_TYPE_IDENTIFIER}
-                                {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]}
-                            />
-                            <BrokerDropDown
-                                key={BROKER_DROPDOWN_IDENTIFIER}
-                                fixedCosts={
-                                    this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value
-                                        ? this.state[TRANSACTION_COSTS_IDENTIFIER].value
-                                        : 0
-                                }
-                                percentageCosts={
-                                    this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value
-                                        ? 0
-                                        : this.state[TRANSACTION_COSTS_IDENTIFIER].value
-                                }
-                                {...this.state[BROKER_DROPDOWN_IDENTIFIER]}
-                            />
+                            <CheckboxInputElement {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]} />
+                            <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
                             {/* Visualization Options */}
                             <SidebarSectionHeading title="Visualization Options" />
-                            <GraphDetailDropDown
-                                key={DETAILED_GRAPH_DROPDOWN_IDENTIFIER}
-                                {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]}
-                            />
-                            <CheckboxInputElement
-                                key={Y_AXIS_LOCK_IDENTIFIER}
-                                {...this.state[Y_AXIS_LOCK_IDENTIFIER]}
-                            />
-                            <CheckboxInputElement
-                                key={ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER}
-                                {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]}
-                            />
+                            <GraphDetailDropDown {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]} />
+                            <CheckboxInputElement {...this.state[Y_AXIS_LOCK_IDENTIFIER]} />
+                            <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
                             <ETFSelectionDropDown
-                                key={ETF_DROPDOWN_SELECTION_IDENTIFIER}
                                 autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
                                 {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
                             />
@@ -308,7 +265,7 @@ export class App extends React.Component {
                     </nav>
                     <main className="col-md-9 col-lg-10 ms-sm-auto">
                         <h1>Etf Pension Plan Visualization</h1>
-                        <Visualization {...visualizationProps} />
+                        <Visualization {...this.state} />
                     </main>
                 </div>
             </div>
@@ -316,7 +273,30 @@ export class App extends React.Component {
     }
 }
 
-function getInitialInputFormState(caller) {
+// TODO  mach notation konsistent: _, private, Interface mit I, remove state identifier constants, organize interfaces / code.
+export interface AppState {
+    isValid: boolean;
+    startingCapital: TextInputState;
+    monthlyInvestment: TextInputState;
+    monthlyPayout: TextInputState;
+    transactionCosts: TextInputState;
+    savingPhase: TextInputState;
+    age: TextInputState;
+    lifeExpectation: TextInputState;
+    taxFreeAmount: TextInputState;
+
+    apiKey: APIKey;
+
+    transactionCostsType: CheckboxState;
+    etfAutomaticPercentage: CheckboxState;
+    yAxisLock: CheckboxState;
+
+    detailedGraph: IGraphDetailDropDown;
+    brokerDropdown: IBrokerDropDown;
+    etfDropdownSelection: ETFSelection;
+}
+
+function getInitialInputFormState(caller: App): AppState {
     return {
         isValid: true,
         // simple ui elements.
@@ -329,6 +309,7 @@ function getInitialInputFormState(caller) {
             identifier: STARTING_CAPITAL_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [MONTHLY_INVESTMENT_IDENTIFIER]: {
             value: 100,
@@ -339,6 +320,7 @@ function getInitialInputFormState(caller) {
             identifier: MONTHLY_INVESTMENT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [MONTHLY_PAYOUT_IDENTIFIER]: {
             value: 1000,
@@ -349,6 +331,7 @@ function getInitialInputFormState(caller) {
             identifier: MONTHLY_PAYOUT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [TRANSACTION_COSTS_IDENTIFIER]: {
             value: 0.015,
@@ -359,12 +342,7 @@ function getInitialInputFormState(caller) {
             identifier: TRANSACTION_COSTS_IDENTIFIER,
             transformFunction: transformInputToFloat,
             onValueChange: caller.handleTextChange,
-        },
-        [TRANSACTION_COSTS_TYPE_IDENTIFIER]: {
-            value: false,
-            label: 'Fixed Amount',
-            identifier: TRANSACTION_COSTS_TYPE_IDENTIFIER,
-            onValueChange: caller.handleCheckBoxChange,
+            disabled: false,
         },
         [SAVING_PHASE_IDENTIFIER]: {
             value: 40,
@@ -375,6 +353,7 @@ function getInitialInputFormState(caller) {
             identifier: SAVING_PHASE_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [AGE_IDENTIFIER]: {
             value: 30,
@@ -385,6 +364,7 @@ function getInitialInputFormState(caller) {
             identifier: AGE_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [LIFE_EXPECTATION_IDENTIFIER]: {
             value: 80,
@@ -395,6 +375,7 @@ function getInitialInputFormState(caller) {
             identifier: LIFE_EXPECTATION_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
         },
         [TAX_FREE_AMOUNT_IDENTIFIER]: {
             value: 801,
@@ -405,6 +386,13 @@ function getInitialInputFormState(caller) {
             identifier: TAX_FREE_AMOUNT_IDENTIFIER,
             transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
+        [TRANSACTION_COSTS_TYPE_IDENTIFIER]: {
+            value: false,
+            label: 'Fixed Amount',
+            identifier: TRANSACTION_COSTS_TYPE_IDENTIFIER,
+            onValueChange: caller.handleCheckBoxChange,
         },
         [ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]: {
             value: false,
@@ -420,13 +408,14 @@ function getInitialInputFormState(caller) {
         },
         [API_KEY_IDENTIFIER]: {
             displayOverlay: true,
+            error: false,
             value: '',
             label: '',
             errorMessage: '',
             isValid: true,
             textAppending: '',
             identifier: API_KEY_IDENTIFIER,
-            transformFunction: e => e.target.value,
+            transformFunction: (e: ChangeEvent<HTMLInputElement>) => (e.target as HTMLInputElement).value,
             onValueChange: caller.handleTextChange,
             handleAPIKeyConfirm: caller.handleAPIKeyConfirm,
         },

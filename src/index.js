@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import './scss/main.scss';
 import App from './components/App';
 import reportWebVitals from './reportWebVitals';
+// Needed to make the drop downs work.
+import { Dropdown, Tooltip } from 'bootstrap'; // eslint-disable-line no-unused-vars
 
 ReactDOM.render(
     <React.StrictMode>

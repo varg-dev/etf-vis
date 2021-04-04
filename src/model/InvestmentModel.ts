@@ -2,19 +2,58 @@ import ForecastModelSingleton from './ForecastModel';
 import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear } from '../helpers/utils';
 import cloneDeep from 'lodash.clonedeep';
 
+import {CostConfiguration, ConfigOptions} from '../components/Visualization';
+
 const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
 const corporateTaxRatio = 0.26375;
 const inflationRate = 0.01;
 const defaultDividendAmount = 0.025;
 
-function getNextMonthDate(date) {
+interface ETFShares {
+    [etfIdentifier: string]: number;
+}
+
+export type ETFRatio = ETFShares;
+
+type ETFPrizes = ETFShares;
+
+type ETFMoney = ETFShares;
+
+
+interface InvestmentStep {
+    date: Date;
+    newShares: ETFShares;
+    totalShares: ETFShares;
+    dividendNewShares: ETFShares;
+    dividendTotalShares: ETFShares;
+    totalCosts: number;
+    sharePrizes: ETFPrizes;
+    totalInvestedMoney: ETFMoney;
+    newInvestedMoney: ETFMoney;
+    newInvestment: number;
+    totalTaxes: number;
+    totalPayout: ETFMoney;
+    newPayout: ETFMoney;
+    inflation: number;
+}
+
+interface PayoutStats {
+    [etfIdentifier: string]: PayoutStat;
+}
+
+interface PayoutStat {
+    investmentStepsIdx: number;
+    alreadySoldShares: number;
+}
+
+function getNextMonthDate(date: Date) {
     const newDate = new Date(date);
     newDate.setMonth(date.getMonth() + 1);
     return newDate;
 }
 
-function calculateDividend(etfIdentifier, date) {
+function calculateDividend(etfIdentifier: string, date: Date) {
     if (!isLastMonthOfAYear(date)) {
         return 0;
     } else {
@@ -24,32 +63,32 @@ function calculateDividend(etfIdentifier, date) {
     }
 }
 
-function calculateCosts(amount, costConfiguration) {
+function calculateCosts(amount: number, costConfiguration: CostConfiguration) {
     let costs = amount * costConfiguration.percentageCosts + costConfiguration.fixedCosts;
     const amountWithoutCosts = Math.max(amount - costs, 0);
     costs = amount - amountWithoutCosts;
     return [amountWithoutCosts, costs];
 }
 
-function subtractTaxFreeGain(taxAmount, taxFreeAmount) {
+function subtractTaxFreeGain(taxAmount: number, taxFreeAmount: number) {
     const leftoverTaxes = Math.max(0, taxAmount - taxFreeAmount);
     const leftoverTaxFreeAmount = Math.max(0, taxFreeAmount - taxAmount);
     return [leftoverTaxes, leftoverTaxFreeAmount];
 }
 
-export function getTotalShareValue(etfIdentifier, investmentStep) {
+export function getTotalShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
     return investmentStep.totalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
 
-export function getTotalDividenShareValue(etfIdentifier, investmentStep){
+export function getTotalDividenShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
     return investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
 
-function getNewShareValue(etfIdentifier, investmentStep) {
+function getNewShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
     return investmentStep.newShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
 
-function sumOfTotalValues(investmentStep) {
+function sumOfTotalValues(investmentStep: InvestmentStep) {
     let sum = 0;
     for (const etfIdentifier in investmentStep.totalShares) {
         sum += getTotalShareValue(etfIdentifier, investmentStep);
@@ -57,7 +96,7 @@ function sumOfTotalValues(investmentStep) {
     return sum;
 }
 
-function calculateAndAddInflation(investmentStep, initialDate, endDate) {
+function calculateAndAddInflation(investmentStep: InvestmentStep, initialDate: Date, endDate: Date) {
     // TODO predict inflationRate??? if so how should I predict it?
     const sumTotalValues = sumOfTotalValues(investmentStep);
     const timeFactor =
@@ -67,7 +106,12 @@ function calculateAndAddInflation(investmentStep, initialDate, endDate) {
     investmentStep.inflation = sumTotalValues - sumTotalValues * Math.pow(1 - inflationRate, timeFactor);
 }
 
-function calculateForecastInterval(age, lifeExpectation, savingPhaseLength, fadeOutYears = 10) {
+function calculateForecastInterval(
+    age: number,
+    lifeExpectation: number,
+    savingPhaseLength: number,
+    fadeOutYears: number = 10
+) {
     const yearsLeft = lifeExpectation - age;
     const now = new Date();
     const beginningDate = new Date(now.getFullYear(), now.getMonth() + 1);
@@ -79,7 +123,12 @@ function calculateForecastInterval(age, lifeExpectation, savingPhaseLength, fade
     return [beginningDate, endSavingPhaseDate, endDate];
 }
 
-function calculateTaxes(investmentSteps, date, leftoverTaxFreeAmount, etfToRatio) {
+function calculateTaxes(
+    investmentSteps: InvestmentStep[],
+    date: Date,
+    leftoverTaxFreeAmount: number,
+    etfToRatio: ETFRatio
+) {
     if (!isFirstMonthOfAYear(date) || investmentSteps.length < 2) {
         return [0, leftoverTaxFreeAmount];
     }
@@ -127,11 +176,18 @@ function calculateTaxes(investmentSteps, date, leftoverTaxFreeAmount, etfToRatio
     return [summedTaxes, leftoverTaxFreeAmount];
 }
 
-export function addAccumulationMonth(investmentSteps, investment, date, initialDate, etfToRatio, configOptions) {
+function addAccumulationMonth(
+    investmentSteps: InvestmentStep[],
+    investment: number,
+    date: Date,
+    initialDate: Date,
+    etfToRatio: ETFRatio,
+    configOptions: ConfigOptions
+) {
     const forecast = ForecastModelSingleton.getInstance();
     let costs = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
-    const newInvestmentStep = {
+    const newInvestmentStep: InvestmentStep = {
         date: date,
         newShares: {},
         totalShares: { ...prevInvestmentStep.totalShares },
@@ -145,6 +201,7 @@ export function addAccumulationMonth(investmentSteps, investment, date, initialD
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
+        inflation: 0,
     };
     for (const etfIdentifier in etfToRatio) {
         const investmentOfEtfWithCosts = etfToRatio[etfIdentifier] * investment;
@@ -187,15 +244,15 @@ export function addAccumulationMonth(investmentSteps, investment, date, initialD
 }
 
 function addPayoutMonth(
-    investmentSteps,
-    sellingAmount,
-    etfToRatio,
-    date,
-    initialDate,
-    configOptions,
-    leftoverAlreadyPaidTaxes,
-    leftoverTaxFreeAmount,
-    payoutStats
+    investmentSteps: InvestmentStep[],
+    sellingAmount: number,
+    etfToRatio: ETFRatio,
+    date: Date,
+    initialDate: Date,
+    configOptions: ConfigOptions,
+    leftoverAlreadyPaidTaxes: number,
+    leftoverTaxFreeAmount: number,
+    payoutStats: PayoutStats
 ) {
     if (isFirstMonthOfAYear(date)) {
         leftoverTaxFreeAmount = configOptions.taxFreeAmount;
@@ -204,7 +261,7 @@ function addPayoutMonth(
     let costs = 0;
     let taxes = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
-    const newInvestmentStep = {
+    const newInvestmentStep: InvestmentStep = {
         date: date,
         newShares: {},
         totalShares: { ...prevInvestmentStep.totalShares },
@@ -218,6 +275,7 @@ function addPayoutMonth(
         totalTaxes: prevInvestmentStep.totalTaxes,
         totalPayout: { ...prevInvestmentStep.totalPayout },
         newPayout: {},
+        inflation: 0,
     };
     for (const etfIdentifier in etfToRatio) {
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
@@ -322,9 +380,9 @@ function addPayoutMonth(
     return [leftoverAlreadyPaidTaxes, leftoverTaxFreeAmount];
 }
 
-function generateEmptyInvestmentStep(etfToRatio, date) {
+function generateEmptyInvestmentStep(etfToRatio: ETFRatio, date: Date) {
     const forecast = ForecastModelSingleton.getInstance();
-    const emptyInvestmentStep = {
+    const emptyInvestmentStep: InvestmentStep = {
         date: date,
         totalCosts: 0,
         totalTaxes: 0,
@@ -338,6 +396,7 @@ function generateEmptyInvestmentStep(etfToRatio, date) {
         sharePrizes: {},
         newInvestedMoney: {},
         newInvestment: 0,
+        inflation: 0,
     };
     for (const etfIdentifier in etfToRatio) {
         emptyInvestmentStep.newShares[etfIdentifier] = 0;
@@ -354,15 +413,29 @@ function generateEmptyInvestmentStep(etfToRatio, date) {
 }
 
 export class InvestmentModel {
+    private startCapital: number;
+    private monthlyInvestment: number;
+    private monthlyPayout: number;
+    private savingPhaseLength: number;
+    private etfToRatio: ETFRatio;
+    private configOptions: ConfigOptions;
+    private expectationOfLife: number;
+    private age: number;
+
+    private savingDates: Date[] = [];
+    private payoutDates: Date[] = [];
+    private initialDate: Date = new Date();
+    private investmentSteps: InvestmentStep[] = [];
+
     constructor(
-        startCapital,
-        monthlyInvestment,
-        monthlyPayout,
-        savingPhaseLength,
-        etfToRatio,
-        configOptions,
-        age,
-        expectationOfLife
+        startCapital: number,
+        monthlyInvestment: number,
+        monthlyPayout: number,
+        savingPhaseLength: number,
+        etfToRatio: ETFRatio,
+        configOptions: ConfigOptions,
+        age: number,
+        expectationOfLife: number
     ) {
         this.startCapital = startCapital;
         this.monthlyInvestment = monthlyInvestment;
@@ -424,7 +497,7 @@ export class InvestmentModel {
 
         let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
         let leftoverTaxFreeAmount = this.configOptions.taxFreeAmount;
-        const payoutStats = {};
+        const payoutStats: PayoutStats = {};
         for (const etfIdentifier in this.etfToRatio) {
             payoutStats[etfIdentifier] = { investmentStepsIdx: 0, alreadySoldShares: 0 };
         }
@@ -444,7 +517,7 @@ export class InvestmentModel {
         this.investmentSteps = investmentSteps;
     }
 
-    getInvestmentSteps(numberOfEntriesPerYear) {
+    getInvestmentSteps(numberOfEntriesPerYear: number) {
         if (!Number.isInteger(numberOfMonthsOfAYear / numberOfEntriesPerYear)) {
             throw new Error(
                 `The numberOfEntriesPerYear need to be dividable by ${numberOfMonthsOfAYear} in order to make sense.`
@@ -470,5 +543,9 @@ export class InvestmentModel {
             selectedInvestmentSteps.push(adjustedInvestmentStep);
         }
         return selectedInvestmentSteps;
+    }
+
+    getPayoutPhaseBeginDate(){
+        return this.payoutDates[0];
     }
 }

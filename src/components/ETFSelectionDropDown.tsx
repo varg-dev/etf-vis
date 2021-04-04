@@ -1,15 +1,38 @@
-import React from 'react';
+import { ChangeEvent, MouseEvent } from 'react';
 
-import { TextInputElement } from './TextInputElement';
-
+import { ETFPercentageInputElement } from './TextInputElement';
 import { ErrorMessage } from './MinimalBootstrapComponents';
 
-function percentageTransformFunction(e) {
+export interface ETFProperties {
+    identifier: string;
+    symbol: string;
+    label: string;
+    percentage: number;
+    selected: boolean;
+}
+
+interface ETFIndex {
+    [etfIdentifier: string]: ETFProperties;
+}
+
+export interface ETFSelection {
+    label: string;
+    isValid: boolean;
+    identifier: string;
+    errorMessage: string;
+    handleSelectionChange: (etfProperties: ETFProperties) => void;
+    handleShareChange: (changedValue: number, changedStateIdentifier: string) => void;
+    elements: ETFIndex;
+}
+
+type ETFSelectionDropDownProps = ETFSelection & { autoPercentage: boolean };
+
+function percentageTransformFunction(e: ChangeEvent<HTMLInputElement>) {
     const floatVal = parseFloat(e.target.value) / 100;
     return isNaN(floatVal) ? 0 : floatVal;
 }
 
-export function ETFSelectionDropDown(props) {
+export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
     return (
         <div className="dropdown position-relative">
             <button
@@ -29,12 +52,12 @@ export function ETFSelectionDropDown(props) {
                                 props.elements[elementIdentifier].selected ? 'dropdown-item active' : 'dropdown-item'
                             }
                             type="button"
-                            onClick={e => {
-                                if (e.target.type !== 'text') {
+                            onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                                //if (e.target.type !== 'text') {
                                     props.handleSelectionChange(props.elements[elementIdentifier]);
-                                }
+                                //}
                             }}>
-                            <TextInputElement
+                            <ETFPercentageInputElement
                                 {...props.elements[elementIdentifier]}
                                 value={Math.round(props.elements[elementIdentifier].percentage * 100)}
                                 textAppending="%"
@@ -42,6 +65,7 @@ export function ETFSelectionDropDown(props) {
                                 transformFunction={percentageTransformFunction}
                                 disabled={props.autoPercentage}
                                 isValid={true}
+                                errorMessage=''
                             />
                         </button>
                     </li>

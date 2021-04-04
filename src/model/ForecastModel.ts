@@ -1,4 +1,5 @@
 import regression from 'regression';
+import { DataPoint } from 'regression';
 import {
     dateToTimestamp,
     etfHistoricalToCourseForecastArray,
@@ -6,25 +7,76 @@ import {
     loadHistoricalETFData,
     timestampIndexOfForecastArray,
     courseIndexOfForecastArray,
-    HistoricalDataNotPresentException,
+    generateHistoricalDataNotPresentException,
+    HistoricEntry,
 } from '../helpers/utils';
+
+interface CoursePredictors {
+    maxTimestampBeforeCoursePredictorRepetition: number;
+    predictors: CoursePredictor;
+}
+
+interface DividendPredictor {
+    [timestamp: number]: regression.Result;
+}
+
+interface CoursePredictor {
+    [timestamp: number]: regression.Result;
+}
+
+interface DividendPredictors {
+    maxYearBeforeDividendPredictorRepetition: number;
+    predictors: DividendPredictor;
+}
+
+interface HistoricDataOfETF {
+    courseForecastArray: DataPoint[];
+    dividendForecastArray: DataPoint[];
+    history: HistoricEntry[];
+}
+
+interface HistoricData {
+    [etfIdentifier: string]: HistoricDataOfETF;
+}
+
+interface ETFCoursePredictors {
+    [etfIdentifier: string]: CoursePredictors;
+}
+
+interface ETFDividendPredictors {
+    [etfIdentifier: string]: DividendPredictors;
+}
+
+// EXTERN:
+
+interface ETFProperties {
+    [etfIdentifier: string]: ETFProperty;
+}
+
+interface ETFProperty {
+    identifier: string;
+    symbol: string;
+    label: string;
+    percentage: number;
+    selected: boolean;
+}
 
 // USAGE: first call configure to set required static vars. Then the singleton can be accessed via getInstance. Never call the Constructor on your own.
 // Always call loadAndCacheHistoricalETFData of an etf before calling predict on that etf.
 export class ForecastModelSingleton {
-    static instance = null;
-    static apiKey = null;
-    static backCastTimeConstant = null;
-    static backCastTimeFactor = null;
+    static instance: null | ForecastModelSingleton = null;
+    static apiKey: string = '';
+    static backCastTimestampConstant: number = 7;
+    static backCastTimeFactor: number = 2;
+
+    private historicalData: HistoricData = {};
+    private coursePredictors: ETFCoursePredictors = {};
+    private dividendPredictors: ETFDividendPredictors = {};
 
     // DO NOT CALL. USE getInstance()
-    constructor() {
-        this.historicalData = {};
-        this.coursePredictors = {};
-        this.dividendPredictors = {};
-    }
+    private constructor() {}
 
-    static configure(apiKey, backCastTimeFactor = 2, backCastTimeConstant = 7) {
+    static configure(apiKey: string, backCastTimeFactor = 2, backCastTimeConstant = 7) {
         ForecastModelSingleton.apiKey = apiKey;
         ForecastModelSingleton.backCastTimeFactor = backCastTimeFactor;
 
@@ -36,23 +88,23 @@ export class ForecastModelSingleton {
         if (ForecastModelSingleton.instance != null) {
             const instance = ForecastModelSingleton.getInstance();
             for (const etfIdentifier in instance.coursePredictors) {
-                instance.coursePredictors[etfIdentifier] = {
-                    maxTimestampBeforeCoursePredictorRepetition: ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
-                        instance.historicalData[etfIdentifier].courseForecastArray
-                    ),
-                };
+                instance.coursePredictors[
+                    etfIdentifier
+                ].maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+                    instance.historicalData[etfIdentifier].courseForecastArray
+                );
             }
             for (const etfIdentifier in instance.dividendPredictors) {
-                instance.dividendPredictors[etfIdentifier] = {
-                    maxYearBeforeDividendPredictorRepetition: ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
-                        instance.historicalData[etfIdentifier].dividendForecastArray
-                    ),
-                };
+                instance.dividendPredictors[
+                    etfIdentifier
+                ].maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+                    instance.historicalData[etfIdentifier].dividendForecastArray
+                );
             }
         }
     }
 
-    static async loadHistoricData(apiKey, etfProperties) {
+    static async loadHistoricData(apiKey: string, etfProperties: ETFProperties) {
         ForecastModelSingleton.configure(apiKey);
         const forecast = ForecastModelSingleton.getInstance();
         for (const etfIdentifier in etfProperties) {
@@ -68,17 +120,17 @@ export class ForecastModelSingleton {
         return ForecastModelSingleton.instance;
     }
 
-    static _calculateMaxTimestampBeforePredictorRepetition(forecastArray) {
+    static _calculateMaxTimestampBeforePredictorRepetition(forecastArray: DataPoint[]) {
         const firstTimestamp = forecastArray[0][timestampIndexOfForecastArray];
         const lastTimestamp = forecastArray[forecastArray.length - 1][timestampIndexOfForecastArray];
         return lastTimestamp + (lastTimestamp - firstTimestamp) / ForecastModelSingleton.backCastTimeFactor;
     }
 
-    async loadAndCacheHistoricalETFData(etfIdentifier) {
+    async loadAndCacheHistoricalETFData(etfIdentifier: string) {
         if (etfIdentifier in this.historicalData) {
             return;
         }
-        const historicalData = await loadHistoricalETFData(etfIdentifier);
+        const historicalData = await loadHistoricalETFData(etfIdentifier, ForecastModelSingleton.apiKey);
 
         const courseForecastArray = etfHistoricalToCourseForecastArray(historicalData);
         const maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
@@ -97,13 +149,15 @@ export class ForecastModelSingleton {
         };
         this.coursePredictors[etfIdentifier] = {
             maxTimestampBeforeCoursePredictorRepetition: maxTimestampBeforeCoursePredictorRepetition,
+            predictors: {}
         };
         this.dividendPredictors[etfIdentifier] = {
             maxYearBeforeDividendPredictorRepetition: maxYearBeforeDividendPredictorRepetition,
+            predictors: {},
         };
     }
 
-    _createCoursePredictorIfNotPresent(etfIdentifier, timestamp) {
+    _createCoursePredictorIfNotPresent(etfIdentifier: string, timestamp: number) {
         // Skip if already exists.
         if (timestamp in this.coursePredictors[etfIdentifier]) {
             return;
@@ -117,13 +171,13 @@ export class ForecastModelSingleton {
         const filteredForecastArray = forecastArray.filter(
             entry => entry[timestampIndexOfForecastArray] >= lastTimestampToIncludeInPrediction
         );
-        this.coursePredictors[etfIdentifier][timestamp] = regression.linear(filteredForecastArray, {
+        this.coursePredictors[etfIdentifier].predictors[timestamp] = regression.linear(filteredForecastArray, {
             order: 2,
             precision: 20,
         });
     }
 
-    _courseDateToPredictorTimestampAndDateTimestamp(date, etfIdentifier) {
+    _courseDateToPredictorTimestampAndDateTimestamp(date: Date, etfIdentifier: string) {
         const timestamp = dateToTimestamp(date);
         return [
             timestamp > this.coursePredictors[etfIdentifier].maxTimestampBeforeCoursePredictorRepetition
@@ -133,7 +187,7 @@ export class ForecastModelSingleton {
         ];
     }
 
-    _createDividendPredictorIfNotPresent(etfIdentifier, year) {
+    _createDividendPredictorIfNotPresent(etfIdentifier: string, year: number) {
         // Skip if already exists.
         if (year in this.dividendPredictors[etfIdentifier]) {
             return;
@@ -147,39 +201,39 @@ export class ForecastModelSingleton {
         const filteredForecastArray = forecastArray.filter(
             entry => entry[timestampIndexOfForecastArray] >= lastYearToIncludeInPrediction
         );
-        this.dividendPredictors[etfIdentifier][year] = regression.linear(filteredForecastArray, {
+        this.dividendPredictors[etfIdentifier].predictors[year] = regression.linear(filteredForecastArray, {
             order: 2,
             precision: 20,
         });
     }
 
-    _dividendYearToPredictorYear(etfIdentifier, year) {
+    _dividendYearToPredictorYear(etfIdentifier: string, year: number) {
         return this.dividendPredictors[etfIdentifier].maxYearBeforeDividendPredictorRepetition < year
             ? this.dividendPredictors[etfIdentifier].maxYearBeforeDividendPredictorRepetition
             : year;
     }
 
-    predictCourse(etfIdentifier, date) {
+    predictCourse(etfIdentifier: string, date: Date) {
         if (!(etfIdentifier in this.coursePredictors)) {
-            throw new HistoricalDataNotPresentException(etfIdentifier);
+            throw generateHistoricalDataNotPresentException(etfIdentifier);
         }
         const [predictorTimestamp, timestamp] = this._courseDateToPredictorTimestampAndDateTimestamp(
             date,
             etfIdentifier
         );
         this._createCoursePredictorIfNotPresent(etfIdentifier, predictorTimestamp);
-        return this.coursePredictors[etfIdentifier][predictorTimestamp].predict(timestamp)[courseIndexOfForecastArray];
+        return this.coursePredictors[etfIdentifier].predictors[predictorTimestamp].predict(timestamp)[courseIndexOfForecastArray];
     }
 
-    predictDividend(etfIdentifier, year) {
+    predictDividend(etfIdentifier: string, year: number) {
         if (!(etfIdentifier in this.dividendPredictors)) {
-            throw new HistoricalDataNotPresentException(etfIdentifier);
+            throw generateHistoricalDataNotPresentException(etfIdentifier);
         }
         const predictorYear = this._dividendYearToPredictorYear(etfIdentifier, year);
         this._createDividendPredictorIfNotPresent(etfIdentifier, predictorYear);
         return Math.max(
             0,
-            this.dividendPredictors[etfIdentifier][predictorYear].predict(year)[courseIndexOfForecastArray]
+            this.dividendPredictors[etfIdentifier].predictors[predictorYear].predict(year)[courseIndexOfForecastArray]
         );
     }
 }

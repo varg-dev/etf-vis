@@ -1,19 +1,21 @@
-import React from 'react';
+import { ChangeEvent } from 'react';
+import { StringTextInputElement, TextInputStateIdentifier } from './TextInputElement';
 
-import { TextInputElement } from './TextInputElement';
-
-export function SidebarSectionHeading(props) {
-    return (
-        <div className="position-relative">
-            <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
-                <span>{props.title}</span>
-            </h6>
-            <ErrorMessage {...props} identifier={props.title} />
-        </div>
-    );
+export interface APIKey {
+    displayOverlay: boolean;
+    value: string;
+    label: string;
+    errorMessage: string;
+    isValid: boolean;
+    textAppending: string;
+    identifier: TextInputStateIdentifier;
+    transformFunction: (e: ChangeEvent<HTMLInputElement>) => string;
+    onValueChange: (changedValue: string, changedStateIdentifier: TextInputStateIdentifier) => void;
+    handleAPIKeyConfirm: () => void;
+    error: boolean;
 }
 
-export function Overlay(props) {
+export function Overlay(props: APIKey) {
     return (
         <div className="row">
             <div className="col-12 p-0">
@@ -31,24 +33,13 @@ export function Overlay(props) {
                                 Alphavantage API Key
                             </a>{' '}
                         </h1>
-                        <TextInputElement {...props} disabled={!props.displayOverlay} />
+                        <StringTextInputElement {...props} disabled={!props.displayOverlay} />
                         <button type="button" className="btn btn-primary my-5" onClick={props.handleAPIKeyConfirm}>
                             Confirm
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
-
-export function ErrorMessage(props) {
-    return (
-        <div
-            id={props.identifier + 'Feedback'}
-            className="invalid-tooltip"
-            style={{ visibility: props.isValid ? 'hidden' : 'visible' }}>
-            {props.errorMessage}
         </div>
     );
 }
