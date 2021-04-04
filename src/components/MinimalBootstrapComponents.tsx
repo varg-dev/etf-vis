@@ -1,4 +1,4 @@
-interface ISidebarSectionHeading{ 
+interface ISidebarSectionHeading {
     title: string;
 }
 

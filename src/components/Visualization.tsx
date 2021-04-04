@@ -12,22 +12,22 @@ import {
     generateCostConfig,
 } from './App';
 import { InvestmentModel, ETFRatio } from '../model/InvestmentModel';
-import AreaChartD3 from '../renderer/AreaChartD3';
-import CashflowBarChart from '../renderer/CashflowBarChartD3';
+import { AreaChartD3 } from '../renderer/AreaChartD3';
+import { CashflowBarChart } from '../renderer/CashflowBarChartD3';
 import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
-import { AppState } from './App';
+import { IAppState } from './App';
 
-export interface ConfigOptions {
-    costConfig: CostConfiguration;
+export interface IConfigOptions {
+    costConfig: ICostConfiguration;
     taxFreeAmount: number;
 }
 
-export interface CostConfiguration {
+export interface ICostConfiguration {
     percentageCosts: number;
     fixedCosts: number;
 }
 
-export class Visualization extends React.Component<AppState, {}> {
+export class Visualization extends React.Component<IAppState, {}> {
     private firstSVGRef = React.createRef<HTMLDivElement>();
     private secondSVGRef = React.createRef<HTMLDivElement>();
 
@@ -36,7 +36,7 @@ export class Visualization extends React.Component<AppState, {}> {
 
     private investmentModel: InvestmentModel | undefined = undefined;
 
-    getInvestmentModel() {
+    private _getInvestmentModel() {
         const etfIdentifierToRatio: ETFRatio = {};
         const etfProperties = this.props.etfDropdownSelection.elements;
         for (const etfIdentifier in etfProperties) {
@@ -44,7 +44,7 @@ export class Visualization extends React.Component<AppState, {}> {
                 etfIdentifierToRatio[etfProperties[etfIdentifier].symbol] = etfProperties[etfIdentifier].percentage;
             }
         }
-        const configOptions: ConfigOptions = {
+        const configOptions: IConfigOptions = {
             taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER].value,
             costConfig: generateCostConfig(this.props),
         };
@@ -61,7 +61,7 @@ export class Visualization extends React.Component<AppState, {}> {
         );
     }
 
-    getTooltipDate() {
+    private _getTooltipDate() {
         if (this.areaChart != null) {
             return this.areaChart.tooltipDate;
         } else if (this.barChart != null) {
@@ -71,26 +71,26 @@ export class Visualization extends React.Component<AppState, {}> {
         }
     }
 
-    getYAxisExtent(diagram: D3ChartStrategy | undefined) {
+    private _getYAxisExtent(diagram: D3ChartStrategy | undefined) {
         return diagram != null && this.props[Y_AXIS_LOCK_IDENTIFIER].value ? diagram.yExtent : undefined;
     }
 
-    drawVisualization() {
+    private _drawVisualization() {
         D3ChartStrategy.reset();
         try {
             if (this.props.isValid != null && this.props.isValid) {
-                this.investmentModel = this.getInvestmentModel();
+                this.investmentModel = this._getInvestmentModel();
                 const firstPayoutPhaseDate = this.investmentModel.getPayoutPhaseBeginDate();
                 const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
                     this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value
                 );
-                let tooltipDate = this.getTooltipDate();
+                let tooltipDate = this._getTooltipDate();
                 this.areaChart = new AreaChartD3(
                     correctLevelOfDetailInvestmentSteps,
                     this.firstSVGRef.current,
                     firstPayoutPhaseDate,
                     tooltipDate,
-                    this.getYAxisExtent(this.areaChart)
+                    this._getYAxisExtent(this.areaChart)
                 );
                 this.areaChart.render();
                 this.barChart = new CashflowBarChart(
@@ -98,7 +98,7 @@ export class Visualization extends React.Component<AppState, {}> {
                     this.secondSVGRef.current,
                     firstPayoutPhaseDate,
                     tooltipDate,
-                    this.getYAxisExtent(this.barChart)
+                    this._getYAxisExtent(this.barChart)
                 );
                 this.barChart.render();
             }
@@ -108,11 +108,11 @@ export class Visualization extends React.Component<AppState, {}> {
     }
 
     async componentDidMount() {
-        this.drawVisualization();
+        this._drawVisualization();
     }
 
     componentDidUpdate() {
-        this.drawVisualization();
+        this._drawVisualization();
     }
     render() {
         return (
@@ -123,5 +123,3 @@ export class Visualization extends React.Component<AppState, {}> {
         );
     }
 }
-
-export default Visualization;

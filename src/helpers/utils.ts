@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import {DataPoint} from 'regression';
+import { DataPoint } from 'regression';
 
 // Ignore milliseconds, seconds, minutes.
 const timeDiffIgnoreDivisor = 1000 * 60 * 60 * 24;
@@ -9,6 +9,12 @@ export const timestampIndexOfForecastArray = 0;
 export const courseIndexOfForecastArray = 1;
 export const numberOfMonthsOfAYear = 12;
 export const inflationRate = 0.01;
+
+export interface IHistoricEntry {
+    date: Date;
+    dividend: number;
+    course: number;
+}
 
 export function isLastMonthOfAYear(date: Date) {
     return date.getMonth() === numberOfMonthsOfAYear - 1;
@@ -22,13 +28,7 @@ export function isFirstMonthOfAYear(date: Date) {
     return date.getMonth() === 0;
 }
 
-export interface HistoricEntry {
-    date: Date;
-    dividend: number;
-    course: number;
-}
-
-export async function loadHistoricalETFData(etfIdentifier: string, apiKey: string): Promise<HistoricEntry[]> {
+export async function loadHistoricalETFData(etfIdentifier: string, apiKey: string): Promise<IHistoricEntry[]> {
     const historicalData = await d3.csv(
         `https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol=${etfIdentifier}&apikey=${apiKey}&datatype=csv`,
         entry => {
@@ -50,12 +50,12 @@ export async function loadHistoricalETFData(etfIdentifier: string, apiKey: strin
     return historicalData;
 }
 
-export function etfHistoricalToCourseForecastArray(historicalData: HistoricEntry[]): DataPoint[] {
+export function etfHistoricalToCourseForecastArray(historicalData: IHistoricEntry[]): DataPoint[] {
     return historicalData.map(entry => [dateToTimestamp(entry.date), entry.course]);
 }
 
 // Requires sorted historical data. Note it is sorted by default. Do not change the order.
-export function etfHistoricalToDividendForecastArray(historicalData: HistoricEntry[]): DataPoint[] {
+export function etfHistoricalToDividendForecastArray(historicalData: IHistoricEntry[]): DataPoint[] {
     let currentYear = historicalData[0].date.getFullYear();
     const dividendForecastArray: DataPoint[] = [[currentYear, 0]];
     historicalData.forEach(entry => {

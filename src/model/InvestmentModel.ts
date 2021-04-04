@@ -1,8 +1,8 @@
-import ForecastModelSingleton from './ForecastModel';
+import { ForecastModelSingleton } from './ForecastModel';
 import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear } from '../helpers/utils';
 import cloneDeep from 'lodash.clonedeep';
 
-import {CostConfiguration, ConfigOptions} from '../components/Visualization';
+import { ICostConfiguration, IConfigOptions } from '../components/Visualization';
 
 const basicRateOfInterest = 0.007;
 const partialExemption = 0.7;
@@ -10,23 +10,22 @@ const corporateTaxRatio = 0.26375;
 const inflationRate = 0.01;
 const defaultDividendAmount = 0.025;
 
-interface ETFShares {
+interface IETFShares {
     [etfIdentifier: string]: number;
 }
 
-export type ETFRatio = ETFShares;
+export type ETFRatio = IETFShares;
 
-type ETFPrizes = ETFShares;
+type ETFPrizes = IETFShares;
 
-type ETFMoney = ETFShares;
-
+type ETFMoney = IETFShares;
 
 interface InvestmentStep {
     date: Date;
-    newShares: ETFShares;
-    totalShares: ETFShares;
-    dividendNewShares: ETFShares;
-    dividendTotalShares: ETFShares;
+    newShares: IETFShares;
+    totalShares: IETFShares;
+    dividendNewShares: IETFShares;
+    dividendTotalShares: IETFShares;
     totalCosts: number;
     sharePrizes: ETFPrizes;
     totalInvestedMoney: ETFMoney;
@@ -38,14 +37,23 @@ interface InvestmentStep {
     inflation: number;
 }
 
-interface PayoutStats {
-    [etfIdentifier: string]: PayoutStat;
+interface IPayoutStats {
+    [etfIdentifier: string]: IPayoutStat;
 }
 
-interface PayoutStat {
+interface IPayoutStat {
     investmentStepsIdx: number;
     alreadySoldShares: number;
 }
+
+export function getTotalShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
+    return investmentStep.totalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+}
+
+export function getTotalDividenShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
+    return investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
+}
+
 
 function getNextMonthDate(date: Date) {
     const newDate = new Date(date);
@@ -63,7 +71,7 @@ function calculateDividend(etfIdentifier: string, date: Date) {
     }
 }
 
-function calculateCosts(amount: number, costConfiguration: CostConfiguration) {
+function calculateCosts(amount: number, costConfiguration: ICostConfiguration) {
     let costs = amount * costConfiguration.percentageCosts + costConfiguration.fixedCosts;
     const amountWithoutCosts = Math.max(amount - costs, 0);
     costs = amount - amountWithoutCosts;
@@ -74,14 +82,6 @@ function subtractTaxFreeGain(taxAmount: number, taxFreeAmount: number) {
     const leftoverTaxes = Math.max(0, taxAmount - taxFreeAmount);
     const leftoverTaxFreeAmount = Math.max(0, taxFreeAmount - taxAmount);
     return [leftoverTaxes, leftoverTaxFreeAmount];
-}
-
-export function getTotalShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
-    return investmentStep.totalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
-}
-
-export function getTotalDividenShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
-    return investmentStep.dividendTotalShares[etfIdentifier] * investmentStep.sharePrizes[etfIdentifier];
 }
 
 function getNewShareValue(etfIdentifier: string, investmentStep: InvestmentStep) {
@@ -182,7 +182,7 @@ function addAccumulationMonth(
     date: Date,
     initialDate: Date,
     etfToRatio: ETFRatio,
-    configOptions: ConfigOptions
+    configOptions: IConfigOptions
 ) {
     const forecast = ForecastModelSingleton.getInstance();
     let costs = 0;
@@ -249,10 +249,10 @@ function addPayoutMonth(
     etfToRatio: ETFRatio,
     date: Date,
     initialDate: Date,
-    configOptions: ConfigOptions,
+    configOptions: IConfigOptions,
     leftoverAlreadyPaidTaxes: number,
     leftoverTaxFreeAmount: number,
-    payoutStats: PayoutStats
+    payoutStats: IPayoutStats
 ) {
     if (isFirstMonthOfAYear(date)) {
         leftoverTaxFreeAmount = configOptions.taxFreeAmount;
@@ -418,7 +418,7 @@ export class InvestmentModel {
     private monthlyPayout: number;
     private savingPhaseLength: number;
     private etfToRatio: ETFRatio;
-    private configOptions: ConfigOptions;
+    private configOptions: IConfigOptions;
     private expectationOfLife: number;
     private age: number;
 
@@ -433,7 +433,7 @@ export class InvestmentModel {
         monthlyPayout: number,
         savingPhaseLength: number,
         etfToRatio: ETFRatio,
-        configOptions: ConfigOptions,
+        configOptions: IConfigOptions,
         age: number,
         expectationOfLife: number
     ) {
@@ -449,7 +449,7 @@ export class InvestmentModel {
         this._calculateModel();
     }
 
-    _calculateTimestampsForModel() {
+    private _calculateTimestampsForModel() {
         const [startDate, endSavingPhaseDate, endDate] = calculateForecastInterval(
             this.age,
             this.expectationOfLife,
@@ -472,7 +472,7 @@ export class InvestmentModel {
         this.initialDate = startDate;
     }
 
-    _calculateModel() {
+    private _calculateModel() {
         let investmentSteps = [generateEmptyInvestmentStep(this.etfToRatio, this.savingDates[0])];
         addAccumulationMonth(
             investmentSteps,
@@ -497,7 +497,7 @@ export class InvestmentModel {
 
         let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
         let leftoverTaxFreeAmount = this.configOptions.taxFreeAmount;
-        const payoutStats: PayoutStats = {};
+        const payoutStats: IPayoutStats = {};
         for (const etfIdentifier in this.etfToRatio) {
             payoutStats[etfIdentifier] = { investmentStepsIdx: 0, alreadySoldShares: 0 };
         }
@@ -545,7 +545,7 @@ export class InvestmentModel {
         return selectedInvestmentSteps;
     }
 
-    getPayoutPhaseBeginDate(){
+    getPayoutPhaseBeginDate() {
         return this.payoutDates[0];
     }
 }

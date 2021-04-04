@@ -1,13 +1,18 @@
 import React, { ChangeEvent } from 'react';
-import { Visualization, CostConfiguration } from './Visualization';
-import { TextInputElement, TextInputState, TextInputStateIdentifier, NumberInputStateIdentifier } from './TextInputElement';
-import { CheckboxInputElement, CheckboxState, CheckBoxStateIdentifier } from './CheckboxInputElement';
-import { Overlay, APIKey } from './APIKeyOverlay';
+import { Visualization, ICostConfiguration } from './Visualization';
+import {
+    TextInputElement,
+    ITextInputState,
+    TextInputStateIdentifier,
+    NumberInputStateIdentifier,
+} from './TextInputElement';
+import { CheckboxInputElement, ICheckboxState, ICheckBoxStateIdentifier } from './CheckboxInputElement';
+import { Overlay, IAPIKey } from './APIKeyOverlay';
 import { SidebarSectionHeading } from './MinimalBootstrapComponents';
 import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropDown';
-import { GraphDetailDropDown, IGraphDetailDropDown, GraphDetailLevel } from './GraphDetailDropDown';
-import { ETFSelectionDropDown, ETFProperties, ETFSelection } from './ETFSelectionDropDown';
-import ForecastModelSingleton from '../model/ForecastModel';
+import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
+import { ETFSelectionDropDown, IETFProperties, IETFSelection } from './ETFSelectionDropDown';
+import { ForecastModelSingleton } from '../model/ForecastModel';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -32,6 +37,29 @@ export const ETF_SYMBOL_TO_NAME = {
     SUSA: 'MSCI USA ESG',
 };
 
+// TODO  mach notation konsistent: _, private,
+export interface IAppState {
+    isValid: boolean;
+    startingCapital: ITextInputState;
+    monthlyInvestment: ITextInputState;
+    monthlyPayout: ITextInputState;
+    transactionCosts: ITextInputState;
+    savingPhase: ITextInputState;
+    age: ITextInputState;
+    lifeExpectation: ITextInputState;
+    taxFreeAmount: ITextInputState;
+
+    apiKey: IAPIKey;
+
+    transactionCostsType: ICheckboxState;
+    etfAutomaticPercentage: ICheckboxState;
+    yAxisLock: ICheckboxState;
+
+    detailedGraph: IGraphDetailDropDown;
+    brokerDropdown: IBrokerDropDown;
+    etfDropdownSelection: IETFSelection;
+}
+
 function transformInputToInt(e: ChangeEvent<HTMLInputElement>) {
     const valueWithoutTextAppending = e.target.value.split(' ')[0];
     const intVal = parseInt(valueWithoutTextAppending);
@@ -51,7 +79,7 @@ function isPositiveInt(val: number) {
     return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
 }
 
-export function generateCostConfig(state: AppState): CostConfiguration {
+export function generateCostConfig(state: IAppState): ICostConfiguration {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
         return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
     } else {
@@ -59,7 +87,7 @@ export function generateCostConfig(state: AppState): CostConfiguration {
     }
 }
 
-function recalculateETFPercentages(state: AppState) {
+function recalculateETFPercentages(state: IAppState) {
     let numberOfSelectedETFs = 0;
     for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
         if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
@@ -73,7 +101,7 @@ function recalculateETFPercentages(state: AppState) {
     return state;
 }
 
-export class App extends React.Component<{}, AppState> {
+export class App extends React.Component<{}, IAppState> {
     constructor(props: {}) {
         super(props);
 
@@ -91,10 +119,10 @@ export class App extends React.Component<{}, AppState> {
     handleTextChange(changedValue: number | string, changedStateIdentifier: TextInputStateIdentifier) {
         const state = { ...this.state };
         state[changedStateIdentifier].value = changedValue;
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
-    handleCheckBoxChange(changedStateIdentifier: CheckBoxStateIdentifier) {
+    handleCheckBoxChange(changedStateIdentifier: ICheckBoxStateIdentifier) {
         const state = { ...this.state };
         state[changedStateIdentifier].value = !state[changedStateIdentifier].value;
         if (changedStateIdentifier === TRANSACTION_COSTS_TYPE_IDENTIFIER) {
@@ -109,7 +137,7 @@ export class App extends React.Component<{}, AppState> {
         ) {
             recalculateETFPercentages(state);
         }
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
     handleBrokerChange(brokerProperties: BrokerProperties) {
@@ -117,16 +145,16 @@ export class App extends React.Component<{}, AppState> {
         state[TRANSACTION_COSTS_IDENTIFIER].value =
             brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts : brokerProperties.fixedCosts;
         state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value = brokerProperties.percentageCosts > 0 ? false : true;
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
-    handleGraphDetailChange(detailProperties: GraphDetailLevel) {
+    handleGraphDetailChange(detailProperties: IGraphDetailLevel) {
         const state = { ...this.state };
         state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value = detailProperties.value;
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
-    handleETFSelectionChange(etfProperties: ETFProperties) {
+    handleETFSelectionChange(etfProperties: IETFProperties) {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
             ETF_DROPDOWN_SELECTION_IDENTIFIER
@@ -134,13 +162,13 @@ export class App extends React.Component<{}, AppState> {
         if (state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value) {
             recalculateETFPercentages(state);
         }
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
     handleETFShareChange(changedValue: number, changedETFIdentifier: string) {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].percentage = changedValue;
-        this.validateAndSetState(state);
+        this._validateAndSetState(state);
     }
 
     async handleAPIKeyConfirm() {
@@ -160,7 +188,7 @@ export class App extends React.Component<{}, AppState> {
         this.forceUpdate();
     }
 
-    validateAndSetState(state: AppState) {
+    private _validateAndSetState(state: IAppState) {
         const positiveIntIdentifier: NumberInputStateIdentifier[] = [
             MONTHLY_INVESTMENT_IDENTIFIER,
             MONTHLY_PAYOUT_IDENTIFIER,
@@ -273,30 +301,7 @@ export class App extends React.Component<{}, AppState> {
     }
 }
 
-// TODO  mach notation konsistent: _, private, Interface mit I, remove state identifier constants, organize interfaces / code.
-export interface AppState {
-    isValid: boolean;
-    startingCapital: TextInputState;
-    monthlyInvestment: TextInputState;
-    monthlyPayout: TextInputState;
-    transactionCosts: TextInputState;
-    savingPhase: TextInputState;
-    age: TextInputState;
-    lifeExpectation: TextInputState;
-    taxFreeAmount: TextInputState;
-
-    apiKey: APIKey;
-
-    transactionCostsType: CheckboxState;
-    etfAutomaticPercentage: CheckboxState;
-    yAxisLock: CheckboxState;
-
-    detailedGraph: IGraphDetailDropDown;
-    brokerDropdown: IBrokerDropDown;
-    etfDropdownSelection: ETFSelection;
-}
-
-function getInitialInputFormState(caller: App): AppState {
+function getInitialInputFormState(caller: App): IAppState {
     return {
         isValid: true,
         // simple ui elements.
@@ -506,5 +511,3 @@ function getInitialInputFormState(caller: App): AppState {
         },
     };
 }
-
-export default App;

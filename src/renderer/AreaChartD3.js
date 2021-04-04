@@ -207,5 +207,3 @@ export class AreaChartD3 extends D3ChartStrategy {
         }
     }
 }
-
-export default AreaChartD3;

@@ -3,7 +3,7 @@ import { ChangeEvent, MouseEvent } from 'react';
 import { ETFPercentageInputElement } from './TextInputElement';
 import { ErrorMessage } from './MinimalBootstrapComponents';
 
-export interface ETFProperties {
+export interface IETFProperties {
     identifier: string;
     symbol: string;
     label: string;
@@ -11,21 +11,21 @@ export interface ETFProperties {
     selected: boolean;
 }
 
-interface ETFIndex {
-    [etfIdentifier: string]: ETFProperties;
+interface IETFIndex {
+    [etfIdentifier: string]: IETFProperties;
 }
 
-export interface ETFSelection {
+export interface IETFSelection {
     label: string;
     isValid: boolean;
     identifier: string;
     errorMessage: string;
-    handleSelectionChange: (etfProperties: ETFProperties) => void;
+    handleSelectionChange: (etfProperties: IETFProperties) => void;
     handleShareChange: (changedValue: number, changedStateIdentifier: string) => void;
-    elements: ETFIndex;
+    elements: IETFIndex;
 }
 
-type ETFSelectionDropDownProps = ETFSelection & { autoPercentage: boolean };
+type ETFSelectionDropDownProps = IETFSelection & { autoPercentage: boolean };
 
 function percentageTransformFunction(e: ChangeEvent<HTMLInputElement>) {
     const floatVal = parseFloat(e.target.value) / 100;

@@ -1,4 +1,4 @@
-export interface GraphDetailLevel {
+export interface IGraphDetailLevel {
     identifier: string;
     value: number;
     label: string;
@@ -8,8 +8,8 @@ export interface IGraphDetailDropDown {
     value: number;
     label: string;
     isValid: boolean;
-    handleChange: (detailProperties: GraphDetailLevel) => void;
-    elements: GraphDetailLevel[];
+    handleChange: (detailProperties: IGraphDetailLevel) => void;
+    elements: IGraphDetailLevel[];
 }
 
 export function GraphDetailDropDown(props: IGraphDetailDropDown) {
@@ -27,9 +27,7 @@ export function GraphDetailDropDown(props: IGraphDetailDropDown) {
                 {props.elements.map(element => (
                     <li key={element.identifier}>
                         <button
-                            className={
-                                props.value === element.value ? 'dropdown-item active' : 'dropdown-item'
-                            }
+                            className={props.value === element.value ? 'dropdown-item active' : 'dropdown-item'}
                             type="button"
                             onClick={e => props.handleChange(element)}>
                             {element.label}

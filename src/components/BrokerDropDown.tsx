@@ -1,4 +1,4 @@
-import { CostConfiguration } from './Visualization';
+import { ICostConfiguration } from './Visualization';
 
 export interface BrokerProperties {
     identifier: string;
@@ -14,7 +14,7 @@ export interface IBrokerDropDown {
     elements: BrokerProperties[];
 }
 
-type BrokerDropDownProps = CostConfiguration & IBrokerDropDown;
+type BrokerDropDownProps = ICostConfiguration & IBrokerDropDown;
 
 function costsOfElementMatchUIValues(props: BrokerDropDownProps, element: BrokerProperties) {
     return element.fixedCosts === props.fixedCosts && element.percentageCosts === props.percentageCosts;

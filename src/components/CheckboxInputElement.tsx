@@ -1,14 +1,13 @@
-export type CheckBoxStateIdentifier = 'transactionCostsType' | 'etfAutomaticPercentage' | 'yAxisLock';
-
-export interface CheckboxState {
+export interface ICheckboxState {
     value: boolean;
     label: string;
-    identifier: CheckBoxStateIdentifier;
-    onValueChange: (changedStateIdentifier: CheckBoxStateIdentifier) => void;
+    identifier: ICheckBoxStateIdentifier;
+    onValueChange: (changedStateIdentifier: ICheckBoxStateIdentifier) => void;
 }
 
+export type ICheckBoxStateIdentifier = 'transactionCostsType' | 'etfAutomaticPercentage' | 'yAxisLock';
 
-export function CheckboxInputElement(props: CheckboxState) {
+export function CheckboxInputElement(props: ICheckboxState) {
     return (
         <div className="checkbox-element">
             <input
@@ -24,5 +23,3 @@ export function CheckboxInputElement(props: CheckboxState) {
         </div>
     );
 }
-
-export default CheckboxInputElement;

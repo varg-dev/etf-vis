@@ -122,5 +122,3 @@ export class CashflowBarChart extends D3ChartStrategy {
         }
     }
 }
-
-export default CashflowBarChart;

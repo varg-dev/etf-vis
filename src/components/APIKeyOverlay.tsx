@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 import { StringTextInputElement, TextInputStateIdentifier } from './TextInputElement';
 
-export interface APIKey {
+export interface IAPIKey {
     displayOverlay: boolean;
     value: string;
     label: string;
@@ -15,7 +15,7 @@ export interface APIKey {
     error: boolean;
 }
 
-export function Overlay(props: APIKey) {
+export function Overlay(props: IAPIKey) {
     return (
         <div className="row">
             <div className="col-12 p-0">

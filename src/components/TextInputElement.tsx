@@ -1,6 +1,42 @@
 import { ChangeEvent } from 'react';
 import { ErrorMessage } from './MinimalBootstrapComponents';
 
+export interface ITextInputState {
+    value: number;
+    label: string;
+    errorMessage: string;
+    textAppending: string;
+    isValid: boolean;
+    disabled: boolean;
+    identifier: NumberInputStateIdentifier;
+    transformFunction: (e: ChangeEvent<HTMLInputElement>) => number;
+    onValueChange: (changedValue: number, changedStateIdentifier: NumberInputStateIdentifier) => void;
+}
+
+export interface IStringTextInputState {
+    value: string;
+    label: string;
+    errorMessage: string;
+    textAppending: string;
+    isValid: boolean;
+    disabled: boolean;
+    identifier: TextInputStateIdentifier;
+    transformFunction: (e: ChangeEvent<HTMLInputElement>) => string;
+    onValueChange: (changedValue: string, changedStateIdentifier: TextInputStateIdentifier) => void;
+}
+
+export interface IETFPercentageInputState {
+    value: number;
+    label: string;
+    errorMessage: string;
+    textAppending: string;
+    isValid: boolean;
+    disabled: boolean;
+    identifier: string;
+    transformFunction: (e: ChangeEvent<HTMLInputElement>) => number;
+    onValueChange: (changedValue: number, changedStateIdentifier: string) => void;
+}
+
 export type NumberInputStateIdentifier =
     | 'startingCapital'
     | 'monthlyInvestment'
@@ -13,43 +49,7 @@ export type NumberInputStateIdentifier =
 
 export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
 
-export interface TextInputState {
-    value: number;
-    label: string;
-    errorMessage: string;
-    textAppending: string;
-    isValid: boolean;
-    disabled: boolean;
-    identifier: NumberInputStateIdentifier;
-    transformFunction: (e: ChangeEvent<HTMLInputElement>) => number;
-    onValueChange: (changedValue: number, changedStateIdentifier: NumberInputStateIdentifier) => void;
-}
-
-export interface StringTextInputState {
-    value: string;
-    label: string;
-    errorMessage: string;
-    textAppending: string;
-    isValid: boolean;
-    disabled: boolean;
-    identifier: TextInputStateIdentifier;
-    transformFunction: (e: ChangeEvent<HTMLInputElement>) => string;
-    onValueChange: (changedValue: string, changedStateIdentifier: TextInputStateIdentifier) => void;
-}
-
-export interface ETFPercentageInputState {
-    value: number;
-    label: string;
-    errorMessage: string;
-    textAppending: string;
-    isValid: boolean;
-    disabled: boolean;
-    identifier: string;
-    transformFunction: (e: ChangeEvent<HTMLInputElement>) => number;
-    onValueChange: (changedValue: number, changedStateIdentifier: string) => void;
-}
-
-export function TextInputElement(props: TextInputState) {
+export function TextInputElement(props: ITextInputState) {
     return (
         <div className="position-relative">
             <label className="form-label" htmlFor={props.identifier}>
@@ -68,7 +68,7 @@ export function TextInputElement(props: TextInputState) {
     );
 }
 
-export function StringTextInputElement(props: StringTextInputState) {
+export function StringTextInputElement(props: IStringTextInputState) {
     return (
         <div className="position-relative">
             <label className="form-label" htmlFor={props.identifier}>
@@ -87,7 +87,7 @@ export function StringTextInputElement(props: StringTextInputState) {
     );
 }
 
-export function ETFPercentageInputElement(props: ETFPercentageInputState) {
+export function ETFPercentageInputElement(props: IETFPercentageInputState) {
     return (
         <div className="position-relative">
             <label className="form-label" htmlFor={props.identifier}>
@@ -105,5 +105,3 @@ export function ETFPercentageInputElement(props: ETFPercentageInputState) {
         </div>
     );
 }
-
-export default TextInputElement;
