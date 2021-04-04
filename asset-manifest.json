@@ -1,22 +1,22 @@
 {
   "files": {
-    "main.css": "/ETF-Pension-Plan-Visualization/static/css/main.a15dc3da.chunk.css",
-    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.f0b72851.chunk.js",
-    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.f0b72851.chunk.js.map",
+    "main.css": "/ETF-Pension-Plan-Visualization/static/css/main.b8511c58.chunk.css",
+    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.683d409e.chunk.js",
+    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.683d409e.chunk.js.map",
     "runtime-main.js": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.d156f019.js",
     "runtime-main.js.map": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.d156f019.js.map",
-    "static/js/2.f66d8b1f.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/2.f66d8b1f.chunk.js",
-    "static/js/2.f66d8b1f.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/2.f66d8b1f.chunk.js.map",
+    "static/js/2.769278a8.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/2.769278a8.chunk.js",
+    "static/js/2.769278a8.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/2.769278a8.chunk.js.map",
     "static/js/3.a498f242.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/3.a498f242.chunk.js",
     "static/js/3.a498f242.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/3.a498f242.chunk.js.map",
     "index.html": "/ETF-Pension-Plan-Visualization/index.html",
-    "static/css/main.a15dc3da.chunk.css.map": "/ETF-Pension-Plan-Visualization/static/css/main.a15dc3da.chunk.css.map",
-    "static/js/2.f66d8b1f.chunk.js.LICENSE.txt": "/ETF-Pension-Plan-Visualization/static/js/2.f66d8b1f.chunk.js.LICENSE.txt"
+    "static/css/main.b8511c58.chunk.css.map": "/ETF-Pension-Plan-Visualization/static/css/main.b8511c58.chunk.css.map",
+    "static/js/2.769278a8.chunk.js.LICENSE.txt": "/ETF-Pension-Plan-Visualization/static/js/2.769278a8.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.d156f019.js",
-    "static/js/2.f66d8b1f.chunk.js",
-    "static/css/main.a15dc3da.chunk.css",
-    "static/js/main.f0b72851.chunk.js"
+    "static/js/2.769278a8.chunk.js",
+    "static/css/main.b8511c58.chunk.css",
+    "static/js/main.683d409e.chunk.js"
   ]
 }
