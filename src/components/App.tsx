@@ -31,13 +31,6 @@ export const Y_AXIS_LOCK_IDENTIFIER = 'yAxisLock';
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
 
-export const ETF_SYMBOL_TO_NAME = {
-    'SP5C.PAR': 'S & P 500',
-    ESGE: 'iShare',
-    SUSA: 'MSCI USA ESG',
-};
-
-// TODO  mach notation konsistent: _, private,
 export interface IAppState {
     isValid: boolean;
     startingCapital: ITextInputState;
@@ -59,6 +52,17 @@ export interface IAppState {
     brokerDropdown: IBrokerDropDown;
     etfDropdownSelection: IETFSelection;
 }
+
+export interface StringIndex {
+    [identifier: string]: string;
+}
+
+export const ETF_SYMBOL_TO_NAME: StringIndex = {
+    'SP5C.PAR': 'S & P 500',
+    ESGE: 'iShare',
+    SUSA: 'MSCI USA ESG',
+};
+
 
 function transformInputToInt(e: ChangeEvent<HTMLInputElement>) {
     const valueWithoutTextAppending = e.target.value.split(' ')[0];

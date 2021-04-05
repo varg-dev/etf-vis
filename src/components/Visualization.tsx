@@ -78,7 +78,12 @@ export class Visualization extends React.Component<IAppState, {}> {
     private _drawVisualization() {
         D3ChartStrategy.reset();
         try {
-            if (this.props.isValid != null && this.props.isValid) {
+            if (
+                this.props.isValid != null &&
+                this.props.isValid &&
+                this.firstSVGRef.current != null &&
+                this.secondSVGRef.current != null
+            ) {
                 this.investmentModel = this._getInvestmentModel();
                 const firstPayoutPhaseDate = this.investmentModel.getPayoutPhaseBeginDate();
                 const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(

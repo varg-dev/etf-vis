@@ -1,6 +1,7 @@
+import { InvestmentStep } from '../model/InvestmentModel';
 import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
 
-function getSumNewPayout(investmentStep) {
+function getSumNewPayout(investmentStep: InvestmentStep) {
     let sumNewPayout = 0;
     for (const etfIdentifier in investmentStep.newPayout) {
         sumNewPayout += investmentStep.newPayout[etfIdentifier];
@@ -9,13 +10,19 @@ function getSumNewPayout(investmentStep) {
 }
 
 export class CashflowBarChart extends D3ChartStrategy {
-    constructor(investmentSteps, renderDivRef, payoutPhaseStartDate, tooltipDate, yExtent) {
+    private readonly barPaddingPercentage = 0.9;
+    private readonly colors = { payout: '#3acc5c', invested: '#ff3e58' };
+
+    private rectWidth = 0; 
+
+    constructor(
+        investmentSteps: InvestmentStep[],
+        renderDivRef: HTMLDivElement,
+        payoutPhaseStartDate: Date,
+        tooltipDate: Date | undefined,
+        yExtent: [number, number] | undefined
+    ) {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'secondSVG', tooltipDate, yExtent);
-        this.barPaddingPercentage = 0.9;
-
-        this.zeroLineStrokeWidth = 3;
-
-        this.colors = { payout: '#3acc5c', invested: '#ff3e58' };
     }
 
     render() {
@@ -89,7 +96,7 @@ export class CashflowBarChart extends D3ChartStrategy {
         };
     }
 
-    _updateTooltip(investmentStepIndex) {
+    _updateTooltip(investmentStepIndex: number) {
         const payoutValue = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
         const investedValue = this.investmentSteps[investmentStepIndex].newInvestment;
         this.textProperties.payout.text = generateLabelWithValueText('payout', this.valueToDisplayText(payoutValue));

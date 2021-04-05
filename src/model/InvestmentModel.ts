@@ -20,7 +20,7 @@ type ETFPrizes = IETFShares;
 
 type ETFMoney = IETFShares;
 
-interface InvestmentStep {
+export interface InvestmentStep {
     date: Date;
     newShares: IETFShares;
     totalShares: IETFShares;

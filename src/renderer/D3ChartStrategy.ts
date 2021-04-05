@@ -1,22 +1,40 @@
 import * as d3 from 'd3';
 import { roundDateToBeginningOfMonth, numberOfMonthsOfAYear } from '../helpers/utils';
+import { InvestmentStep } from '../model/InvestmentModel';
+
+interface ITextProperty {
+    text: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    textAnchor: string;
+    fontWeight: string;
+    color: string;
+}
+
+interface ITextProperties {
+    [textIdentifier: string]: ITextProperty;
+}
+
+export interface DataArrayEntry {
+    yStart: number;
+    yEnd: number;
+    date: Date;
+    color: string;
+}
+
+export type DataArray = DataArrayEntry[][];
 
 const FIVE_MILLION = 5000000;
 const ONE_THOUSAND = 1000;
 const ONE_MILLION = 1000000;
 const numberOfTicks = 7;
 
-export function generateLabelWithValueText(name, value = undefined) {
+export function generateLabelWithValueText(name: string, value: string | undefined = undefined) {
     return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
 }
 
-function setInteractionDisplayForActiveDiagrams(displayOption) {
-    for (const activeDiagram of D3ChartStrategy.activeStrategies) {
-        activeDiagram.interaction.style('display', displayOption);
-    }
-}
-
-function calculateInvestmentStepIndexForDate(date, investmentSteps) {
+function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]) {
     const firstDate = investmentSteps[0].date;
     const secondDate = investmentSteps[1].date;
     const numberOfMonthsSinceStartDate =
@@ -30,14 +48,42 @@ function calculateInvestmentStepIndexForDate(date, investmentSteps) {
 }
 
 export class D3ChartStrategy {
-    static activeStrategies = [];
+    tooltipDate: Date;
+    yExtent: [number, number];
+
+    protected readonly lineStrokeWidth = 3;
+    protected readonly standardFontSize = 20;
+    protected readonly labelValueIdentifier = 'value';
+
+    protected investmentSteps: InvestmentStep[];
+    protected dateExtent: [Date, Date] = [new Date(), new Date()];
+    protected marginW: number;
+    protected marginH: number;
+    protected width: number;
+    protected height: number;
+    protected maxIndex = 0;
+    protected minIndex = 0;
+    protected yScale: d3.ScaleLinear<number, number, never> = d3.scaleLinear();
+    protected xScale: d3.ScaleTime<number, number, never> = d3.scaleTime();
+    protected dataArray: DataArray = [];
+    protected textProperties: ITextProperties = {};
+    protected payoutPhaseStartDate: Date;
+
+    protected svg: d3.Selection<SVGGElement, unknown, null, undefined>;
+
+    private static activeStrategies: D3ChartStrategy[] = [];
+
+    private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
+    private interaction: d3.Selection<SVGGElement, unknown, null, undefined>;
+    private textGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
+
     constructor(
-        investmentSteps,
-        renderDivRef,
-        payoutPhaseStartDate,
-        svgID,
-        tooltipDate,
-        yExtent,
+        investmentSteps: InvestmentStep[],
+        renderDivRef: HTMLDivElement,
+        payoutPhaseStartDate: Date,
+        svgID: string,
+        tooltipDate: Date | undefined,
+        yExtent: [number, number] | undefined,
         width = 1100,
         height = 300,
         marginW = 200,
@@ -49,16 +95,13 @@ export class D3ChartStrategy {
         D3ChartStrategy.activeStrategies.push(this);
         this.investmentSteps = investmentSteps;
         this.payoutPhaseStartDate = payoutPhaseStartDate;
-        this.tooltipDate = tooltipDate;
-        this.yExtent = yExtent;
+        this.tooltipDate = tooltipDate != null ? tooltipDate : new Date(0);
+        this.yExtent = yExtent != null ? yExtent : [0, 0];
 
         this.marginW = marginW;
         this.marginH = marginH;
         this.width = width;
         this.height = height;
-
-        this.lineStrokeWidth = 3;
-        this.labelValueIdentifier = 'value';
 
         // Reset diagram by deletion.
         renderDivRef.innerHTML = '';
@@ -70,10 +113,21 @@ export class D3ChartStrategy {
             .attr('viewBox', `0 0 ${this.width + 2 * this.marginW} ${this.height + 2 * this.marginH}`)
             .append('g')
             .attr('transform', `translate(${[this.marginW / 2, this.marginH]})`);
+
+        // Set default values needed by typescript.
+        this.textGroup = this.svg;
+        this.interaction = this.svg;
+        this.hoverLine = this.svg.append('line');
     }
 
     static reset() {
         D3ChartStrategy.activeStrategies = [];
+    }
+
+    private static _setInteractionDisplayForActiveDiagrams(displayOption: string) {
+        for (const activeDiagram of D3ChartStrategy.activeStrategies) {
+            activeDiagram.interaction.style('visibility', displayOption);
+        }
     }
 
     render() {
@@ -86,38 +140,14 @@ export class D3ChartStrategy {
         this._drawAxis();
         this._addInteraction();
 
-        if (this.tooltipDate != null) {
+        if (this.tooltipDate >= this.dateExtent[0] && this.tooltipDate <= this.dateExtent[1]) {
             this._updateAllDiagrams();
         }
     }
 
-    _calculateExtents() {
-        this.dateExtent = d3.extent(this.dataArray[0], d => d.date);
-
-        const lastImportantDateForYScale = new Date(this.payoutPhaseStartDate);
-        lastImportantDateForYScale.setMonth(lastImportantDateForYScale.getMonth() + numberOfMonthsOfAYear);
-        // Only calculate the y extent when it is undefined. Meaning the y axis is not locked.
-        if (this.yExtent == null) {
-            const filteredDataArrayForYMax = this.dataArray[this.maxIndex].filter(
-                e => e.date <= lastImportantDateForYScale && e.date > this.dateExtent[0]
-            );
-            const filteredDataArrayForYMin = this.dataArray[this.minIndex].filter(
-                e => e.date <= lastImportantDateForYScale
-            );
-            const maxVal = d3.max(filteredDataArrayForYMax.map(e => e.yStart));
-            const minVal = d3.min(filteredDataArrayForYMin.map(e => e.yEnd));
-            this.yExtent = [minVal, maxVal];
-        }
-    }
-
-    _createScales() {
-        this.yScale = d3.scaleLinear().domain(this.yExtent).range([this.height, 0]);
-        this.xScale = d3.scaleTime().domain(this.dateExtent).range([0, this.width]);
-    }
-
-    valueToDisplayText(value, hasToBePositive = false) {
+    protected valueToDisplayText(value: number, hasToBePositive = false) {
         const labelDivisionFactor =
-            Math.max(-this.yExtent[0], this.yExtent[1]) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
+            Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
         const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
         if (hasToBePositive) {
             value = Math.abs(value);
@@ -127,14 +157,38 @@ export class D3ChartStrategy {
         })}${numberIndicator} €`;
     }
 
-    _drawAxis() {
+    private _calculateExtents() {
+        this.dateExtent = d3.extent(this.dataArray[0], d => d.date) as [Date, Date];
+
+        const lastImportantDateForYScale = new Date(this.payoutPhaseStartDate);
+        lastImportantDateForYScale.setMonth(lastImportantDateForYScale.getMonth() + numberOfMonthsOfAYear);
+        // Only calculate the y extent when it is undefined. Meaning the y axis is not locked.
+        if (this.yExtent[0] === 0 && this.yExtent[1] === 0) {
+            const filteredDataArrayForYMax = this.dataArray[this.maxIndex].filter(
+                e => e.date <= lastImportantDateForYScale && e.date > this.dateExtent[0]
+            );
+            const filteredDataArrayForYMin = this.dataArray[this.minIndex].filter(
+                e => e.date <= lastImportantDateForYScale
+            );
+            const maxVal = d3.max(filteredDataArrayForYMax.map(e => e.yStart)) as number;
+            const minVal = d3.min(filteredDataArrayForYMin.map(e => e.yEnd)) as number;
+            this.yExtent = [minVal, maxVal];
+        }
+    }
+
+    private _createScales() {
+        this.yScale = d3.scaleLinear().domain(this.yExtent).range([this.height, 0]);
+        this.xScale = d3.scaleTime().domain(this.dateExtent).range([0, this.width]);
+    }
+
+    private _drawAxis() {
         this.svg
             .append('g')
             .style('font-size', '20px')
             .call(
                 d3
                     .axisLeft(this.yScale)
-                    .tickFormat(d => this.valueToDisplayText(d))
+                    .tickFormat(d => this.valueToDisplayText(d as number))
                     .ticks(numberOfTicks)
             );
 
@@ -167,14 +221,14 @@ export class D3ChartStrategy {
             .style('stroke', 'black');
     }
 
-    _addInteraction() {
+    private _addInteraction() {
         const interactionClass = 'interaction';
         const tooltipLineClass = 'tooltipLine';
 
         this.interaction = this.svg
             .append('g')
             .attr('class', interactionClass)
-            .style('display', 'none')
+            .style('visibility', 'hidden')
             .attr('transform', `translate(${[0, -this.marginH]})`);
 
         this.hoverLine = this.interaction
@@ -195,20 +249,20 @@ export class D3ChartStrategy {
             .attr('width', this.width)
             .attr('fill', 'none')
             .style('pointer-events', 'all')
-            .on('mouseover', () => setInteractionDisplayForActiveDiagrams(null))
-            .on('mouseout', () => setInteractionDisplayForActiveDiagrams('none'))
+            .on('mouseover', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('visible'))
+            .on('mouseout', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('hidden'))
             .on('mousemove', mouseEvent => this._handleTooltipEvent(mouseEvent));
     }
 
     // Interaction inspired by: http://www.d3noob.org/2014/07/my-favourite-tooltip-method-for-line.html
-    _handleTooltipEvent(mouseEvent) {
+    private _handleTooltipEvent(mouseEvent: any) {
         const x = d3.pointer(mouseEvent)[0];
         const date = this.xScale.invert(x);
         this.tooltipDate = roundDateToBeginningOfMonth(date);
         this._updateAllDiagrams();
     }
 
-    _updateAllDiagrams() {
+    private _updateAllDiagrams() {
         const investmentStepIndex = calculateInvestmentStepIndexForDate(this.tooltipDate, this.investmentSteps);
         for (const activeDiagram of D3ChartStrategy.activeStrategies) {
             activeDiagram.hoverLine.attr('x1', this.xScale(this.tooltipDate)).attr('x2', this.xScale(this.tooltipDate));
@@ -217,7 +271,7 @@ export class D3ChartStrategy {
         }
     }
 
-    _drawText() {
+    private _drawText() {
         this.textGroup = this.svg.append('g').attr('class', 'textGroup');
         this.textGroup
             .selectAll('text')
@@ -233,11 +287,11 @@ export class D3ChartStrategy {
             .style('fill', d => d.color);
     }
 
-    _updateDiagram() {
-        this.textGroup.selectAll('text').text(d => d.text);
+    private _updateDiagram() {
+        this.textGroup.selectAll('text').text(d => (d as ITextProperty).text);
     }
 
-    _prepareText() {
+    protected _prepareText() {
         const savingPhaseMid =
             this.xScale(this.dateExtent[0]) +
             (this.xScale(this.payoutPhaseStartDate) - this.xScale(this.dateExtent[0])) / 2;
@@ -246,7 +300,6 @@ export class D3ChartStrategy {
             this.xScale(this.payoutPhaseStartDate) +
             (this.xScale(this.dateExtent[1]) - this.xScale(this.payoutPhaseStartDate)) / 2;
         const yPos = -10;
-        this.standardFontSize = 20;
         this.textProperties = {
             savingBold: {
                 text: 'SAVING',
@@ -287,15 +340,15 @@ export class D3ChartStrategy {
         };
     }
 
-    _prepareData() {
+    protected _prepareData() {
         throw new Error('Abstract method. Not Implemented');
     }
 
-    _drawContent() {
+    protected _drawContent() {
         throw new Error('Abstract method. Not Implemented');
     }
 
-    _updateTooltip() {
+    protected _updateTooltip(investmentStepIndex: number) {
         throw new Error('Abstract method. Not Implemented');
     }
 }
