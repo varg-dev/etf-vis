@@ -1,9 +1,9 @@
-import { InvestmentStep } from '../model/InvestmentModel';
+import { InvestmentStep, ETFIdentifier } from '../model/InvestmentModel';
 import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
 
 function getSumNewPayout(investmentStep: InvestmentStep) {
     let sumNewPayout = 0;
-    for (const etfIdentifier in investmentStep.newPayout) {
+    for (const etfIdentifier of Object.keys(investmentStep.newPayout) as ETFIdentifier[]) {
         sumNewPayout += investmentStep.newPayout[etfIdentifier];
     }
     return sumNewPayout;

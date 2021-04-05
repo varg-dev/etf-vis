@@ -13,6 +13,7 @@ import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropD
 import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
 import { ETFSelectionDropDown, IETFProperties, IETFSelection } from './ETFSelectionDropDown';
 import { ForecastModelSingleton } from '../model/ForecastModel';
+import { ETFIdentifier } from '../model/InvestmentModel';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -53,16 +54,13 @@ export interface IAppState {
     etfDropdownSelection: IETFSelection;
 }
 
-export interface StringIndex {
-    [identifier: string]: string;
-}
+type ETFIdentifierToString = { [key in ETFIdentifier]: string };
 
-export const ETF_SYMBOL_TO_NAME: StringIndex = {
+export const ETF_SYMBOL_TO_NAME: ETFIdentifierToString = {
     'SP5C.PAR': 'S & P 500',
     ESGE: 'iShare',
     SUSA: 'MSCI USA ESG',
 };
-
 
 function transformInputToInt(e: ChangeEvent<HTMLInputElement>) {
     const valueWithoutTextAppending = e.target.value.split(' ')[0];

@@ -36,7 +36,7 @@ export class Visualization extends React.Component<IAppState, {}> {
 
     private investmentModel: InvestmentModel | undefined = undefined;
 
-    private _getInvestmentModel() {
+    private _getETFIdentifierToRatio(){
         const etfIdentifierToRatio: ETFRatio = {};
         const etfProperties = this.props.etfDropdownSelection.elements;
         for (const etfIdentifier in etfProperties) {
@@ -44,6 +44,10 @@ export class Visualization extends React.Component<IAppState, {}> {
                 etfIdentifierToRatio[etfProperties[etfIdentifier].symbol] = etfProperties[etfIdentifier].percentage;
             }
         }
+        return etfIdentifierToRatio;
+    }
+
+    private _getInvestmentModel(etfIdentifierToRatio: ETFRatio) {
         const configOptions: IConfigOptions = {
             taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER].value,
             costConfig: generateCostConfig(this.props),
@@ -84,7 +88,8 @@ export class Visualization extends React.Component<IAppState, {}> {
                 this.firstSVGRef.current != null &&
                 this.secondSVGRef.current != null
             ) {
-                this.investmentModel = this._getInvestmentModel();
+                const etfIdentifierToRatio = this._getETFIdentifierToRatio();
+                this.investmentModel = this._getInvestmentModel(etfIdentifierToRatio);
                 const firstPayoutPhaseDate = this.investmentModel.getPayoutPhaseBeginDate();
                 const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
                     this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value
@@ -95,7 +100,8 @@ export class Visualization extends React.Component<IAppState, {}> {
                     this.firstSVGRef.current,
                     firstPayoutPhaseDate,
                     tooltipDate,
-                    this._getYAxisExtent(this.areaChart)
+                    this._getYAxisExtent(this.areaChart),
+                    etfIdentifierToRatio
                 );
                 this.areaChart.render();
                 this.barChart = new CashflowBarChart(

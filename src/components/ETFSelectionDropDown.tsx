@@ -3,9 +3,11 @@ import { ChangeEvent, MouseEvent } from 'react';
 import { ETFPercentageInputElement } from './TextInputElement';
 import { ErrorMessage } from './MinimalBootstrapComponents';
 
+import { ETFIdentifier } from '../model/InvestmentModel';
+
 export interface IETFProperties {
     identifier: string;
-    symbol: string;
+    symbol: ETFIdentifier;
     label: string;
     percentage: number;
     selected: boolean;
@@ -54,7 +56,7 @@ export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
                             type="button"
                             onClick={(e: MouseEvent<HTMLButtonElement>) => {
                                 //if (e.target.type !== 'text') {
-                                    props.handleSelectionChange(props.elements[elementIdentifier]);
+                                props.handleSelectionChange(props.elements[elementIdentifier]);
                                 //}
                             }}>
                             <ETFPercentageInputElement
@@ -65,7 +67,7 @@ export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
                                 transformFunction={percentageTransformFunction}
                                 disabled={props.autoPercentage}
                                 isValid={true}
-                                errorMessage=''
+                                errorMessage=""
                             />
                         </button>
                     </li>

@@ -1,22 +1,22 @@
 import * as d3 from 'd3';
-import { getTotalShareValue, getTotalDividenShareValue, InvestmentStep } from '../model/InvestmentModel';
+import {
+    getTotalShareValue,
+    getTotalDividenShareValue,
+    InvestmentStep,
+    NegativeInvestmentStepIdentifier,
+    ETFIdentifier,
+    ETFRatio,
+} from '../model/InvestmentModel';
 import { D3ChartStrategy, generateLabelWithValueText, DataArrayEntry } from './D3ChartStrategy';
-import { ETF_SYMBOL_TO_NAME, StringIndex } from '../components/App';
+import { ETF_SYMBOL_TO_NAME } from '../components/App';
 
 interface IDataToIndex {
     [identifier: string]: number;
 }
 
-interface IETFColor {
-    total: string;
-    invested: string;
-}
+type ETFIdentifierToColors = { [key in ETFIdentifier]: { total: string; invested: string } };
 
-interface IETFColors {
-    [etfIdentifier: string]: IETFColor;
-}
-
-type NegativeInvestmentStepIdentifier = 'totalCosts' | 'totalTaxes' | 'inflation';
+type NegativeInvestmentToColorMap = { [key in NegativeInvestmentStepIdentifier]: string };
 
 function generateEtfValueText(
     investmentValue: string | undefined = undefined,
@@ -26,18 +26,22 @@ function generateEtfValueText(
 }
 
 export class AreaChartD3 extends D3ChartStrategy {
-    private readonly etfLineColors: IETFColors = {
+    private readonly etfLineColors: ETFIdentifierToColors = {
         'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },
         ESGE: { total: '#ff1eff', invested: '#ff63ff' },
         SUSA: { total: '#23ff01', invested: '#7dff69' },
     };
-    private readonly colors: StringIndex = { inflation: '#ff7f00', totalCosts: '#be3bff', totalTaxes: '#e31a1c' };
+    private readonly colors: NegativeInvestmentToColorMap = {
+        inflation: '#ff7f00',
+        totalCosts: '#be3bff',
+        totalTaxes: '#e31a1c',
+    };
     private readonly lineOpacity = 0.7;
     private readonly negativeLabels: NegativeInvestmentStepIdentifier[] = ['totalCosts', 'totalTaxes', 'inflation'];
     private readonly investedIdentifier = 'invested';
     private readonly capitalIdentifier = 'capital';
 
-    private etfIdentifiers: string[];
+    private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
 
     constructor(
@@ -45,11 +49,18 @@ export class AreaChartD3 extends D3ChartStrategy {
         renderDivRef: HTMLDivElement,
         payoutPhaseStartDate: Date,
         tooltipDate: Date | undefined,
-        yExtent: [number, number] | undefined
+        yExtent: [number, number] | undefined,
+        etfRatio: ETFRatio
     ) {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate, yExtent);
 
-        this.etfIdentifiers = Object.keys(this.investmentSteps[0].totalShares);
+        this.etfIdentifiers = [];
+        for (const etfIdentifier of Object.keys(etfRatio) as ETFIdentifier[]){
+            const ratio = etfRatio[etfIdentifier];
+            if (ratio!= null && ratio > 0.0){
+                this.etfIdentifiers.push(etfIdentifier);
+            }
+        }
     }
 
     _prepareData() {
@@ -92,7 +103,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 color: this.colors.inflation,
             });
             let heightOffset = 0;
-            for (const etfIdentifier in investmentStep.totalShares) {
+            for (const etfIdentifier of this.etfIdentifiers) {
                 const totalShareValue = getTotalShareValue(etfIdentifier, investmentStep);
                 const totalDividendShareValue = getTotalDividenShareValue(etfIdentifier, investmentStep);
                 this.dataArray[this.dataToIndex[etfIdentifier + this.capitalIdentifier]].push({
@@ -110,19 +121,6 @@ export class AreaChartD3 extends D3ChartStrategy {
                 heightOffset += totalShareValue;
             }
         }
-
-        // Append miscellaneous data to array.
-        /*this.dataArray[this.dataToIndex.inflation].color = this.colors.inflation;
-        this.dataArray[this.dataToIndex.totalTaxes].color = this.colors.totalTaxes;
-        this.dataArray[this.dataToIndex.totalCosts].color = this.colors.totalCosts;
-        for (const etfIdentifier in this.investmentSteps[0].totalShares) {
-            this.dataArray[this.dataToIndex[etfIdentifier + investedIdentifier]].color = this.etfLineColors[
-                etfIdentifier
-            ].invested;
-            this.dataArray[this.dataToIndex[etfIdentifier + capitalIdentifier]].color = this.etfLineColors[
-                etfIdentifier
-            ].total;
-        }*/
     }
 
     _drawLines() {
