@@ -137,7 +137,7 @@ function calculateTaxes(
     investmentSteps: InvestmentStep[],
     date: Date,
     leftoverTaxFreeAmount: number,
-    etfToRatio: ETFRatio
+    etfToRatio: ETFRatio,
 ) {
     if (!isFirstMonthOfAYear(date) || investmentSteps.length < 2) {
         return [0, leftoverTaxFreeAmount];
@@ -151,18 +151,17 @@ function calculateTaxes(
             ? investmentSteps[investmentSteps.length - numberOfMonthsOfAYear]
             : investmentSteps[1];
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
-        let accumulatedBasicProfit = 0;
+        // Sum up total Investment of the first date of this year.
+        let accumulatedBasicProfit =
+            (getTotalShareValue(etfIdentifier, firstInvestmentStepOfThisYear) *
+                (numberOfMonthsOfAYear - firstInvestmentStepOfThisYear.date.getMonth())) /
+            numberOfMonthsOfAYear;
         // Sum up all new investments from february to december.
         for (let i = 1; i < numberOfMonthsOfAYear && investmentSteps.length - i > 0; i++) {
             const currentInvestmentStep = investmentSteps[investmentSteps.length - i];
             accumulatedBasicProfit +=
                 (getNewShareValue(etfIdentifier, currentInvestmentStep) * i) / numberOfMonthsOfAYear;
         }
-        // Sum up total Investment of the first date of this year.
-        accumulatedBasicProfit +=
-            (getTotalShareValue(etfIdentifier, firstInvestmentStepOfThisYear) *
-                (numberOfMonthsOfAYear - firstInvestmentStepOfThisYear.date.getMonth())) /
-            numberOfMonthsOfAYear;
         accumulatedBasicProfit *= 0.7 * basicRateOfInterest;
         const currentShareValues = getTotalShareValue(etfIdentifier, decemberInvestmentStep);
         // Calculate profit of last year.
@@ -372,7 +371,6 @@ function addPayoutMonth(
                     ? investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] - currentSharesLeft
                     : 0;
         }
-
         // Handle dividend.
         const dividendPayoutMoney =
             newInvestmentStep.totalShares[etfIdentifier] * calculateDividend(etfIdentifier, date);
@@ -381,6 +379,17 @@ function addPayoutMonth(
         newInvestmentStep.totalShares[etfIdentifier] += newSharesByDividend;
         newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
         newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
+
+        // Handle Vorabpauschale.
+        const [newTaxes, newLeftoverTaxFreeAmount] = calculateTaxes(
+            investmentSteps,
+            date,
+            leftoverTaxFreeAmount,
+            etfToRatio
+        );
+        leftoverTaxFreeAmount = newLeftoverTaxFreeAmount;
+        taxes += newTaxes;
+        leftoverAlreadyPaidTaxes += newTaxes;
     }
 
     newInvestmentStep.totalCosts += costs;
