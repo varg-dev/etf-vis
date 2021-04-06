@@ -8,7 +8,7 @@ import {
 } from './TextInputElement';
 import { CheckboxInputElement, ICheckboxState, ICheckBoxStateIdentifier } from './CheckboxInputElement';
 import { Overlay, IAPIKey } from './APIKeyOverlay';
-import { SidebarSectionHeading } from './MinimalBootstrapComponents';
+import { SidebarSectionHeading } from './SidebarSectionHeadingComponent';
 import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropDown';
 import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
 import { ETFSelectionDropDown, IETFProperties, IETFSelection } from './ETFSelectionDropDown';

@@ -1,7 +1,7 @@
 import { ChangeEvent, MouseEvent } from 'react';
 
 import { ETFPercentageInputElement } from './TextInputElement';
-import { ErrorMessage } from './MinimalBootstrapComponents';
+import { ErrorMessage } from './ErrorMessageComponent';
 
 import { ETFIdentifier } from '../model/InvestmentModel';
 

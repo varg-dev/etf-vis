@@ -73,6 +73,8 @@ export class D3ChartStrategy {
 
     private static activeStrategies: D3ChartStrategy[] = [];
 
+    private readonly fadeOutGradientID = 'fadeOutGradient';
+
     private faceOutYearsLength = 10;
 
     private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
@@ -348,11 +350,29 @@ export class D3ChartStrategy {
         const fadeOutStartDate = new Date(this.dateExtent[1]);
         fadeOutStartDate.setFullYear(fadeOutStartDate.getFullYear() - this.faceOutYearsLength);
 
+        const gradient = fadeOutGroup.append('linearGradient').attr('id', this.fadeOutGradientID);
+
+        gradient
+            .append('stop')
+            .attr('class', 'start')
+            .attr('offset', '0%')
+            .attr('stop-color', 'white')
+            .attr('stop-opacity', 0);
+
+        gradient
+            .append('stop')
+            .attr('class', 'end')
+            .attr('offset', '100%')
+            .attr('stop-color', 'white')
+            .attr('stop-opacity', 1);
+
         fadeOutGroup
             .append('rect')
             .attr('x', this.xScale(fadeOutStartDate))
-            .attr('y', this.yScale(this.yExtent[0]))
-            .attr('width', this.xScale(this.dateExtent[1]) - this.xScale(fadeOutStartDate));
+            .attr('y', this.marginH * 2 * -1)
+            .attr('width', this.xScale(this.dateExtent[1]) - this.xScale(fadeOutStartDate))
+            .attr('height', this.yScale(this.yExtent[0]) - this.yScale(this.yExtent[1]) + this.marginH * 2)
+            .style('fill', `url(#${this.fadeOutGradientID})`);
     }
 
     protected _prepareData() {

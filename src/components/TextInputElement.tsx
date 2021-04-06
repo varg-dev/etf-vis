@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import { ErrorMessage } from './MinimalBootstrapComponents';
+import { ErrorMessage } from './ErrorMessageComponent';
 
 export interface ITextInputState {
     value: number;
