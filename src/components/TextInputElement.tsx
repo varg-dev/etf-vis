@@ -45,7 +45,9 @@ export type NumberInputStateIdentifier =
     | 'savingPhase'
     | 'age'
     | 'lifeExpectation'
-    | 'taxFreeAmount';
+    | 'taxFreeAmount'
+    | 'yearlyInvestmentIncrease'
+    | 'yearlyPayoutIncrease';
 
 export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
 

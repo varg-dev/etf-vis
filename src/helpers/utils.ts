@@ -16,6 +16,10 @@ export interface IHistoricEntry {
     course: number;
 }
 
+export function percentageToFloatValue(val: number) {
+    return val / 100.0;
+}
+
 export function isLastMonthOfAYear(date: Date) {
     return date.getMonth() === numberOfMonthsOfAYear - 1;
 }

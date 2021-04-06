@@ -1,5 +1,11 @@
 import { ForecastModelSingleton } from './ForecastModel';
-import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear } from '../helpers/utils';
+import {
+    numberOfMonthsOfAYear,
+    isLastMonthOfAYear,
+    clamp,
+    isFirstMonthOfAYear,
+    percentageToFloatValue,
+} from '../helpers/utils';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ICostConfiguration, IConfigOptions } from '../components/Visualization';
@@ -103,6 +109,11 @@ function calculateAndAddInflation(investmentStep: InvestmentStep, initialDate: D
         initialDate.getFullYear() +
         (endDate.getMonth() - initialDate.getMonth()) / numberOfMonthsOfAYear;
     investmentStep.inflation = sumTotalValues - sumTotalValues * Math.pow(1 - inflationRate, timeFactor);
+}
+
+function calculateAmountIncrease(amount: number, percentageIncrease: number, numberOfMonth: number) {
+    const yearsSinceStart = Math.floor(numberOfMonth / numberOfMonthsOfAYear);
+    return amount * Math.pow(1 + percentageIncrease, yearsSinceStart);
 }
 
 function calculateForecastInterval(
@@ -415,7 +426,9 @@ function generateEmptyInvestmentStep(etfToRatio: ETFRatio, date: Date) {
 export class InvestmentModel {
     private startCapital: number;
     private monthlyInvestment: number;
+    private yearlyInvestmentIncrease: number;
     private monthlyPayout: number;
+    private yearlyPayoutIncrease: number;
     private savingPhaseLength: number;
     private etfToRatio: ETFRatio;
     private configOptions: IConfigOptions;
@@ -430,7 +443,9 @@ export class InvestmentModel {
     constructor(
         startCapital: number,
         monthlyInvestment: number,
+        yearlyInvestmentIncrease: number,
         monthlyPayout: number,
+        yearlyPayoutIncrease: number,
         savingPhaseLength: number,
         etfToRatio: ETFRatio,
         configOptions: IConfigOptions,
@@ -445,6 +460,9 @@ export class InvestmentModel {
         this.configOptions = configOptions;
         this.expectationOfLife = expectationOfLife;
         this.age = age;
+        this.yearlyInvestmentIncrease = percentageToFloatValue(yearlyInvestmentIncrease);
+        this.yearlyPayoutIncrease = percentageToFloatValue(yearlyPayoutIncrease);
+
         this._calculateTimestampsForModel();
         this._calculateModel();
     }
@@ -482,11 +500,12 @@ export class InvestmentModel {
             this.etfToRatio,
             this.configOptions
         );
-        for (const savingDate of this.savingDates.slice(1)) {
+        for (let i = 1; i < this.savingDates.length; i++) {
+            const investmentAmount = calculateAmountIncrease(this.monthlyInvestment, this.yearlyInvestmentIncrease, i);
             addAccumulationMonth(
                 investmentSteps,
-                this.monthlyInvestment,
-                savingDate,
+                investmentAmount,
+                this.savingDates[i],
                 this.initialDate,
                 this.etfToRatio,
                 this.configOptions
@@ -502,12 +521,13 @@ export class InvestmentModel {
             ESGE: { investmentStepsIdx: 0, alreadySoldShares: 0 },
             SUSA: { investmentStepsIdx: 0, alreadySoldShares: 0 },
         };
-        for (const payoutDate of this.payoutDates) {
+        for (let i = 0; i < this.payoutDates.length; i++) {
+            const payoutAmount = calculateAmountIncrease(this.monthlyPayout, this.yearlyPayoutIncrease, i);
             [leftoverAlreadyPaidTaxes, leftoverTaxFreeAmount] = addPayoutMonth(
                 investmentSteps,
-                this.monthlyPayout,
+                payoutAmount,
                 this.etfToRatio,
-                payoutDate,
+                this.payoutDates[i],
                 this.initialDate,
                 this.configOptions,
                 leftoverAlreadyPaidTaxes,

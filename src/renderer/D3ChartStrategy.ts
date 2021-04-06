@@ -73,6 +73,8 @@ export class D3ChartStrategy {
 
     private static activeStrategies: D3ChartStrategy[] = [];
 
+    private faceOutYearsLength = 10;
+
     private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
     private interaction: d3.Selection<SVGGElement, unknown, null, undefined>;
     private textGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -135,6 +137,7 @@ export class D3ChartStrategy {
         this._calculateExtents();
         this._createScales();
         this._drawContent();
+        this._drawFadeOut();
         this._prepareText();
         this._drawText();
         this._drawAxis();
@@ -338,6 +341,18 @@ export class D3ChartStrategy {
                 color: 'black',
             },
         };
+    }
+
+    private _drawFadeOut() {
+        const fadeOutGroup = this.svg.append('g').attr('class', 'fadeOut');
+        const fadeOutStartDate = new Date(this.dateExtent[1]);
+        fadeOutStartDate.setFullYear(fadeOutStartDate.getFullYear() - this.faceOutYearsLength);
+
+        fadeOutGroup
+            .append('rect')
+            .attr('x', this.xScale(fadeOutStartDate))
+            .attr('y', this.yScale(this.yExtent[0]))
+            .attr('width', this.xScale(this.dateExtent[1]) - this.xScale(fadeOutStartDate));
     }
 
     protected _prepareData() {

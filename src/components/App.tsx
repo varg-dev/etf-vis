@@ -14,15 +14,18 @@ import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './
 import { ETFSelectionDropDown, IETFProperties, IETFSelection } from './ETFSelectionDropDown';
 import { ForecastModelSingleton } from '../model/ForecastModel';
 import { ETFIdentifier } from '../model/InvestmentModel';
+import { percentageToFloatValue } from '../helpers/utils';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
+export const YEARLY_INVESTMENT_INCREASE_IDENTIFIER = 'yearlyInvestmentIncrease';
 export const TRANSACTION_COSTS_IDENTIFIER = 'transactionCosts';
 export const TRANSACTION_COSTS_TYPE_IDENTIFIER = 'transactionCostsType';
 export const SAVING_PHASE_IDENTIFIER = 'savingPhase';
 export const AGE_IDENTIFIER = 'age';
 export const TAX_FREE_AMOUNT_IDENTIFIER = 'taxFreeAmount';
 export const MONTHLY_PAYOUT_IDENTIFIER = 'monthlyPayout';
+export const YEARLY_PAYOUT_INCREASE_IDENTIFIER = 'yearlyPayoutIncrease';
 export const LIFE_EXPECTATION_IDENTIFIER = 'lifeExpectation';
 export const DETAILED_GRAPH_DROPDOWN_IDENTIFIER = 'detailedGraph';
 export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
@@ -36,7 +39,9 @@ export interface IAppState {
     isValid: boolean;
     startingCapital: ITextInputState;
     monthlyInvestment: ITextInputState;
+    yearlyInvestmentIncrease: ITextInputState;
     monthlyPayout: ITextInputState;
+    yearlyPayoutIncrease: ITextInputState;
     transactionCosts: ITextInputState;
     savingPhase: ITextInputState;
     age: ITextInputState;
@@ -74,7 +79,7 @@ function transformInputToFloat(e: ChangeEvent<HTMLInputElement>) {
 }
 
 function isPercentage(val: number) {
-    return !Number.isNaN(val) && val >= 0 && val <= 1;
+    return !Number.isNaN(val) && val >= 0 && val <= 100;
 }
 
 function isPositiveInt(val: number) {
@@ -85,7 +90,7 @@ export function generateCostConfig(state: IAppState): ICostConfiguration {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
         return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
     } else {
-        return { percentageCosts: state[TRANSACTION_COSTS_IDENTIFIER].value, fixedCosts: 0.0 };
+        return { percentageCosts: percentageToFloatValue(state[TRANSACTION_COSTS_IDENTIFIER].value), fixedCosts: 0.0 };
     }
 }
 
@@ -191,7 +196,7 @@ export class App extends React.Component<{}, IAppState> {
     }
 
     private _validateAndSetState(state: IAppState) {
-        const positiveIntIdentifier: NumberInputStateIdentifier[] = [
+        const positiveIntIdentifiers: NumberInputStateIdentifier[] = [
             MONTHLY_INVESTMENT_IDENTIFIER,
             MONTHLY_PAYOUT_IDENTIFIER,
             STARTING_CAPITAL_IDENTIFIER,
@@ -200,11 +205,23 @@ export class App extends React.Component<{}, IAppState> {
             SAVING_PHASE_IDENTIFIER,
             TAX_FREE_AMOUNT_IDENTIFIER,
         ];
+
+        const percentageIdentifiers: NumberInputStateIdentifier[] = [
+            YEARLY_INVESTMENT_INCREASE_IDENTIFIER,
+            YEARLY_PAYOUT_INCREASE_IDENTIFIER,
+        ];
+
         state.isValid = true;
 
-        for (const identifier of positiveIntIdentifier) {
+        for (const identifier of positiveIntIdentifiers) {
             state[identifier].isValid = isPositiveInt(state[identifier].value);
             state[identifier].errorMessage = 'Please enter a positive number.';
+            state.isValid = state[identifier].isValid && state.isValid;
+        }
+
+        for (const identifier of percentageIdentifiers) {
+            state[identifier].isValid = isPercentage(state[identifier].value);
+            state[identifier].errorMessage = 'Please enter a valid percentage between 0 and 100 %.';
             state.isValid = state[identifier].isValid && state.isValid;
         }
 
@@ -264,33 +281,39 @@ export class App extends React.Component<{}, IAppState> {
                     <nav id="sidebarMenu" className="col-md-3 col-lg-2 bg-light sidebar">
                         <form className="position-sticky needs-validation" noValidate>
                             {/* Money Options */}
-                            <SidebarSectionHeading title="Money Options" />
-                            <TextInputElement {...this.state[STARTING_CAPITAL_IDENTIFIER]} />
-                            <TextInputElement {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]} />
-                            <TextInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
-                            <TextInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
+                            <SidebarSectionHeading title="Money Options" initiallyCollapsed={false}>
+                                <TextInputElement {...this.state[STARTING_CAPITAL_IDENTIFIER]} />
+                                <TextInputElement {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]} />
+                                <TextInputElement {...this.state[YEARLY_INVESTMENT_INCREASE_IDENTIFIER]} />
+                                <TextInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
+                                <TextInputElement {...this.state[YEARLY_PAYOUT_INCREASE_IDENTIFIER]} />
+                                <TextInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
+                            </SidebarSectionHeading>
                             {/* Time Options */}
-                            <SidebarSectionHeading title="Time Options" />
-                            <TextInputElement {...this.state[AGE_IDENTIFIER]} />
-                            <TextInputElement {...this.state[LIFE_EXPECTATION_IDENTIFIER]} />
-                            <TextInputElement {...this.state[SAVING_PHASE_IDENTIFIER]} />
+                            <SidebarSectionHeading title="Time Options" initiallyCollapsed={false}>
+                                <TextInputElement {...this.state[AGE_IDENTIFIER]} />
+                                <TextInputElement {...this.state[LIFE_EXPECTATION_IDENTIFIER]} />
+                                <TextInputElement {...this.state[SAVING_PHASE_IDENTIFIER]} />
+                            </SidebarSectionHeading>
                             {/* Cost Options */}
-                            <SidebarSectionHeading title="Cost Options" />
-                            <TextInputElement
-                                key={TRANSACTION_COSTS_IDENTIFIER}
-                                {...this.state[TRANSACTION_COSTS_IDENTIFIER]}
-                            />
-                            <CheckboxInputElement {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]} />
-                            <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
+                            <SidebarSectionHeading title="Cost Options" initiallyCollapsed={true}>
+                                <TextInputElement
+                                    key={TRANSACTION_COSTS_IDENTIFIER}
+                                    {...this.state[TRANSACTION_COSTS_IDENTIFIER]}
+                                />
+                                <CheckboxInputElement {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]} />
+                                <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
+                            </SidebarSectionHeading>
                             {/* Visualization Options */}
-                            <SidebarSectionHeading title="Visualization Options" />
-                            <GraphDetailDropDown {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]} />
-                            <CheckboxInputElement {...this.state[Y_AXIS_LOCK_IDENTIFIER]} />
-                            <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
-                            <ETFSelectionDropDown
-                                autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
-                                {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
-                            />
+                            <SidebarSectionHeading title="Visualization Options" initiallyCollapsed={true}>
+                                <GraphDetailDropDown {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]} />
+                                <CheckboxInputElement {...this.state[Y_AXIS_LOCK_IDENTIFIER]} />
+                                <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
+                                <ETFSelectionDropDown
+                                    autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
+                                    {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
+                                />
+                            </SidebarSectionHeading>
                         </form>
                     </nav>
                     <main className="col-md-9 col-lg-10 ms-sm-auto">
@@ -329,6 +352,17 @@ function getInitialInputFormState(caller: App): IAppState {
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
+        [YEARLY_INVESTMENT_INCREASE_IDENTIFIER]: {
+            value: 0.0,
+            label: 'Monthly Investment Increase',
+            errorMessage: '',
+            textAppending: '%',
+            isValid: true,
+            identifier: YEARLY_INVESTMENT_INCREASE_IDENTIFIER,
+            transformFunction: transformInputToFloat,
+            onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
         [MONTHLY_PAYOUT_IDENTIFIER]: {
             value: 1000,
             label: 'Monthly Payout',
@@ -340,8 +374,19 @@ function getInitialInputFormState(caller: App): IAppState {
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
+        [YEARLY_PAYOUT_INCREASE_IDENTIFIER]: {
+            value: 0.0,
+            label: 'Monthly Payout Increase',
+            errorMessage: '',
+            textAppending: '%',
+            isValid: true,
+            identifier: YEARLY_PAYOUT_INCREASE_IDENTIFIER,
+            transformFunction: transformInputToFloat,
+            onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
         [TRANSACTION_COSTS_IDENTIFIER]: {
-            value: 0.015,
+            value: 1.5,
             label: 'Transaction Costs',
             errorMessage: '',
             textAppending: '%',

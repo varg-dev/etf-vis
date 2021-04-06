@@ -2,10 +2,12 @@ import React from 'react';
 import {
     STARTING_CAPITAL_IDENTIFIER,
     MONTHLY_INVESTMENT_IDENTIFIER,
+    YEARLY_INVESTMENT_INCREASE_IDENTIFIER,
     SAVING_PHASE_IDENTIFIER,
     AGE_IDENTIFIER,
     TAX_FREE_AMOUNT_IDENTIFIER,
     MONTHLY_PAYOUT_IDENTIFIER,
+    YEARLY_PAYOUT_INCREASE_IDENTIFIER,
     LIFE_EXPECTATION_IDENTIFIER,
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
     Y_AXIS_LOCK_IDENTIFIER,
@@ -36,7 +38,7 @@ export class Visualization extends React.Component<IAppState, {}> {
 
     private investmentModel: InvestmentModel | undefined = undefined;
 
-    private _getETFIdentifierToRatio(){
+    private _getETFIdentifierToRatio() {
         const etfIdentifierToRatio: ETFRatio = {};
         const etfProperties = this.props.etfDropdownSelection.elements;
         for (const etfIdentifier in etfProperties) {
@@ -56,7 +58,9 @@ export class Visualization extends React.Component<IAppState, {}> {
         return new InvestmentModel(
             this.props[STARTING_CAPITAL_IDENTIFIER].value,
             this.props[MONTHLY_INVESTMENT_IDENTIFIER].value,
+            this.props[YEARLY_INVESTMENT_INCREASE_IDENTIFIER].value,
             this.props[MONTHLY_PAYOUT_IDENTIFIER].value,
+            this.props[YEARLY_PAYOUT_INCREASE_IDENTIFIER].value,
             this.props[SAVING_PHASE_IDENTIFIER].value,
             etfIdentifierToRatio,
             configOptions,

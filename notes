@@ -63,20 +63,21 @@ c_neu = c_split + costs * costs_sum
 
 neue todos:
 
-- stacked area chart
-- dynamisierung der sparrate (payout)
+- stacked area chart - done
+- dynamisierung der sparrate (payout) - done
 - architektur verbessern
 - dokumentation
 - linien interpolieren
-- vertikale streifen fuer unterteilung der phase
+- vertikale streifen fuer unterteilung der phase - done
 - fate out fuer den tod
-- y achse skalieren  / max aufgrund des beginn des renten auszahlungtages.
-- oder achsen min max als input.
-- vllt doch die inflation als erster negativer punkt???
+- y achse skalieren  / max aufgrund des beginn des renten auszahlungtages. - done
+- oder achsen min max als input. - done
+- vllt doch die inflation als erster negativer punkt??? FRAGE: die kosten und steuern sind schon abgezogen. die inflation aber nicht  => verwirrung.
 - vllt vertikales grid zwischen beiden graphen.
 - cashflow diagramm balkenfarbe pro jahr alternierend
-- achsen: number of ticks, euro zeichen , tausender zeichen- haloed line effekt
-- svg css direkt in den renderer reinpacken.
+- achsen: number of ticks, euro zeichen , tausender zeichen- haloed line effekt - done?
+- svg css direkt in den renderer reinpacken. - done
+- menues einklappbar machen.
 
 - interactions: vertikale linie ma ausrobieren
 - 
