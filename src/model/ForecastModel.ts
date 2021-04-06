@@ -61,6 +61,23 @@ interface IETFProperties {
 
 // USAGE: first call configure to set required static vars. Then the singleton can be accessed via getInstance. Never call the Constructor on your own.
 // Always call loadAndCacheHistoricalETFData of an etf before calling predict on that etf.
+
+/**
+ * Singleton class that provided course and dividend forecasting of ETFs.
+ * It uses [Alphavantage](https://www.alphavantage.co/) to load historic data which
+ * are used by a linear regression model for forecasting.
+ * The father the forecast day is in the future the more historic data is used to fit the linear regression.
+ * The historic data needs to be loaded before a forecast can be done.
+ * Dividends are accumulated and predicted per year.
+ *
+ * Example Code:
+ * ```typescript
+ * await ForecastModelSingleton.loadHistoricData(apiKey, etfProperties);
+ * const instance = ForecastModelSingleton.getInstance();
+ * const predictedCourse = instance.predictCourse(etfIdentifier, futureDate);
+ * const predictedDividend = instance.predictCourse(etfIdentifier, futureYear);
+ * ```
+ */
 export class ForecastModelSingleton {
     private static instance: null | ForecastModelSingleton = null;
     private static apiKey: string = '';
@@ -73,7 +90,14 @@ export class ForecastModelSingleton {
 
     private constructor() {}
 
-    static configure(apiKey: string, backCastTimeFactor = 2, backCastTimeConstant = 7) {
+    /**
+     * Configures the forecasting by setting the concerning values and resetting the present predictors.
+     *
+     * @param apiKey The [Alphavantage](https://www.alphavantage.co/) API Key.
+     * @param backCastTimeFactor Linear forecast factor. The number of dates used for prediction is increase linear towards this factor.
+     * @param backCastTimeConstant Constant forecast Offset. Constantly increases the number of dates used for prediction.
+     */
+    static configure(apiKey: string, backCastTimeFactor = 2, backCastTimeConstant = 7): void {
         ForecastModelSingleton.apiKey = apiKey;
         ForecastModelSingleton.backCastTimeFactor = backCastTimeFactor;
 
@@ -87,21 +111,28 @@ export class ForecastModelSingleton {
             for (const etfIdentifier in instance.coursePredictors) {
                 instance.coursePredictors[
                     etfIdentifier
-                ].maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+                ].maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
                     instance.historicalData[etfIdentifier].courseForecastArray
                 );
             }
             for (const etfIdentifier in instance.dividendPredictors) {
                 instance.dividendPredictors[
                     etfIdentifier
-                ].maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+                ].maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
                     instance.historicalData[etfIdentifier].dividendForecastArray
                 );
             }
         }
     }
 
-    static async loadHistoricData(apiKey: string, etfProperties: IETFProperties) {
+    /**
+     * Configures the Forecasting with the api key and default forecast values.
+     * Loads the historic data from all ETFs in the etfProperties.
+     *
+     * @param apiKey The [Alphavantage](https://www.alphavantage.co/) API Key.
+     * @param etfProperties The etfProperties.
+     */
+    static async loadHistoricData(apiKey: string, etfProperties: IETFProperties): Promise<void> {
         ForecastModelSingleton.configure(apiKey);
         const forecast = ForecastModelSingleton.getInstance();
         for (const etfIdentifier in etfProperties) {
@@ -110,32 +141,49 @@ export class ForecastModelSingleton {
         console.log('Finished loading the historic data.');
     }
 
-    static getInstance() {
+    /**
+     * Returns the Singleton instance of this class.
+     *
+     * @returns The singleton instance.
+     */
+    static getInstance(): ForecastModelSingleton {
         if (ForecastModelSingleton.instance == null) {
             ForecastModelSingleton.instance = new ForecastModelSingleton();
         }
         return ForecastModelSingleton.instance;
     }
 
-    private static _calculateMaxTimestampBeforePredictorRepetition(forecastArray: DataPoint[]) {
+    /**
+     * Calculates the timestamp at which point all predictors are the same since they use all data points.
+     *
+     * @param forecastArray The concerning forecast array.
+     * @returns The timestamp where the repetition starts.
+     */
+    private static _calculateTimestampForPredictorRepetition(forecastArray: DataPoint[]): number {
         const firstTimestamp = forecastArray[0][timestampIndexOfForecastArray];
         const lastTimestamp = forecastArray[forecastArray.length - 1][timestampIndexOfForecastArray];
         return lastTimestamp + (lastTimestamp - firstTimestamp) / ForecastModelSingleton.backCastTimeFactor;
     }
 
-    private async _loadAndCacheHistoricalETFData(etfIdentifier: string) {
+    /**
+     * Loads the historic data for the provided etfIdentifier and sets up the predictors.
+     *
+     * @param etfIdentifier The concerning ETFIdentifier.
+     * @returns -
+     */
+    private async _loadAndCacheHistoricalETFData(etfIdentifier: string): Promise<void> {
         if (etfIdentifier in this.historicalData) {
             return;
         }
         const historicalData = await loadHistoricalETFData(etfIdentifier, ForecastModelSingleton.apiKey);
 
         const courseForecastArray = etfHistoricalToCourseForecastArray(historicalData);
-        const maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+        const maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
             courseForecastArray
         );
 
         const dividendForecastArray = etfHistoricalToDividendForecastArray(historicalData);
-        const maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateMaxTimestampBeforePredictorRepetition(
+        const maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
             dividendForecastArray
         );
 
@@ -154,6 +202,13 @@ export class ForecastModelSingleton {
         };
     }
 
+    /**
+     * Creates the course predictor for the etfIdentifier and the given timestamp if not already present.
+     *
+     * @param etfIdentifier The concerning etfIdentifier.
+     * @param timestamp The concerning timestamp.
+     * @returns
+     */
     private _createCoursePredictorIfNotPresent(etfIdentifier: string, timestamp: number) {
         // Skip if already exists.
         if (timestamp in this.coursePredictors[etfIdentifier]) {
@@ -174,7 +229,15 @@ export class ForecastModelSingleton {
         });
     }
 
-    private _courseDateToPredictorTimestampAndDateTimestamp(date: Date, etfIdentifier: string) {
+    /**
+     * Calculates the timestamp of the given date and the timestamp that should be used for the predictor.
+     * That means that the predictor timestamp is clamped to the timestamp where the predictor already uses all data points.
+     *
+     * @param date The concerning Date.
+     * @param etfIdentifier The concerning etfIdentifier.
+     * @returns The predictor timestamp and date timestamp.
+     */
+    private _courseDateToPredictorTimestampAndDateTimestamp(date: Date, etfIdentifier: string): [number, number] {
         const timestamp = dateToTimestamp(date);
         return [
             timestamp > this.coursePredictors[etfIdentifier].maxTimestampBeforeCoursePredictorRepetition
@@ -184,7 +247,13 @@ export class ForecastModelSingleton {
         ];
     }
 
-    private _createDividendPredictorIfNotPresent(etfIdentifier: string, year: number) {
+    /**
+     * Creates the dividend predictor for the given etf and the year.
+     *
+     * @param etfIdentifier The concerning etfIdentifier.
+     * @param year The concerning year.
+     */
+    private _createDividendPredictorIfNotPresent(etfIdentifier: string, year: number): void {
         // Skip if already exists.
         if (year in this.dividendPredictors[etfIdentifier]) {
             return;
@@ -204,12 +273,27 @@ export class ForecastModelSingleton {
         });
     }
 
-    private _dividendYearToPredictorYear(etfIdentifier: string, year: number) {
+    /**
+     * Clamps the given year to the year when all predictors would be the same
+     *  since all historic data of the given etf is already used.
+     *
+     * @param etfIdentifier The concerning etfIdentifier.
+     * @param year The concerning year.
+     * @returns The adjusted year.
+     */
+    private _dividendYearToPredictorYear(etfIdentifier: string, year: number): number {
         return this.dividendPredictors[etfIdentifier].maxYearBeforeDividendPredictorRepetition < year
             ? this.dividendPredictors[etfIdentifier].maxYearBeforeDividendPredictorRepetition
             : year;
     }
 
+    /**
+     * Predicts the course of the given ETF at the given date.
+     *
+     * @param etfIdentifier The concerning etfIdentifier
+     * @param date The concerning date.
+     * @returns The predicted course of the etf.
+     */
     predictCourse(etfIdentifier: string, date: Date) {
         if (!(etfIdentifier in this.coursePredictors)) {
             throw generateHistoricalDataNotPresentException(etfIdentifier);
@@ -224,6 +308,13 @@ export class ForecastModelSingleton {
         ];
     }
 
+    /**
+     * Predicts the dividend amount of the given ETF at the given year.
+     *
+     * @param etfIdentifier The concerning etfIdentifier
+     * @param year The concerning year.
+     * @returns The predicted dividend amount of the etf.
+     */
     predictDividend(etfIdentifier: string, year: number) {
         if (!(etfIdentifier in this.dividendPredictors)) {
             throw generateHistoricalDataNotPresentException(etfIdentifier);

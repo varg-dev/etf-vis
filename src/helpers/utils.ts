@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 
 import { DataPoint } from 'regression';
 
-// Ignore milliseconds, seconds, minutes.
+// Ignore milliseconds, seconds, minutes, hours.
 const timeDiffIgnoreDivisor = 1000 * 60 * 60 * 24;
 
 export const timestampIndexOfForecastArray = 0;
@@ -16,22 +16,55 @@ export interface IHistoricEntry {
     course: number;
 }
 
-export function percentageToFloatValue(val: number) {
-    return val / 100.0;
-}
-
-export function isLastMonthOfAYear(date: Date) {
+/**
+ * Checks if the date is the last month of a year i.e. December.
+ *
+ * @param date The date to check.
+ * @returns Is the date in December.
+ */
+export function isLastMonthOfAYear(date: Date): boolean {
     return date.getMonth() === numberOfMonthsOfAYear - 1;
 }
 
-export function clamp(value: number, min: number, max: number) {
-    return Math.max(min, Math.min(value, max));
-}
-
-export function isFirstMonthOfAYear(date: Date) {
+/**
+ * Checks if the date is the first month of a year i.e. January.
+ *
+ * @param date The concerning date.
+ * @returns Is the date in January.
+ */
+export function isFirstMonthOfAYear(date: Date): boolean {
     return date.getMonth() === 0;
 }
 
+/**
+ * Clamps the given value into the given min-max range.
+ *
+ * @param value Value to clamp.
+ * @param min Minimum value.
+ * @param max Maximum value.
+ * @returns
+ */
+export function clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(value, max));
+}
+
+/**
+ * Converts a percentage value to a usual float by dividing by 100.
+ *
+ * @param val The percentage value.
+ * @returns The normal float representation of the percentage value.
+ */
+export function percentageToFloatValue(val: number): number {
+    return val / 100.0;
+}
+
+/**
+ * Loads the historic data of the ETF by downloading and parsing it from the [Alphavantage](https://www.alphavantage.co/) API.
+ *
+ * @param etfIdentifier The ETF identifier (symbol) by [Alphavantage](https://www.alphavantage.co/).
+ * @param apiKey The personal API [Alphavantage](https://www.alphavantage.co/) key.
+ * @returns The sorted array with the historic entries.
+ */
 export async function loadHistoricalETFData(etfIdentifier: string, apiKey: string): Promise<IHistoricEntry[]> {
     const historicalData = await d3.csv(
         `https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol=${etfIdentifier}&apikey=${apiKey}&datatype=csv`,
@@ -54,11 +87,24 @@ export async function loadHistoricalETFData(etfIdentifier: string, apiKey: strin
     return historicalData;
 }
 
+/**
+ * Constructs a course forecasting array which consists of [Date, CourseValue] pairs.
+ * The historical data needs to be sorted by the date. Which is already done when loading.
+ *
+ * @param historicalData The historical data array that should be used for the course forecasting array.
+ * @returns The forecasting Array of [Date, CourseValue] pairs.
+ */
 export function etfHistoricalToCourseForecastArray(historicalData: IHistoricEntry[]): DataPoint[] {
     return historicalData.map(entry => [dateToTimestamp(entry.date), entry.course]);
 }
 
-// Requires sorted historical data. Note it is sorted by default. Do not change the order.
+/**
+ * Constructs a dividend forecasting array which consists of [Year, CourseValue] pairs.
+ * The historical data needs to be sorted by the date. Which is already done when loading.
+ *
+ * @param historicalData The historical data array that should be used for the course forecasting array.
+ * @returns The forecasting Array of [Year, CourseValue] pairs.
+ */
 export function etfHistoricalToDividendForecastArray(historicalData: IHistoricEntry[]): DataPoint[] {
     let currentYear = historicalData[0].date.getFullYear();
     const dividendForecastArray: DataPoint[] = [[currentYear, 0]];
@@ -74,24 +120,58 @@ export function etfHistoricalToDividendForecastArray(historicalData: IHistoricEn
     return dividendForecastArray;
 }
 
-export function dateToTimestamp(date: Date) {
+/**
+ * Converts the date to a timestamp in the used format.
+ * A timestamp is a unix timestamp which counts days instead of milliseconds.
+ *
+ * @param date The concerning Date.
+ * @returns The corresponding timestamp.
+ */
+export function dateToTimestamp(date: Date): number {
     return Math.floor(date.getTime() / timeDiffIgnoreDivisor);
 }
 
-export function timestampToDate(timestamp: number) {
+/**
+ * Converts the timestamp to a Date in the used format.
+ * A timestamp is a unix timestamp which counts days instead of milliseconds.
+ *
+ * @param date The concerning timestamp.
+ * @returns The corresponding Date.
+ */
+export function timestampToDate(timestamp: number): Date {
     return new Date(timestamp * timeDiffIgnoreDivisor);
 }
 
-export function generateHistoricalDataNotPresentException(etfIdentifier: string) {
+/**
+ * Generates a specific error for the given ETF identifier which is used to
+ * indicate that the historic data needs to be loaded before forecasting for that etf is available.
+ *
+ * @param etfIdentifier The Identifier of the ETF.
+ * @returns The error object.
+ */
+export function generateHistoricalDataNotPresentException(etfIdentifier: string): Error {
     return new Error(`First call loadHistoricalDataIfNotPresent() before predicting: ${etfIdentifier}`);
 }
 
-// Slightly manipulated. Original: https://stackoverflow.com/a/315767
-function daysInMonth(month: number, year: number) {
+/**
+ * Calculates the number of days in the given month and year.
+ * Based on: https://stackoverflow.com/a/315767
+ *
+ * @param month The concerning Month.
+ * @param year The concerning Year.
+ * @returns The number of days of that month.
+ */
+function daysInMonth(month: number, year: number): number {
     return new Date(year, month + 1, 0).getDate();
 }
 
-export function roundDateToBeginningOfMonth(date: Date) {
+/**
+ * Rounds the given date to the first day of that or the next month.
+ *
+ * @param date The concerning date.
+ * @returns The rounded Date.
+ */
+export function roundDateToBeginningOfMonth(date: Date): Date {
     const currentDayOfMonth = date.getDate();
     const maxDayOfMonth = daysInMonth(date.getMonth(), date.getFullYear());
     const monthOffset = Math.round(currentDayOfMonth / maxDayOfMonth);
