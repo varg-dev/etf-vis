@@ -509,13 +509,13 @@ function getInitialInputFormState(caller: App): IAppState {
                     identifier: 'comdirect',
                     label: 'comdirect',
                     fixedCosts: 0,
-                    percentageCosts: 0.015,
+                    percentageCosts: 1.5,
                 },
                 {
                     identifier: 'tradeRepublic',
                     label: 'Trade Republic',
                     fixedCosts: 0,
-                    percentageCosts: 0.01,
+                    percentageCosts: 1.0,
                 },
                 {
                     identifier: 'eToro',
