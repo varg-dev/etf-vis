@@ -11,9 +11,12 @@ function getSumNewPayout(investmentStep: InvestmentStep) {
 
 export class CashflowBarChart extends D3ChartStrategy {
     private readonly barPaddingPercentage = 0.9;
-    private readonly colors = { payout: '#3acc5c', invested: '#ff3e58' };
+    private readonly colors = {
+        payout: { first: '#3acc5c', second: '#2d9e45' },
+        invested: { first: '#ff3e58', second: '#c32f46' },
+    };
 
-    private rectWidth = 0; 
+    private rectWidth = 0;
 
     constructor(
         investmentSteps: InvestmentStep[],
@@ -40,20 +43,22 @@ export class CashflowBarChart extends D3ChartStrategy {
         this.maxIndex = dataToIndex.payout;
 
         this.dataArray = [[], []];
+        const startYear = this.investmentSteps[0].date.getFullYear();
         for (const investmentStep of this.investmentSteps) {
             let sumNewPayout = getSumNewPayout(investmentStep);
+            const colorIdentifier = (investmentStep.date.getFullYear() - startYear) % 2 === 0 ? 'first' : 'second';
 
             this.dataArray[dataToIndex.invested].push({
                 yStart: 0,
                 yEnd: -investmentStep.newInvestment,
                 date: investmentStep.date,
-                color: this.colors.invested,
+                color: this.colors.invested[colorIdentifier],
             });
             this.dataArray[dataToIndex.payout].push({
                 yStart: sumNewPayout,
                 yEnd: 0,
                 date: investmentStep.date,
-                color: this.colors.payout,
+                color: this.colors.payout[colorIdentifier],
             });
         }
 
@@ -76,7 +81,7 @@ export class CashflowBarChart extends D3ChartStrategy {
             fontSize: this.standardFontSize,
             textAnchor: 'middle',
             fontWeight: 'normal',
-            color: this.colors[payoutIdentifier],
+            color: this.colors[payoutIdentifier].first,
         };
 
         const investedX =
@@ -92,7 +97,7 @@ export class CashflowBarChart extends D3ChartStrategy {
             fontSize: this.standardFontSize,
             textAnchor: 'middle',
             fontWeight: 'normal',
-            color: this.colors[investedIdentifier],
+            color: this.colors[investedIdentifier].first,
         };
     }
 

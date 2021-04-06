@@ -69,15 +69,15 @@ neue todos:
 - dokumentation
 - linien interpolieren
 - vertikale streifen fuer unterteilung der phase - done
-- fate out fuer den tod
+- fate out fuer den tod - done
 - y achse skalieren  / max aufgrund des beginn des renten auszahlungtages. - done
 - oder achsen min max als input. - done
 - vllt doch die inflation als erster negativer punkt??? FRAGE: die kosten und steuern sind schon abgezogen. die inflation aber nicht  => verwirrung.
 - vllt vertikales grid zwischen beiden graphen.
-- cashflow diagramm balkenfarbe pro jahr alternierend
+- cashflow diagramm balkenfarbe pro jahr alternierend - done
 - achsen: number of ticks, euro zeichen , tausender zeichen- haloed line effekt - done?
 - svg css direkt in den renderer reinpacken. - done
-- menues einklappbar machen.
+- menues einklappbar machen. - done
 
 - interactions: vertikale linie ma ausrobieren
 - 

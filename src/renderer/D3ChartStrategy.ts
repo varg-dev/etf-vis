@@ -255,7 +255,7 @@ export class D3ChartStrategy {
             .attr('fill', 'none')
             .style('pointer-events', 'all')
             .on('mouseover', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('visible'))
-            .on('mouseout', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('hidden'))
+            //.on('mouseout', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('hidden'))
             .on('mousemove', mouseEvent => this._handleTooltipEvent(mouseEvent));
     }
 
@@ -269,6 +269,7 @@ export class D3ChartStrategy {
 
     private _updateAllDiagrams() {
         const investmentStepIndex = calculateInvestmentStepIndexForDate(this.tooltipDate, this.investmentSteps);
+        D3ChartStrategy._setInteractionDisplayForActiveDiagrams('visible');
         for (const activeDiagram of D3ChartStrategy.activeStrategies) {
             activeDiagram.hoverLine.attr('x1', this.xScale(this.tooltipDate)).attr('x2', this.xScale(this.tooltipDate));
             activeDiagram._updateTooltip(investmentStepIndex);
@@ -369,8 +370,8 @@ export class D3ChartStrategy {
         fadeOutGroup
             .append('rect')
             .attr('x', this.xScale(fadeOutStartDate))
-            .attr('y', this.marginH * 2 * -1)
-            .attr('width', this.xScale(this.dateExtent[1]) - this.xScale(fadeOutStartDate))
+            .attr('y', -this.marginH)
+            .attr('width', this.xScale(this.dateExtent[1]) - this.xScale(fadeOutStartDate) + 1)
             .attr('height', this.yScale(this.yExtent[0]) - this.yScale(this.yExtent[1]) + this.marginH * 2)
             .style('fill', `url(#${this.fadeOutGradientID})`);
     }
