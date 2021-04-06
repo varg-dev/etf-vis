@@ -297,12 +297,12 @@ export class App extends React.Component<{}, IAppState> {
                             </SidebarSectionHeading>
                             {/* Cost Options */}
                             <SidebarSectionHeading title="Cost Options" initiallyCollapsed={true}>
+                                <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
                                 <TextInputElement
                                     key={TRANSACTION_COSTS_IDENTIFIER}
                                     {...this.state[TRANSACTION_COSTS_IDENTIFIER]}
                                 />
                                 <CheckboxInputElement {...this.state[TRANSACTION_COSTS_TYPE_IDENTIFIER]} />
-                                <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
                             </SidebarSectionHeading>
                             {/* Visualization Options */}
                             <SidebarSectionHeading title="Visualization Options" initiallyCollapsed={true}>

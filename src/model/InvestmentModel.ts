@@ -213,6 +213,7 @@ function addAccumulationMonth(
         inflation: 0,
     };
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
+        // Handle investment amount and costs.
         const investmentOfEtfWithCosts = (etfToRatio[etfIdentifier] as number) * investment;
         newInvestmentStep.newInvestment += investmentOfEtfWithCosts;
         const [investmentOfEtfWithoutCosts, newCosts] = calculateCosts(
@@ -222,24 +223,29 @@ function addAccumulationMonth(
         costs += newCosts;
         newInvestmentStep.newInvestedMoney[etfIdentifier] = investmentOfEtfWithoutCosts;
         newInvestmentStep.totalInvestedMoney[etfIdentifier] += investmentOfEtfWithoutCosts;
-
+        
+        // Handle new shares and prize.
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         const newShares = investmentOfEtfWithoutCosts / etfSharePrize;
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
         newInvestmentStep.newShares[etfIdentifier] = newShares;
-
+        
+        // Handle dividend.
         const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
         const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
         const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
         newInvestmentStep.newShares[etfIdentifier] += newSharesByDividend;
         newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
         newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
-
+        
+        // Adjust other values.
         newInvestmentStep.totalShares[etfIdentifier] += newInvestmentStep.newShares[etfIdentifier];
         newInvestmentStep.newPayout[etfIdentifier] = 0;
     }
+
+    // Handle costs, taxes and inflation. 
     newInvestmentStep.totalCosts += costs;
-    const [newTaxes, newLeftoverTaxFreeAmount] = calculateTaxes(
+    const [newTaxes, _] = calculateTaxes(
         investmentSteps,
         date,
         configOptions.taxFreeAmount,
@@ -248,8 +254,6 @@ function addAccumulationMonth(
     newInvestmentStep.totalTaxes += newTaxes;
     calculateAndAddInflation(newInvestmentStep, initialDate, date);
     investmentSteps.push(newInvestmentStep);
-
-    return newLeftoverTaxFreeAmount;
 }
 
 function addPayoutMonth(
@@ -288,12 +292,13 @@ function addPayoutMonth(
     };
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
+        // Set default values.
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
         newInvestmentStep.newPayout[etfIdentifier] = 0;
         newInvestmentStep.newInvestedMoney[etfIdentifier] = 0;
         // Skip payout if there are no shares left to sell.
         if (payoutStats[etfIdentifier].investmentStepsIdx < investmentSteps.length) {
-            // Handle payout.
+            // Prepare amount and costs.
             const amountToSell = (etfToRatio[etfIdentifier] as number) * sellingAmount;
             let amountAlreadySold = 0;
             const costsToPay = calculateCosts(amountToSell, configOptions.costConfig)[1];
@@ -302,10 +307,12 @@ function addPayoutMonth(
             let currentSharesLeft =
                 investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] -
                 payoutStats[etfIdentifier].alreadySoldShares;
+            // Iterate over all investment steps according to the FIFO principle and sell as much shares as needed.
             for (; payoutInvestmentStepIdxForFIFO < investmentSteps.length; payoutInvestmentStepIdxForFIFO++) {
-                const leftoverAmountToSell = amountToSell - amountAlreadySold;
                 const currentInvestmentStepForFIFO = investmentSteps[payoutInvestmentStepIdxForFIFO];
+                const leftoverAmountToSell = amountToSell - amountAlreadySold;
 
+                // Calculate the amount of shares to sell and the leftover shares.
                 const currentValueOfShares =
                     etfSharePrize *
                     (payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
@@ -319,14 +326,17 @@ function addPayoutMonth(
                     payoutInvestmentStepIdxForFIFO === payoutStats[etfIdentifier].investmentStepsIdx
                         ? payoutStats[etfIdentifier].alreadySoldShares
                         : 0;
-
+                
+                // Apply costs to the sold shares.
                 const amountToSellWithoutCosts = Math.max(0, amountToSellWithCosts - (costsToPay - alreadyPaidCosts));
                 alreadyPaidCosts += Math.max(0, amountToSellWithCosts - amountToSellWithoutCosts);
-
+                
+                // Calculate amount on which taxes need to be paid.
                 const initialValueOfShares =
                     amountOfSharesToSell * currentInvestmentStepForFIFO.sharePrizes[etfIdentifier];
                 let amountToPayTaxes = Math.max(0, amountToSellWithoutCosts - initialValueOfShares);
-
+                
+                // Apply taxes.
                 [amountToPayTaxes, leftoverTaxFreeAmount] = subtractTaxFreeGain(
                     amountToPayTaxes,
                     leftoverTaxFreeAmount
@@ -336,6 +346,7 @@ function addPayoutMonth(
                 taxes += taxesToPay;
                 const payoutAmount = amountToSellWithoutCosts - taxesToPay;
 
+                // Set resulting values.
                 newInvestmentStep.newPayout[etfIdentifier] += payoutAmount;
                 newInvestmentStep.totalPayout[etfIdentifier] += payoutAmount;
 
@@ -361,8 +372,8 @@ function addPayoutMonth(
                     break;
                 }
             }
-            costs += alreadyPaidCosts;
             // Handle update payoutStats.
+            costs += alreadyPaidCosts;
             payoutStats[etfIdentifier].investmentStepsIdx = payoutInvestmentStepIdxForFIFO;
             payoutStats[etfIdentifier].investmentStepsIdx += currentSharesLeft === 0 ? 1 : 0;
 
@@ -392,6 +403,7 @@ function addPayoutMonth(
         leftoverAlreadyPaidTaxes += newTaxes;
     }
 
+    // Set resulting values and inflation.
     newInvestmentStep.totalCosts += costs;
     newInvestmentStep.totalTaxes += taxes;
     calculateAndAddInflation(newInvestmentStep, initialDate, date);
@@ -560,7 +572,7 @@ export class InvestmentModel {
         const selectedInvestmentSteps = [];
         const numberOfMonthsToMerge = numberOfMonthsOfAYear / numberOfEntriesPerYear;
         for (let i = 0; i < this.investmentSteps.length; i += numberOfMonthsToMerge) {
-            // Take the start date as representative.
+            // Take the start date of the period as the representation.
             const adjustedInvestmentStep = cloneDeep(this.investmentSteps[i]);
             for (let offset = 1; offset < numberOfMonthsToMerge; offset++) {
                 adjustedInvestmentStep.newInvestment += this.investmentSteps[i + offset].newInvestment;
