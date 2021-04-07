@@ -1,3 +1,4 @@
+import { ChangeEvent } from 'react';
 import { ErrorMessage } from './ErrorMessageComponent';
 
 export interface ITextInputState {
@@ -53,7 +54,7 @@ export function TextInputElement(props: ITextInputState) {
                 id={props.identifier}
                 type="text"
                 value={props.value + (props.textAppending !== '' ? ' ' + props.textAppending : '')}
-                onChange={e => props.onValueChange(e.target.value, props.identifier)}
+                onChange={e => props.onValueChange(e.target.value.split(' ')[0], props.identifier)}
                 disabled={props.disabled}
             />
             <ErrorMessage {...props} />
@@ -78,7 +79,7 @@ export function TextInputElement(props: ITextInputState) {
                 id={props.identifier}
                 type="text"
                 value={props.value + (props.textAppending !== '' ? ' ' + props.textAppending : '')}
-                onChange={e => props.onValueChange(e.target.value, props.identifier)}
+                onChange={e => props.onValueChange(e.target.value.split(' ')[0], props.identifier)}
                 disabled={props.disabled}
             />
             <ErrorMessage {...props} />

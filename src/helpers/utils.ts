@@ -23,8 +23,8 @@ export interface IHistoricEntry {
  * @returns The value as an integer.
  */
 export function stringToInt(value: string) {
-    const int = parseInt(value);
-    return Number.isNaN(int) ? 0 : int;
+    const int = Number(value);
+    return Number.isNaN(int) || !Number.isInteger(int) ? 0 : int;
 }
 
 /**
@@ -34,7 +34,7 @@ export function stringToInt(value: string) {
  * @returns The value as a float.
  */
 export function stringToFloat(value: string) {
-    const float = parseFloat(value);
+    const float = Number(value);
     return Number.isNaN(float) ? 0.0 : float;
 }
 
@@ -56,7 +56,7 @@ export function percentageStringToFloat(value: string) {
  * @returns If the value is a valid percentage.
  */
 export function isPercentage(val: string): boolean {
-    const float = percentageStringToFloat(val);
+    const float = Number(val) / 100;
     return !Number.isNaN(float) && float >= 0 && float <= 1.0;
 }
 
@@ -68,7 +68,7 @@ export function isPercentage(val: string): boolean {
  * @returns If the value is a valid integer.
  */
 export function isPositiveInt(val: string): boolean {
-    const int = stringToInt(val);
+    const int = Number(val);
     return !Number.isNaN(int) && Number.isInteger(int) && int >= 0;
 }
 

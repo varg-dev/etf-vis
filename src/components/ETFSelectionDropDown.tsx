@@ -1,10 +1,9 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
 import { ETFTextInputElement } from './TextInputElement';
 import { ErrorMessage } from './ErrorMessageComponent';
 
 import { IETFProperty } from '../model/ForecastModel';
-
 
 interface IETFIndex {
     [etfIdentifier: string]: IETFProperty;
@@ -23,19 +22,8 @@ export interface IETFSelection {
 type ETFSelectionDropDownProps = IETFSelection & { autoPercentage: boolean };
 
 /**
- * Transforms the changed value to a percentage. Uses 0 as fallback if the value is not a valid float.
- * 
- * @param e The change event.
- * @returns 
- */
-function percentageTransformFunction(e: ChangeEvent<HTMLInputElement>) {
-    const floatVal = parseFloat(e.target.value) / 100;
-    return isNaN(floatVal) ? 0 : floatVal;
-}
-
-/**
  * Renders the ETF selection drop down which includes editable text for the percentages.
- * 
+ *
  * @param props The etf drop down properties.
  * @returns The rendered ETF selection drop down.
  */
@@ -60,11 +48,11 @@ export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
                             }
                             type="button"
                             onClick={(e: MouseEvent<HTMLButtonElement>) => {
-                                //if (e.target.type !== 'text') {
-                                props.handleSelectionChange(props.elements[elementIdentifier]);
-                                //}
+                                // Skip all events from the text input field.
+                                if (!(e.target instanceof HTMLInputElement)) {
+                                    props.handleSelectionChange(props.elements[elementIdentifier]);
+                                }
                             }}>
-                                {/** das problem ist dass der identifier kieneswegs ein Text... ist. */}
                             <ETFTextInputElement
                                 {...props.elements[elementIdentifier]}
                                 value={props.elements[elementIdentifier].value}

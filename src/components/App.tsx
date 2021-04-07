@@ -75,9 +75,9 @@ export const ETF_SYMBOL_TO_NAME: ETFIdentifierToString = {
  */
 export function generateCostConfig(state: IAppState): ICostConfiguration {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
-        return { percentageCosts: 0.0, fixedCosts: percentageStringToFloat(state[TRANSACTION_COSTS_IDENTIFIER].value) };
+        return { percentageCosts: 0.0, fixedCosts: stringToInt(state[TRANSACTION_COSTS_IDENTIFIER].value) };
     } else {
-        return { percentageCosts: stringToInt(state[TRANSACTION_COSTS_IDENTIFIER].value), fixedCosts: 0.0 };
+        return { percentageCosts: percentageStringToFloat(state[TRANSACTION_COSTS_IDENTIFIER].value), fixedCosts: 0.0 };
     }
 }
 
@@ -95,9 +95,11 @@ function recalculateETFPercentages(state: IAppState): IAppState {
             numberOfSelectedETFs++;
         }
     }
-    const newPercentage = 1.0 / Math.max(1, numberOfSelectedETFs);
+    const newPercentage = 100.0 / Math.max(1, numberOfSelectedETFs);
     for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
-        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value = newPercentage.toString();
+        if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value = newPercentage.toString();
+        }
     }
     return state;
 }
@@ -135,8 +137,8 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Handles the change of a checkbox and applies the change to the state and validates it.
-     * 
-     * Does further adjustments if the specific checkbox needs further state changes. 
+     *
+     * Does further adjustments if the specific checkbox needs further state changes.
      * e.g. the  automatic percentage checkbox.
      *
      * @param changedStateIdentifier  The changed state identifier.
@@ -158,20 +160,22 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Handles the selection of a specific broker.
-     * 
+     *
      * @param brokerProperties The broker properties.
      */
     handleBrokerChange(brokerProperties: BrokerProperties): void {
         const state = { ...this.state };
         state[TRANSACTION_COSTS_IDENTIFIER].value =
-            brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts.toString() : brokerProperties.fixedCosts.toString();
+            brokerProperties.percentageCosts > 0
+                ? brokerProperties.percentageCosts.toString()
+                : brokerProperties.fixedCosts.toString();
         state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value = brokerProperties.percentageCosts > 0 ? false : true;
         this._validateAndSetState(state);
     }
 
     /**
      * Handles the selection of a specific graph detail.
-     * 
+     *
      * @param brokerProperties The graph detail properties.
      */
     handleGraphDetailChange(detailProperties: IGraphDetailLevel): void {
@@ -182,7 +186,7 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Handles the selection of a specific ETF.
-     * 
+     *
      * @param brokerProperties The ETF properties of the selected ETF.
      */
     handleETFSelectionChange(etfProperties: IETFProperty): void {
@@ -198,7 +202,7 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Handles the percentage value change of the etf selection.
-     * 
+     *
      * @param changedValue The changed  percentage value of the ETF.
      * @param changedETFIdentifier The identifier of the ETF.
      */
@@ -230,7 +234,7 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Checks if the updated state contains an invalid configuration.
-     * 
+     *
      * @param state The updated state of the App.
      */
     private _validateAndSetState(state: IAppState) {
@@ -264,7 +268,8 @@ export class App extends React.Component<{}, IAppState> {
         }
 
         // Check the year values.
-        const leftoverYears = stringToInt(state[LIFE_EXPECTATION_IDENTIFIER].value) - stringToInt(state[AGE_IDENTIFIER].value);
+        const leftoverYears =
+            stringToInt(state[LIFE_EXPECTATION_IDENTIFIER].value) - stringToInt(state[AGE_IDENTIFIER].value);
         if (state[AGE_IDENTIFIER].value >= state[LIFE_EXPECTATION_IDENTIFIER].value) {
             state[AGE_IDENTIFIER].errorMessage = 'You cannot be older than the life expectation';
             state[AGE_IDENTIFIER].isValid = false;
@@ -291,7 +296,9 @@ export class App extends React.Component<{}, IAppState> {
         let foundOneSelectedEtf = false;
         for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
             if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
-                sumOfPercentages += percentageStringToFloat(state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value);
+                sumOfPercentages += percentageStringToFloat(
+                    state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value
+                );
                 foundOneSelectedEtf = true;
             }
         }
@@ -312,7 +319,7 @@ export class App extends React.Component<{}, IAppState> {
 
     /**
      * Renders the whole page based on the state of the app.
-     * 
+     *
      * @returns The Page content.
      */
     render() {
@@ -371,7 +378,7 @@ export class App extends React.Component<{}, IAppState> {
 
 /**
  * Generates the initial app state.
- * 
+ *
  * @param caller The calling instance of the App class.
  * @returns The initial app state.
  */
