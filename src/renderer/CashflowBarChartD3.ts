@@ -1,6 +1,12 @@
 import { InvestmentStep, ETFIdentifier } from '../model/InvestmentModel';
 import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
 
+/**
+ * Calculates the sum of all payout over all used etfs.
+ * 
+ * @param investmentStep The concerning investmentStep.
+ * @returns The sum of all payouts.
+ */
 function getSumNewPayout(investmentStep: InvestmentStep) {
     let sumNewPayout = 0;
     for (const etfIdentifier of Object.keys(investmentStep.newPayout) as ETFIdentifier[]) {
@@ -9,6 +15,9 @@ function getSumNewPayout(investmentStep: InvestmentStep) {
     return sumNewPayout;
 }
 
+/**
+ * Renders a cashflow diagram of the investment model.
+ */
 export class CashflowBarChart extends D3ChartStrategy {
     private readonly barPaddingPercentage = 0.9;
     private readonly colors = {
@@ -18,6 +27,15 @@ export class CashflowBarChart extends D3ChartStrategy {
 
     private rectWidth = 0;
 
+    /**
+     * Just calls the constructor of the base class with the specific svg id.
+     * 
+     * @param investmentSteps The investment model.
+     * @param renderDivRef The div reference where the diagram should be placed.
+     * @param payoutPhaseStartDate The start of the payout phase.
+     * @param tooltipDate The tooltip date if the tooltip was active in the last rendered diagram.
+     * @param yExtent The y extent if it should stay static.
+     */
     constructor(
         investmentSteps: InvestmentStep[],
         renderDivRef: HTMLDivElement,
@@ -28,10 +46,9 @@ export class CashflowBarChart extends D3ChartStrategy {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'secondSVG', tooltipDate, yExtent);
     }
 
-    render() {
-        super.render();
-    }
-
+    /**
+     * Prepares the data for the diagram based on the investment model.
+     */
     _prepareData() {
         // Create line array.
         const dataToIndex = {
@@ -65,6 +82,9 @@ export class CashflowBarChart extends D3ChartStrategy {
         this.rectWidth = (this.width / this.dataArray[dataToIndex.invested].length) * this.barPaddingPercentage;
     }
 
+    /**
+     * Prepares additional Text that should be displayed by adding it to the textProperties.
+     */
     _prepareText() {
         super._prepareText();
 
@@ -101,6 +121,11 @@ export class CashflowBarChart extends D3ChartStrategy {
         };
     }
 
+     /**
+     * Updates the textProperties according to the investment step the tooltip is currently on.
+     *
+     * @param investmentStepIndex The index of the investment step of at the current mouse position.
+     */
     _updateTooltip(investmentStepIndex: number) {
         const payoutValue = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
         const investedValue = this.investmentSteps[investmentStepIndex].newInvestment;
@@ -111,6 +136,9 @@ export class CashflowBarChart extends D3ChartStrategy {
         );
     }
 
+    /**
+     * Draws the main content of the diagram. In this case the bars of the cashflow barchart.
+     */
     _drawContent() {
         // Skip the last bar if it is outside the graph.
         const needToSkipLastBar = this.dataArray[0][this.dataArray[0].length - 1].date === this.dateExtent[1];

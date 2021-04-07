@@ -18,6 +18,13 @@ type ETFIdentifierToColors = { [key in ETFIdentifier]: { total: string; invested
 
 type NegativeInvestmentToColorMap = { [key in NegativeInvestmentStepIdentifier]: string };
 
+/**
+ * Generates a formatted text for the investment and total value of an etf.
+ *
+ * @param investmentValue The investment value of the etf.
+ * @param totalValue The total value of the etf.
+ * @returns The formatted tex.
+ */
 function generateEtfValueText(
     investmentValue: string | undefined = undefined,
     totalValue: string | undefined = undefined
@@ -25,6 +32,10 @@ function generateEtfValueText(
     return `Inv: ${investmentValue == null ? '-' : investmentValue}, Tot: ${totalValue == null ? '-' : totalValue}`;
 }
 
+/**
+ * A class that draws an area chart that contains the value of costs, taxes,
+ * inflation and teh total value and invested value of all used ETFs.
+ */
 export class AreaChartD3 extends D3ChartStrategy {
     private readonly etfLineColors: ETFIdentifierToColors = {
         'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },
@@ -44,6 +55,9 @@ export class AreaChartD3 extends D3ChartStrategy {
     private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
 
+    /**
+     * Constructs the area chart by calling the base class constructor and determining all used ETFs.
+     */
     constructor(
         investmentSteps: InvestmentStep[],
         renderDivRef: HTMLDivElement,
@@ -55,14 +69,17 @@ export class AreaChartD3 extends D3ChartStrategy {
         super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate, yExtent);
 
         this.etfIdentifiers = [];
-        for (const etfIdentifier of Object.keys(etfRatio) as ETFIdentifier[]){
+        for (const etfIdentifier of Object.keys(etfRatio) as ETFIdentifier[]) {
             const ratio = etfRatio[etfIdentifier];
-            if (ratio!= null && ratio > 0.0){
+            if (ratio != null && ratio > 0.0) {
                 this.etfIdentifiers.push(etfIdentifier);
             }
         }
     }
 
+    /**
+     * Prepares all data from the investment model for rendering.
+     */
     _prepareData() {
         this.dataToIndex = {
             totalCosts: 0,
@@ -123,6 +140,9 @@ export class AreaChartD3 extends D3ChartStrategy {
         }
     }
 
+    /**
+     * Draws the data as lines instead of a stacked area chart.
+     */
     _drawLines() {
         // Draw line chart.
         for (let i = 0; i < this.dataArray.length; i++) {
@@ -142,10 +162,17 @@ export class AreaChartD3 extends D3ChartStrategy {
                 );
         }
     }
+
+    /**
+     * Draws the main content of the diagram. Currently a stacked area chart.
+     */
     _drawContent() {
         this._drawArea();
     }
 
+    /**
+     * Draws the stacked areas of the diagram.
+     */
     _drawArea() {
         // Draw stacked area chart.
         for (let i = 0; i < this.dataArray.length; i++) {
@@ -168,6 +195,9 @@ export class AreaChartD3 extends D3ChartStrategy {
         }
     }
 
+    /**
+     * Prepares the additional text that is displayed by adding it to the textProperties.
+     */
     _prepareText() {
         super._prepareText();
         const paddingW = this.width * 0.005;
@@ -212,6 +242,11 @@ export class AreaChartD3 extends D3ChartStrategy {
         }
     }
 
+    /**
+     * Updates the textProperties according to the investment step the tooltip is currently on.
+     *
+     * @param investmentStepIndex The index of the investment step of at the current mouse position.
+     */
     _updateTooltip(investmentStepIndex: number) {
         for (const etfIdentifier of this.etfIdentifiers) {
             const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);

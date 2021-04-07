@@ -62,6 +62,8 @@ function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: Invest
  * In order to adjust the visualization to a new investment model, a complete re rendering is required.
  *
  * Keeps track of all active diagrams. Thus needs to be reset in the case of a redrawing of the graphs.
+ * 
+ * It ensures that all active diagrams are synced regarding the tooltip and x axis.
  */
 export abstract class D3ChartStrategy {
     tooltipDate: Date;
