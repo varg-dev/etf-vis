@@ -12,6 +12,12 @@ export interface IGraphDetailDropDown {
     elements: IGraphDetailLevel[];
 }
 
+/**
+ * Renders a drop down to select the graph level of detail.
+ *
+ * @param props The graph detail properties.
+ * @returns Rendered graph level of detail drop down.
+ */
 export function GraphDetailDropDown(props: IGraphDetailDropDown) {
     return (
         <div className="dropdown">

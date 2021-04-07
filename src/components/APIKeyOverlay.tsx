@@ -15,6 +15,12 @@ export interface IAPIKey {
     error: boolean;
 }
 
+/**
+ * Renders the API Key entering UI.
+ *
+ * @param props The properties for the api key UI.
+ * @returns
+ */
 export function Overlay(props: IAPIKey) {
     return (
         <div className="row">

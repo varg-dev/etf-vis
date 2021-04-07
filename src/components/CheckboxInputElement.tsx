@@ -7,6 +7,12 @@ export interface ICheckboxState {
 
 export type ICheckBoxStateIdentifier = 'transactionCostsType' | 'etfAutomaticPercentage' | 'yAxisLock';
 
+/**
+ * Renders a checkbox from the given properties.
+ * 
+ * @param props The checkbox properties.
+ * @returns The rendered checkbox.
+ */
 export function CheckboxInputElement(props: ICheckboxState) {
     return (
         <div className="checkbox-element">

@@ -29,11 +29,23 @@ export interface IETFSelection {
 
 type ETFSelectionDropDownProps = IETFSelection & { autoPercentage: boolean };
 
+/**
+ * Transforms the changed value to a percentage. Uses 0 as fallback if the value is not a valid float.
+ * 
+ * @param e The change event.
+ * @returns 
+ */
 function percentageTransformFunction(e: ChangeEvent<HTMLInputElement>) {
     const floatVal = parseFloat(e.target.value) / 100;
     return isNaN(floatVal) ? 0 : floatVal;
 }
 
+/**
+ * Renders the ETF selection drop down which includes editable text for the percentages.
+ * 
+ * @param props The etf drop down properties.
+ * @returns The rendered ETF selection drop down.
+ */
 export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
     return (
         <div className="dropdown position-relative">

@@ -4,6 +4,12 @@ interface IErrorMessage {
     errorMessage: string;
 }
 
+/**
+ * Renders an error message as a tooltip.
+ * 
+ * @param props The error message properties.
+ * @returns The rendered error message.
+ */
 export function ErrorMessage(props: IErrorMessage) {
     return (
         <div

@@ -51,6 +51,12 @@ export type NumberInputStateIdentifier =
 
 export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
 
+/**
+ * Renders a integer text input element.
+ * 
+ * @param props The text input properties.
+ * @returns The rendered text input.
+ */
 export function TextInputElement(props: ITextInputState) {
     return (
         <div className="position-relative">
@@ -70,6 +76,12 @@ export function TextInputElement(props: ITextInputState) {
     );
 }
 
+/**
+ * Renders a string text input element.
+ * 
+ * @param props The text input properties.
+ * @returns The rendered text input.
+ */
 export function StringTextInputElement(props: IStringTextInputState) {
     return (
         <div className="position-relative">
@@ -89,6 +101,12 @@ export function StringTextInputElement(props: IStringTextInputState) {
     );
 }
 
+/**
+ * Renders a percentage text input element.
+ * 
+ * @param props The text input properties.
+ * @returns The rendered text input.
+ */
 export function ETFPercentageInputElement(props: IETFPercentageInputState) {
     return (
         <div className="position-relative">

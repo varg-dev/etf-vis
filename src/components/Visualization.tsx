@@ -29,6 +29,10 @@ export interface ICostConfiguration {
     fixedCosts: number;
 }
 
+/**
+ * React component which handles the visualization.
+ * It re renders the visualizations each time the state changes.
+ */
 export class Visualization extends React.Component<IAppState, {}> {
     private firstSVGRef = React.createRef<HTMLDivElement>();
     private secondSVGRef = React.createRef<HTMLDivElement>();
@@ -38,7 +42,12 @@ export class Visualization extends React.Component<IAppState, {}> {
 
     private investmentModel: InvestmentModel | undefined = undefined;
 
-    private _getETFIdentifierToRatio() {
+    /**
+     * Generates the etf to ratio mapping for all currently selected etfs.
+     *
+     * @returns The etf to ratio mapping.
+     */
+    private _getETFIdentifierToRatio(): ETFRatio {
         const etfIdentifierToRatio: ETFRatio = {};
         const etfProperties = this.props.etfDropdownSelection.elements;
         for (const etfIdentifier in etfProperties) {
@@ -49,7 +58,13 @@ export class Visualization extends React.Component<IAppState, {}> {
         return etfIdentifierToRatio;
     }
 
-    private _getInvestmentModel(etfIdentifierToRatio: ETFRatio) {
+    /**
+     * Calculates the investment model for the current properties.
+     *
+     * @param etfIdentifierToRatio The etfIdentifier mapping to the ratio.
+     * @returns The investment model for the current state.
+     */
+    private _getInvestmentModel(etfIdentifierToRatio: ETFRatio): InvestmentModel {
         const configOptions: IConfigOptions = {
             taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER].value,
             costConfig: generateCostConfig(this.props),
@@ -69,7 +84,12 @@ export class Visualization extends React.Component<IAppState, {}> {
         );
     }
 
-    private _getTooltipDate() {
+    /**
+     * Returns the tooltip date if it existed in the last visualization.
+     *
+     * @returns The tooltip date if defined.
+     */
+    private _getTooltipDate(): Date | undefined {
         if (this.areaChart != null) {
             return this.areaChart.tooltipDate;
         } else if (this.barChart != null) {
@@ -79,10 +99,18 @@ export class Visualization extends React.Component<IAppState, {}> {
         }
     }
 
+    /**
+     * Returns the y extent if it exists and the y axis should be locked.
+     *
+     * @returns The y extent if defined and axis should be locked.
+     */
     private _getYAxisExtent(diagram: D3ChartStrategy | undefined) {
         return diagram != null && this.props[Y_AXIS_LOCK_IDENTIFIER].value ? diagram.yExtent : undefined;
     }
 
+    /**
+     * Draws both charts.
+     */
     private _drawVisualization() {
         D3ChartStrategy.reset();
         try {
@@ -122,13 +150,25 @@ export class Visualization extends React.Component<IAppState, {}> {
         }
     }
 
-    async componentDidMount() {
+    /**
+     * Draws the visualization if the component has been drawn for the first time.
+     */
+    componentDidMount() {
         this._drawVisualization();
     }
 
+    /**
+     * Draws the visualization if the state changed.
+     */
     componentDidUpdate() {
         this._drawVisualization();
     }
+
+    /**
+     * Renders the divs with the references for the charts.
+     *
+     * @returns The divs holding the references for the charts.
+     */
     render() {
         return (
             <React.Fragment>

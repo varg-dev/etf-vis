@@ -4,12 +4,12 @@ interface ISidebarSectionHeading {
     children: JSX.Element[];
 }
 
-interface IErrorMessage {
-    identifier: string;
-    isValid: boolean;
-    errorMessage: string;
-}
-
+/**
+ * Renders a collapsible side bar section header which contains child ui elements.
+ *
+ * @param props The side bar properties.
+ * @returns The rendered side bar section.
+ */
 export function SidebarSectionHeading(props: ISidebarSectionHeading) {
     const titleID = props.title.replace(/\W/g, '_');
     return (
@@ -29,17 +29,6 @@ export function SidebarSectionHeading(props: ISidebarSectionHeading) {
             <div className={'collapse ' + (props.initiallyCollapsed ? '' : 'show')} id={titleID}>
                 {props.children}
             </div>
-        </div>
-    );
-}
-
-export function ErrorMessage(props: IErrorMessage) {
-    return (
-        <div
-            id={props.identifier + 'Feedback'}
-            className="invalid-tooltip"
-            style={{ visibility: props.isValid ? 'hidden' : 'visible' }}>
-            {props.errorMessage}
         </div>
     );
 }

@@ -67,25 +67,60 @@ export const ETF_SYMBOL_TO_NAME: ETFIdentifierToString = {
     SUSA: 'MSCI USA ESG',
 };
 
-function transformInputToInt(e: ChangeEvent<HTMLInputElement>) {
+/**
+ * Extracts the changed value of the event and parses it to an integer.
+ * That integer is returned. If the parsing failed 0 is returned as a fallback.
+ *
+ * @param e The input change event.
+ * @returns The changed value as an integer.
+ */
+function transformInputToInt(e: ChangeEvent<HTMLInputElement>): number {
     const valueWithoutTextAppending = e.target.value.split(' ')[0];
     const intVal = parseInt(valueWithoutTextAppending);
     return isNaN(intVal) ? 0 : intVal;
 }
 
-function transformInputToFloat(e: ChangeEvent<HTMLInputElement>) {
+/**
+ * Extracts the changed value of the event and parses it to a float.
+ * That float is returned. If the parsing failed 0 is returned as a fallback.
+ *
+ * @param e The input change event.
+ * @returns The changed value as a float.
+ */
+function transformInputToFloat(e: ChangeEvent<HTMLInputElement>): number {
     const floatVal = parseFloat(e.target.value);
     return isNaN(floatVal) ? 0 : floatVal;
 }
 
-function isPercentage(val: number) {
+/**
+ * Returns if the given value is a valid percentage.
+ * Meaning that the value is between 0 and 100 and is not NaN.
+ *
+ * @param val The concerning value.
+ * @returns If the value is a valid percentage.
+ */
+function isPercentage(val: number): boolean {
     return !Number.isNaN(val) && val >= 0 && val <= 100;
 }
 
-function isPositiveInt(val: number) {
+/**
+ * Returns if the given value is a valid integer.
+ * Meaning that the value is an integer and is not NaN.
+ *
+ * @param val The concerning value.
+ * @returns If the value is a valid integer.
+ */
+function isPositiveInt(val: number): boolean {
     return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
 }
 
+/**
+ * Returns if the given value is a valid integer.
+ * Meaning that the value is an integer and is not NaN.
+ *
+ * @param val The concerning value.
+ * @returns If the value is a valid integer.
+ */
 export function generateCostConfig(state: IAppState): ICostConfiguration {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
         return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
@@ -94,7 +129,14 @@ export function generateCostConfig(state: IAppState): ICostConfiguration {
     }
 }
 
-function recalculateETFPercentages(state: IAppState) {
+/**
+ * Recalculates the ETF percentages based on how many are selected.
+ * This secures that the sum of all active percentages always equal 100%.
+ *
+ * @param state The state of the app.
+ * @returns The manipulated state of the app.
+ */
+function recalculateETFPercentages(state: IAppState): IAppState {
     let numberOfSelectedETFs = 0;
     for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
         if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
@@ -108,6 +150,10 @@ function recalculateETFPercentages(state: IAppState) {
     return state;
 }
 
+/**
+ * The class which renders the whole UI and holds the whole UI state with its interaction changes.
+ * Also draws the visualizations.
+ */
 export class App extends React.Component<{}, IAppState> {
     constructor(props: {}) {
         super(props);
@@ -123,13 +169,27 @@ export class App extends React.Component<{}, IAppState> {
         this.state = getInitialInputFormState(this);
     }
 
-    handleTextChange(changedValue: number | string, changedStateIdentifier: TextInputStateIdentifier) {
+    /**
+     * Handles the change of a text and applies its value to the state and validates it.
+     *
+     * @param changedValue The changed Value.
+     * @param changedStateIdentifier  The changed state identifier.
+     */
+    handleTextChange(changedValue: number | string, changedStateIdentifier: TextInputStateIdentifier): void {
         const state = { ...this.state };
         state[changedStateIdentifier].value = changedValue;
         this._validateAndSetState(state);
     }
 
-    handleCheckBoxChange(changedStateIdentifier: ICheckBoxStateIdentifier) {
+    /**
+     * Handles the change of a checkbox and applies the change to the state and validates it.
+     * 
+     * Does further adjustments if the specific checkbox needs further state changes. 
+     * e.g. the  automatic percentage checkbox.
+     *
+     * @param changedStateIdentifier  The changed state identifier.
+     */
+    handleCheckBoxChange(changedStateIdentifier: ICheckBoxStateIdentifier): void {
         const state = { ...this.state };
         state[changedStateIdentifier].value = !state[changedStateIdentifier].value;
         if (changedStateIdentifier === TRANSACTION_COSTS_TYPE_IDENTIFIER) {
@@ -147,7 +207,12 @@ export class App extends React.Component<{}, IAppState> {
         this._validateAndSetState(state);
     }
 
-    handleBrokerChange(brokerProperties: BrokerProperties) {
+    /**
+     * Handles the selection of a specific broker.
+     * 
+     * @param brokerProperties The broker properties.
+     */
+    handleBrokerChange(brokerProperties: BrokerProperties): void {
         const state = { ...this.state };
         state[TRANSACTION_COSTS_IDENTIFIER].value =
             brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts : brokerProperties.fixedCosts;
@@ -155,13 +220,23 @@ export class App extends React.Component<{}, IAppState> {
         this._validateAndSetState(state);
     }
 
-    handleGraphDetailChange(detailProperties: IGraphDetailLevel) {
+    /**
+     * Handles the selection of a specific graph detail.
+     * 
+     * @param brokerProperties The graph detail properties.
+     */
+    handleGraphDetailChange(detailProperties: IGraphDetailLevel): void {
         const state = { ...this.state };
         state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value = detailProperties.value;
         this._validateAndSetState(state);
     }
 
-    handleETFSelectionChange(etfProperties: IETFProperties) {
+    /**
+     * Handles the selection of a specific ETF.
+     * 
+     * @param brokerProperties The ETF properties of the selected ETF.
+     */
+    handleETFSelectionChange(etfProperties: IETFProperties): void {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
             ETF_DROPDOWN_SELECTION_IDENTIFIER
@@ -172,13 +247,22 @@ export class App extends React.Component<{}, IAppState> {
         this._validateAndSetState(state);
     }
 
-    handleETFShareChange(changedValue: number, changedETFIdentifier: string) {
+    /**
+     * Handles the percentage value change of the etf selection.
+     * 
+     * @param changedValue The changed  percentage value of the ETF.
+     * @param changedETFIdentifier The identifier of the ETF.
+     */
+    handleETFShareChange(changedValue: number, changedETFIdentifier: string): void {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].percentage = changedValue;
         this._validateAndSetState(state);
     }
 
-    async handleAPIKeyConfirm() {
+    /**
+     * Handles the confirmation event of the API key.
+     */
+    async handleAPIKeyConfirm(): Promise<void> {
         const apiKey = this.state[API_KEY_IDENTIFIER].value;
         const apiValues = { ...this.state[API_KEY_IDENTIFIER] };
         try {
@@ -195,6 +279,11 @@ export class App extends React.Component<{}, IAppState> {
         this.forceUpdate();
     }
 
+    /**
+     * Checks if the updated state contains an invalid configuration.
+     * 
+     * @param state The updated state of the App.
+     */
     private _validateAndSetState(state: IAppState) {
         const positiveIntIdentifiers: NumberInputStateIdentifier[] = [
             MONTHLY_INVESTMENT_IDENTIFIER,
@@ -272,6 +361,11 @@ export class App extends React.Component<{}, IAppState> {
         this.setState(state);
     }
 
+    /**
+     * Renders the whole page based on the state of the app.
+     * 
+     * @returns The Page content.
+     */
     render() {
         const costConfig = generateCostConfig(this.state);
         return (
@@ -326,6 +420,12 @@ export class App extends React.Component<{}, IAppState> {
     }
 }
 
+/**
+ * Generates the initial app state.
+ * 
+ * @param caller The calling instance of the App class.
+ * @returns The initial app state.
+ */
 function getInitialInputFormState(caller: App): IAppState {
     return {
         isValid: true,
@@ -537,21 +637,21 @@ function getInitialInputFormState(caller: App): IAppState {
                     identifier: 'S_and_P_500',
                     symbol: 'SP5C.PAR',
                     label: ETF_SYMBOL_TO_NAME['SP5C.PAR'],
-                    percentage: 1.0,
+                    percentage: 100.0,
                     selected: true,
                 },
                 iShare: {
                     identifier: 'iShare',
                     symbol: 'ESGE',
                     label: ETF_SYMBOL_TO_NAME['ESGE'],
-                    percentage: 1.0,
+                    percentage: 'todo bug fix it',
                     selected: false,
                 },
                 msciUSA: {
                     identifier: 'msciUSA',
                     symbol: 'SUSA',
                     label: ETF_SYMBOL_TO_NAME['SUSA'],
-                    percentage: 1.0,
+                    percentage: 100.0,
                     selected: false,
                 },
             },
