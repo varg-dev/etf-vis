@@ -1,20 +1,13 @@
 import { ChangeEvent, MouseEvent } from 'react';
 
-import { ETFPercentageInputElement } from './TextInputElement';
+import { ETFTextInputElement } from './TextInputElement';
 import { ErrorMessage } from './ErrorMessageComponent';
 
-import { ETFIdentifier } from '../model/InvestmentModel';
+import { IETFProperty } from '../model/ForecastModel';
 
-export interface IETFProperties {
-    identifier: string;
-    symbol: ETFIdentifier;
-    label: string;
-    percentage: number;
-    selected: boolean;
-}
 
 interface IETFIndex {
-    [etfIdentifier: string]: IETFProperties;
+    [etfIdentifier: string]: IETFProperty;
 }
 
 export interface IETFSelection {
@@ -22,8 +15,8 @@ export interface IETFSelection {
     isValid: boolean;
     identifier: string;
     errorMessage: string;
-    handleSelectionChange: (etfProperties: IETFProperties) => void;
-    handleShareChange: (changedValue: number, changedStateIdentifier: string) => void;
+    handleSelectionChange: (etfProperties: IETFProperty) => void;
+    handleShareChange: (changedValue: string, changedStateIdentifier: string) => void;
     elements: IETFIndex;
 }
 
@@ -71,12 +64,12 @@ export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
                                 props.handleSelectionChange(props.elements[elementIdentifier]);
                                 //}
                             }}>
-                            <ETFPercentageInputElement
+                                {/** das problem ist dass der identifier kieneswegs ein Text... ist. */}
+                            <ETFTextInputElement
                                 {...props.elements[elementIdentifier]}
-                                value={Math.round(props.elements[elementIdentifier].percentage * 100)}
+                                value={props.elements[elementIdentifier].value}
                                 textAppending="%"
                                 onValueChange={props.handleShareChange}
-                                transformFunction={percentageTransformFunction}
                                 disabled={props.autoPercentage}
                                 isValid={true}
                                 errorMessage=""

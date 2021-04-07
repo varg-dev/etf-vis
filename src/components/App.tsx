@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { Visualization, ICostConfiguration } from './Visualization';
 import {
     TextInputElement,
@@ -11,10 +11,9 @@ import { Overlay, IAPIKey } from './APIKeyOverlay';
 import { SidebarSectionHeading } from './SidebarSectionHeadingComponent';
 import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropDown';
 import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
-import { ETFSelectionDropDown, IETFProperties, IETFSelection } from './ETFSelectionDropDown';
-import { ForecastModelSingleton } from '../model/ForecastModel';
-import { ETFIdentifier } from '../model/InvestmentModel';
-import { percentageToFloatValue } from '../helpers/utils';
+import { ETFSelectionDropDown, IETFSelection } from './ETFSelectionDropDown';
+import { ForecastModelSingleton, ETFIdentifier, IETFProperty } from '../model/ForecastModel';
+import { percentageStringToFloat, stringToInt, isPercentage, isPositiveInt } from '../helpers/utils';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -68,53 +67,6 @@ export const ETF_SYMBOL_TO_NAME: ETFIdentifierToString = {
 };
 
 /**
- * Extracts the changed value of the event and parses it to an integer.
- * That integer is returned. If the parsing failed 0 is returned as a fallback.
- *
- * @param e The input change event.
- * @returns The changed value as an integer.
- */
-function transformInputToInt(e: ChangeEvent<HTMLInputElement>): number {
-    const valueWithoutTextAppending = e.target.value.split(' ')[0];
-    const intVal = parseInt(valueWithoutTextAppending);
-    return isNaN(intVal) ? 0 : intVal;
-}
-
-/**
- * Extracts the changed value of the event and parses it to a float.
- * That float is returned. If the parsing failed 0 is returned as a fallback.
- *
- * @param e The input change event.
- * @returns The changed value as a float.
- */
-function transformInputToFloat(e: ChangeEvent<HTMLInputElement>): number {
-    const floatVal = parseFloat(e.target.value);
-    return isNaN(floatVal) ? 0 : floatVal;
-}
-
-/**
- * Returns if the given value is a valid percentage.
- * Meaning that the value is between 0 and 100 and is not NaN.
- *
- * @param val The concerning value.
- * @returns If the value is a valid percentage.
- */
-function isPercentage(val: number): boolean {
-    return !Number.isNaN(val) && val >= 0 && val <= 100;
-}
-
-/**
- * Returns if the given value is a valid integer.
- * Meaning that the value is an integer and is not NaN.
- *
- * @param val The concerning value.
- * @returns If the value is a valid integer.
- */
-function isPositiveInt(val: number): boolean {
-    return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
-}
-
-/**
  * Returns if the given value is a valid integer.
  * Meaning that the value is an integer and is not NaN.
  *
@@ -123,9 +75,9 @@ function isPositiveInt(val: number): boolean {
  */
 export function generateCostConfig(state: IAppState): ICostConfiguration {
     if (state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value) {
-        return { percentageCosts: 0.0, fixedCosts: state[TRANSACTION_COSTS_IDENTIFIER].value };
+        return { percentageCosts: 0.0, fixedCosts: percentageStringToFloat(state[TRANSACTION_COSTS_IDENTIFIER].value) };
     } else {
-        return { percentageCosts: percentageToFloatValue(state[TRANSACTION_COSTS_IDENTIFIER].value), fixedCosts: 0.0 };
+        return { percentageCosts: stringToInt(state[TRANSACTION_COSTS_IDENTIFIER].value), fixedCosts: 0.0 };
     }
 }
 
@@ -145,7 +97,7 @@ function recalculateETFPercentages(state: IAppState): IAppState {
     }
     const newPercentage = 1.0 / Math.max(1, numberOfSelectedETFs);
     for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
-        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].percentage = newPercentage;
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value = newPercentage.toString();
     }
     return state;
 }
@@ -175,7 +127,7 @@ export class App extends React.Component<{}, IAppState> {
      * @param changedValue The changed Value.
      * @param changedStateIdentifier  The changed state identifier.
      */
-    handleTextChange(changedValue: number | string, changedStateIdentifier: TextInputStateIdentifier): void {
+    handleTextChange(changedValue: string, changedStateIdentifier: TextInputStateIdentifier): void {
         const state = { ...this.state };
         state[changedStateIdentifier].value = changedValue;
         this._validateAndSetState(state);
@@ -193,11 +145,8 @@ export class App extends React.Component<{}, IAppState> {
         const state = { ...this.state };
         state[changedStateIdentifier].value = !state[changedStateIdentifier].value;
         if (changedStateIdentifier === TRANSACTION_COSTS_TYPE_IDENTIFIER) {
-            state[TRANSACTION_COSTS_IDENTIFIER].value = state[changedStateIdentifier].value ? 5 : 0.015;
+            state[TRANSACTION_COSTS_IDENTIFIER].value = state[changedStateIdentifier].value ? '5' : '0.015';
             state[TRANSACTION_COSTS_IDENTIFIER].textAppending = state[changedStateIdentifier].value ? '€' : '%';
-            state[TRANSACTION_COSTS_IDENTIFIER].transformFunction = state[changedStateIdentifier].value
-                ? transformInputToInt
-                : transformInputToFloat;
         } else if (
             changedStateIdentifier === ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER &&
             state[changedStateIdentifier].value
@@ -215,7 +164,7 @@ export class App extends React.Component<{}, IAppState> {
     handleBrokerChange(brokerProperties: BrokerProperties): void {
         const state = { ...this.state };
         state[TRANSACTION_COSTS_IDENTIFIER].value =
-            brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts : brokerProperties.fixedCosts;
+            brokerProperties.percentageCosts > 0 ? brokerProperties.percentageCosts.toString() : brokerProperties.fixedCosts.toString();
         state[TRANSACTION_COSTS_TYPE_IDENTIFIER].value = brokerProperties.percentageCosts > 0 ? false : true;
         this._validateAndSetState(state);
     }
@@ -236,7 +185,7 @@ export class App extends React.Component<{}, IAppState> {
      * 
      * @param brokerProperties The ETF properties of the selected ETF.
      */
-    handleETFSelectionChange(etfProperties: IETFProperties): void {
+    handleETFSelectionChange(etfProperties: IETFProperty): void {
         const state = { ...this.state };
         state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
             ETF_DROPDOWN_SELECTION_IDENTIFIER
@@ -253,9 +202,9 @@ export class App extends React.Component<{}, IAppState> {
      * @param changedValue The changed  percentage value of the ETF.
      * @param changedETFIdentifier The identifier of the ETF.
      */
-    handleETFShareChange(changedValue: number, changedETFIdentifier: string): void {
+    handleETFShareChange(changedValue: string, changedETFIdentifier: string): void {
         const state = { ...this.state };
-        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].percentage = changedValue;
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[changedETFIdentifier].value = changedValue;
         this._validateAndSetState(state);
     }
 
@@ -315,12 +264,12 @@ export class App extends React.Component<{}, IAppState> {
         }
 
         // Check the year values.
-        const leftoverYears = state[LIFE_EXPECTATION_IDENTIFIER].value - state[AGE_IDENTIFIER].value;
+        const leftoverYears = stringToInt(state[LIFE_EXPECTATION_IDENTIFIER].value) - stringToInt(state[AGE_IDENTIFIER].value);
         if (state[AGE_IDENTIFIER].value >= state[LIFE_EXPECTATION_IDENTIFIER].value) {
             state[AGE_IDENTIFIER].errorMessage = 'You cannot be older than the life expectation';
             state[AGE_IDENTIFIER].isValid = false;
             state.isValid = false;
-        } else if (leftoverYears <= state[SAVING_PHASE_IDENTIFIER].value) {
+        } else if (leftoverYears <= stringToInt(state[SAVING_PHASE_IDENTIFIER].value)) {
             state[SAVING_PHASE_IDENTIFIER].errorMessage =
                 'You cannot have a saving phase that lasts longer than your life.';
             state[SAVING_PHASE_IDENTIFIER].isValid = false;
@@ -342,7 +291,7 @@ export class App extends React.Component<{}, IAppState> {
         let foundOneSelectedEtf = false;
         for (const etfIdentifier in state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements) {
             if (state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].selected) {
-                sumOfPercentages += state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].percentage;
+                sumOfPercentages += percentageStringToFloat(state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfIdentifier].value);
                 foundOneSelectedEtf = true;
             }
         }
@@ -431,112 +380,102 @@ function getInitialInputFormState(caller: App): IAppState {
         isValid: true,
         // simple ui elements.
         [STARTING_CAPITAL_IDENTIFIER]: {
-            value: 1000,
+            value: '1000',
             label: 'Starting Capital',
             errorMessage: '',
             textAppending: '€',
             isValid: true,
             identifier: STARTING_CAPITAL_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [MONTHLY_INVESTMENT_IDENTIFIER]: {
-            value: 100,
+            value: '100',
             label: 'Monthly Investment',
             errorMessage: 'Please enter a positive Money amount.',
             textAppending: '€',
             isValid: true,
             identifier: MONTHLY_INVESTMENT_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [YEARLY_INVESTMENT_INCREASE_IDENTIFIER]: {
-            value: 0.0,
+            value: '0.0',
             label: 'Monthly Investment Increase',
             errorMessage: '',
             textAppending: '%',
             isValid: true,
             identifier: YEARLY_INVESTMENT_INCREASE_IDENTIFIER,
-            transformFunction: transformInputToFloat,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [MONTHLY_PAYOUT_IDENTIFIER]: {
-            value: 1000,
+            value: '1000',
             label: 'Monthly Payout',
             errorMessage: '',
             textAppending: '€',
             isValid: true,
             identifier: MONTHLY_PAYOUT_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [YEARLY_PAYOUT_INCREASE_IDENTIFIER]: {
-            value: 0.0,
+            value: '0.0',
             label: 'Monthly Payout Increase',
             errorMessage: '',
             textAppending: '%',
             isValid: true,
             identifier: YEARLY_PAYOUT_INCREASE_IDENTIFIER,
-            transformFunction: transformInputToFloat,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [TRANSACTION_COSTS_IDENTIFIER]: {
-            value: 1.5,
+            value: '1.5',
             label: 'Transaction Costs',
             errorMessage: '',
             textAppending: '%',
             isValid: true,
             identifier: TRANSACTION_COSTS_IDENTIFIER,
-            transformFunction: transformInputToFloat,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [SAVING_PHASE_IDENTIFIER]: {
-            value: 40,
+            value: '40',
             label: 'Saving Phase',
             errorMessage: '',
             textAppending: 'Y',
             isValid: true,
             identifier: SAVING_PHASE_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [AGE_IDENTIFIER]: {
-            value: 30,
+            value: '30',
             label: 'Your Age',
             textAppending: 'Y',
             errorMessage: '',
             isValid: true,
             identifier: AGE_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [LIFE_EXPECTATION_IDENTIFIER]: {
-            value: 80,
+            value: '80',
             label: 'Life Expectation',
             errorMessage: '',
             isValid: true,
             textAppending: 'Y',
             identifier: LIFE_EXPECTATION_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
         [TAX_FREE_AMOUNT_IDENTIFIER]: {
-            value: 801,
+            value: '801',
             label: 'Tax Free Amount',
             errorMessage: '',
             isValid: true,
             textAppending: '€',
             identifier: TAX_FREE_AMOUNT_IDENTIFIER,
-            transformFunction: transformInputToInt,
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
@@ -567,7 +506,6 @@ function getInitialInputFormState(caller: App): IAppState {
             isValid: true,
             textAppending: '',
             identifier: API_KEY_IDENTIFIER,
-            transformFunction: (e: ChangeEvent<HTMLInputElement>) => (e.target as HTMLInputElement).value,
             onValueChange: caller.handleTextChange,
             handleAPIKeyConfirm: caller.handleAPIKeyConfirm,
         },
@@ -637,21 +575,21 @@ function getInitialInputFormState(caller: App): IAppState {
                     identifier: 'S_and_P_500',
                     symbol: 'SP5C.PAR',
                     label: ETF_SYMBOL_TO_NAME['SP5C.PAR'],
-                    percentage: 100.0,
+                    value: '100',
                     selected: true,
                 },
                 iShare: {
                     identifier: 'iShare',
                     symbol: 'ESGE',
                     label: ETF_SYMBOL_TO_NAME['ESGE'],
-                    percentage: 'todo bug fix it',
+                    value: '100',
                     selected: false,
                 },
                 msciUSA: {
                     identifier: 'msciUSA',
                     symbol: 'SUSA',
                     label: ETF_SYMBOL_TO_NAME['SUSA'],
-                    percentage: 100.0,
+                    value: '100',
                     selected: false,
                 },
             },

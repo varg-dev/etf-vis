@@ -47,11 +47,13 @@ interface IHistoricDataOfETF {
     history: IHistoricEntry[];
 }
 
-interface IETFProperty {
+export type ETFIdentifier = 'SP5C.PAR' | 'ESGE' | 'SUSA';
+
+export interface IETFProperty {
     identifier: string;
-    symbol: string;
+    symbol: ETFIdentifier;
     label: string;
-    percentage: number;
+    value: string;
     selected: boolean;
 }
 

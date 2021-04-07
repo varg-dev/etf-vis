@@ -4,9 +4,9 @@ import {
     getTotalDividendShareValue,
     InvestmentStep,
     NegativeInvestmentStepIdentifier,
-    ETFIdentifier,
     ETFRatio,
 } from '../model/InvestmentModel';
+import {ETFIdentifier} from '../model/ForecastModel'
 import { D3ChartStrategy, generateLabelWithValueText, DataArrayEntry } from './D3ChartStrategy';
 import { ETF_SYMBOL_TO_NAME } from '../components/App';
 

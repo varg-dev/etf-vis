@@ -1,5 +1,4 @@
-import { ChangeEvent } from 'react';
-import { StringTextInputElement, TextInputStateIdentifier } from './TextInputElement';
+import { TextInputElement, TextInputStateIdentifier } from './TextInputElement';
 
 export interface IAPIKey {
     displayOverlay: boolean;
@@ -9,7 +8,6 @@ export interface IAPIKey {
     isValid: boolean;
     textAppending: string;
     identifier: TextInputStateIdentifier;
-    transformFunction: (e: ChangeEvent<HTMLInputElement>) => string;
     onValueChange: (changedValue: string, changedStateIdentifier: TextInputStateIdentifier) => void;
     handleAPIKeyConfirm: () => void;
     error: boolean;
@@ -39,7 +37,7 @@ export function Overlay(props: IAPIKey) {
                                 Alphavantage API Key
                             </a>{' '}
                         </h1>
-                        <StringTextInputElement {...props} disabled={!props.displayOverlay} />
+                        <TextInputElement {...props} disabled={!props.displayOverlay} />
                         <button type="button" className="btn btn-primary my-5" onClick={props.handleAPIKeyConfirm}>
                             Confirm
                         </button>

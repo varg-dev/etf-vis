@@ -1,9 +1,10 @@
-import { InvestmentStep, ETFIdentifier } from '../model/InvestmentModel';
+import { InvestmentStep } from '../model/InvestmentModel';
+import { ETFIdentifier } from '../model/ForecastModel';
 import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
 
 /**
  * Calculates the sum of all payout over all used etfs.
- * 
+ *
  * @param investmentStep The concerning investmentStep.
  * @returns The sum of all payouts.
  */
@@ -29,7 +30,7 @@ export class CashflowBarChart extends D3ChartStrategy {
 
     /**
      * Just calls the constructor of the base class with the specific svg id.
-     * 
+     *
      * @param investmentSteps The investment model.
      * @param renderDivRef The div reference where the diagram should be placed.
      * @param payoutPhaseStartDate The start of the payout phase.
@@ -121,7 +122,7 @@ export class CashflowBarChart extends D3ChartStrategy {
         };
     }
 
-     /**
+    /**
      * Updates the textProperties according to the investment step the tooltip is currently on.
      *
      * @param investmentStepIndex The index of the investment step of at the current mouse position.

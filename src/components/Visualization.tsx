@@ -18,6 +18,7 @@ import { AreaChartD3 } from '../renderer/AreaChartD3';
 import { CashflowBarChart } from '../renderer/CashflowBarChartD3';
 import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
 import { IAppState } from './App';
+import { percentageStringToFloat, stringToInt } from '../helpers/utils';
 
 export interface IConfigOptions {
     costConfig: ICostConfiguration;
@@ -52,7 +53,9 @@ export class Visualization extends React.Component<IAppState, {}> {
         const etfProperties = this.props.etfDropdownSelection.elements;
         for (const etfIdentifier in etfProperties) {
             if (etfProperties[etfIdentifier].selected) {
-                etfIdentifierToRatio[etfProperties[etfIdentifier].symbol] = etfProperties[etfIdentifier].percentage;
+                etfIdentifierToRatio[etfProperties[etfIdentifier].symbol] = percentageStringToFloat(
+                    etfProperties[etfIdentifier].value
+                );
             }
         }
         return etfIdentifierToRatio;
@@ -66,21 +69,21 @@ export class Visualization extends React.Component<IAppState, {}> {
      */
     private _getInvestmentModel(etfIdentifierToRatio: ETFRatio): InvestmentModel {
         const configOptions: IConfigOptions = {
-            taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER].value,
+            taxFreeAmount: stringToInt(this.props[TAX_FREE_AMOUNT_IDENTIFIER].value),
             costConfig: generateCostConfig(this.props),
         };
 
         return new InvestmentModel(
-            this.props[STARTING_CAPITAL_IDENTIFIER].value,
-            this.props[MONTHLY_INVESTMENT_IDENTIFIER].value,
-            this.props[YEARLY_INVESTMENT_INCREASE_IDENTIFIER].value,
-            this.props[MONTHLY_PAYOUT_IDENTIFIER].value,
-            this.props[YEARLY_PAYOUT_INCREASE_IDENTIFIER].value,
-            this.props[SAVING_PHASE_IDENTIFIER].value,
+            stringToInt(this.props[STARTING_CAPITAL_IDENTIFIER].value),
+            stringToInt(this.props[MONTHLY_INVESTMENT_IDENTIFIER].value),
+            percentageStringToFloat(this.props[YEARLY_INVESTMENT_INCREASE_IDENTIFIER].value),
+            stringToInt(this.props[MONTHLY_PAYOUT_IDENTIFIER].value),
+            percentageStringToFloat(this.props[YEARLY_PAYOUT_INCREASE_IDENTIFIER].value),
+            stringToInt(this.props[SAVING_PHASE_IDENTIFIER].value),
             etfIdentifierToRatio,
             configOptions,
-            this.props[AGE_IDENTIFIER].value,
-            this.props[LIFE_EXPECTATION_IDENTIFIER].value
+            stringToInt(this.props[AGE_IDENTIFIER].value),
+            stringToInt(this.props[LIFE_EXPECTATION_IDENTIFIER].value)
         );
     }
 

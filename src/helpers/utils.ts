@@ -17,6 +17,62 @@ export interface IHistoricEntry {
 }
 
 /**
+ * Converts the string to an integer and return 0 in the case the parsing fails.
+ *
+ * @param value The concerning value.
+ * @returns The value as an integer.
+ */
+export function stringToInt(value: string) {
+    const int = parseInt(value);
+    return Number.isNaN(int) ? 0 : int;
+}
+
+/**
+ * Converts the string to a float and return 0 in the case the parsing fails.
+ *
+ * @param value The concerning value.
+ * @returns The value as a float.
+ */
+export function stringToFloat(value: string) {
+    const float = parseFloat(value);
+    return Number.isNaN(float) ? 0.0 : float;
+}
+
+/**
+ * Converts the string to a float and return 0 in the case the parsing fails.
+ *
+ * @param value The concerning value.
+ * @returns The value as a float.
+ */
+export function percentageStringToFloat(value: string) {
+    return stringToFloat(value) / 100;
+}
+
+/**
+ * Returns if the given value is a valid percentage.
+ * Meaning that the value is between 0 and 100 and is not NaN.
+ *
+ * @param val The concerning value.
+ * @returns If the value is a valid percentage.
+ */
+export function isPercentage(val: string): boolean {
+    const float = percentageStringToFloat(val);
+    return !Number.isNaN(float) && float >= 0 && float <= 1.0;
+}
+
+/**
+ * Returns if the given value is a valid integer.
+ * Meaning that the value is an integer and is not NaN.
+ *
+ * @param val The concerning value.
+ * @returns If the value is a valid integer.
+ */
+export function isPositiveInt(val: string): boolean {
+    const int = stringToInt(val);
+    return !Number.isNaN(int) && Number.isInteger(int) && int >= 0;
+}
+
+/**
  * Checks if the date is the last month of a year i.e. December.
  *
  * @param date The date to check.
@@ -46,16 +102,6 @@ export function isFirstMonthOfAYear(date: Date): boolean {
  */
 export function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(value, max));
-}
-
-/**
- * Converts a percentage value to a usual float by dividing by 100.
- *
- * @param val The percentage value.
- * @returns The normal float representation of the percentage value.
- */
-export function percentageToFloatValue(val: number): number {
-    return val / 100.0;
 }
 
 /**

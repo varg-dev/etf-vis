@@ -1,33 +1,30 @@
-import { ForecastModelSingleton } from './ForecastModel';
+import { ForecastModelSingleton, ETFIdentifier } from './ForecastModel';
 import {
     numberOfMonthsOfAYear,
     isLastMonthOfAYear,
     clamp,
     isFirstMonthOfAYear,
-    percentageToFloatValue,
 } from '../helpers/utils';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ICostConfiguration, IConfigOptions } from '../components/Visualization';
 
-export type ETFIdentifier = 'SP5C.PAR' | 'ESGE' | 'SUSA';
-
-type IETFShares = { [key in ETFIdentifier]: number };
+type ETFShares = { [key in ETFIdentifier]: number };
 
 export type ETFRatio = { [key in ETFIdentifier]?: number };
 
-type ETFPrizes = IETFShares;
+type ETFPrizes = ETFShares;
 
-type ETFMoney = IETFShares;
+type ETFMoney = ETFShares;
 
 export type NegativeInvestmentStepIdentifier = 'totalCosts' | 'totalTaxes' | 'inflation';
 
 export interface InvestmentStep {
     date: Date;
-    newShares: IETFShares;
-    totalShares: IETFShares;
-    dividendNewShares: IETFShares;
-    dividendTotalShares: IETFShares;
+    newShares: ETFShares;
+    totalShares: ETFShares;
+    dividendNewShares: ETFShares;
+    dividendTotalShares: ETFShares;
     totalCosts: number;
     sharePrizes: ETFPrizes;
     totalInvestedMoney: ETFMoney;
@@ -526,7 +523,7 @@ function addPayoutMonth(
  */
 function generateEmptyInvestmentStep(etfToRatio: ETFRatio, date: Date): InvestmentStep {
     const forecast = ForecastModelSingleton.getInstance();
-    const dummyData: IETFShares = { 'SP5C.PAR': 0, ESGE: 0, SUSA: 0 };
+    const dummyData: ETFShares = { 'SP5C.PAR': 0, ESGE: 0, SUSA: 0 };
     const emptyInvestmentStep: InvestmentStep = {
         date: date,
         totalCosts: 0,
@@ -620,8 +617,8 @@ export class InvestmentModel {
         this.configOptions = configOptions;
         this.expectationOfLife = expectationOfLife;
         this.age = age;
-        this.yearlyInvestmentIncrease = percentageToFloatValue(yearlyInvestmentIncrease);
-        this.yearlyPayoutIncrease = percentageToFloatValue(yearlyPayoutIncrease);
+        this.yearlyInvestmentIncrease = yearlyInvestmentIncrease;
+        this.yearlyPayoutIncrease = yearlyPayoutIncrease;
 
         this._calculateDatesForModel();
         this._calculateModel();
