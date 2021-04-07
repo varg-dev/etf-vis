@@ -30,11 +30,18 @@ const ONE_THOUSAND = 1000;
 const ONE_MILLION = 1000000;
 const numberOfTicks = 7;
 
-export function generateLabelWithValueText(name: string, value: string | undefined = undefined) {
+/**
+ * Returns a formatted text containing the label and value. If the value is undefined '-' is used.
+ *
+ * @param name The label.
+ * @param value The value of the data referenced by the label.
+ * @returns The formatted text.
+ */
+export function generateLabelWithValueText(name: string, value: string | undefined = undefined): string {
     return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
 }
 
-function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]) {
+function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]): number {
     const firstDate = investmentSteps[0].date;
     const secondDate = investmentSteps[1].date;
     const numberOfMonthsSinceStartDate =
@@ -47,7 +54,16 @@ function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: Invest
     return Math.floor(numberOfMonthsSinceStartDate / numberOfMonthsPerInvestmentStep);
 }
 
-export class D3ChartStrategy {
+/**
+ * A rendering base class for d3 visualizations implementing the strategy design pattern.
+ * Provides the rendering and interaction strategy and provides common behavior such as axis rendering.
+ *
+ * No update of the data is implemented.
+ * In order to adjust the visualization to a new investment model, a complete re rendering is required.
+ *
+ * Keeps track of all active diagrams. Thus needs to be reset in the case of a redrawing of the graphs.
+ */
+export abstract class D3ChartStrategy {
     tooltipDate: Date;
     yExtent: [number, number];
 
@@ -75,12 +91,26 @@ export class D3ChartStrategy {
 
     private readonly fadeOutGradientID = 'fadeOutGradient';
 
-    private faceOutYearsLength = 10;
+    private fadeOutYearsLength = 10;
 
     private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
     private interaction: d3.Selection<SVGGElement, unknown, null, undefined>;
     private textGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
 
+    /**
+     * Constructs the strategy and registers the object.
+     *
+     * @param investmentSteps The investment model.
+     * @param renderDivRef The reference to the div to which the diagram should be rendered.
+     * @param payoutPhaseStartDate The start date of the payout phase.
+     * @param svgID The ID of the svg.
+     * @param tooltipDate The tooltip date. Undefined if no tooltip was visible in the last diagram.
+     * @param yExtent The yExtent. Undefined if it should be recalculated.
+     * @param width The diagram width.
+     * @param height The diagram height.
+     * @param marginW The diagram margin width.
+     * @param marginH The diagram margin height.
+     */
     constructor(
         investmentSteps: InvestmentStep[],
         renderDivRef: HTMLDivElement,
@@ -124,17 +154,30 @@ export class D3ChartStrategy {
         this.hoverLine = this.svg.append('line');
     }
 
-    static reset() {
+    /**
+     * Resets the static state that keeps track of every active diagram.
+     * Needs to be called before re rendering the diagrams.
+     */
+    static reset(): void {
         D3ChartStrategy.activeStrategies = [];
     }
 
-    private static _setInteractionDisplayForActiveDiagrams(displayOption: string) {
+    /**
+     * Sets the visibility option for all active diagram tooltips.
+     *
+     * @param displayOption The visibility option to apply to all active diagram tooltips.
+     */
+    private static _setInteractionVisibilityForActiveDiagrams(displayOption: 'hidden' | 'visible'): void {
         for (const activeDiagram of D3ChartStrategy.activeStrategies) {
             activeDiagram.interaction.style('visibility', displayOption);
         }
     }
 
-    render() {
+    /**
+     * The rendering strategy which defined the order in which the diagram is rendered.
+     * Thus defined which part lies on top of the other. e.g. Text is rendered over the central content.
+     */
+    render(): void {
         this._prepareData();
         this._calculateExtents();
         this._createScales();
@@ -150,7 +193,14 @@ export class D3ChartStrategy {
         }
     }
 
-    protected valueToDisplayText(value: number, hasToBePositive = false) {
+    /**
+     * Generates a human readable display text from the value.
+     *
+     * @param value The value to display.
+     * @param hasToBePositive Optional parameter which can bes et to ensure the value is positive by ignoring the sign.
+     * @returns The resulting text.
+     */
+    protected valueToDisplayText(value: number, hasToBePositive = false): string {
         const labelDivisionFactor =
             Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
         const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
@@ -162,6 +212,11 @@ export class D3ChartStrategy {
         })}${numberIndicator} €`;
     }
 
+    /**
+     * calculates the data and thus the axis extent for the time (x-Axis) and money (y-Axis).
+     * The calculation of the y extent is skipped if it has already been set to a valid extent.
+     * Thus if the extent has been set in the constructor the y extent is preserved.
+     */
     private _calculateExtents() {
         this.dateExtent = d3.extent(this.dataArray[0], d => d.date) as [Date, Date];
 
@@ -181,11 +236,17 @@ export class D3ChartStrategy {
         }
     }
 
+    /**
+     * Creates the d3 scales for both axis.
+     */
     private _createScales() {
         this.yScale = d3.scaleLinear().domain(this.yExtent).range([this.height, 0]);
         this.xScale = d3.scaleTime().domain(this.dateExtent).range([0, this.width]);
     }
 
+    /**
+     * Draws both scales, the zero line and the line that separates the saving and payout phase.
+     */
     private _drawAxis() {
         this.svg
             .append('g')
@@ -226,6 +287,11 @@ export class D3ChartStrategy {
             .style('stroke', 'black');
     }
 
+    /**
+     * Adds all necessary things for the interaction to the diagram.
+     *
+     * The interaction design is inspired by: http://www.d3noob.org/2014/07/my-favourite-tooltip-method-for-line.html
+     */
     private _addInteraction() {
         const interactionClass = 'interaction';
         const tooltipLineClass = 'tooltipLine';
@@ -254,22 +320,28 @@ export class D3ChartStrategy {
             .attr('width', this.width)
             .attr('fill', 'none')
             .style('pointer-events', 'all')
-            .on('mouseover', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('visible'))
-            //.on('mouseout', () => D3ChartStrategy._setInteractionDisplayForActiveDiagrams('hidden'))
+            .on('mouseover', () => D3ChartStrategy._setInteractionVisibilityForActiveDiagrams('visible'))
             .on('mousemove', mouseEvent => this._handleTooltipEvent(mouseEvent));
     }
 
-    // Interaction inspired by: http://www.d3noob.org/2014/07/my-favourite-tooltip-method-for-line.html
-    private _handleTooltipEvent(mouseEvent: any) {
+    /**
+     * Handles the tooltip event and updates all diagrams accordingly.
+     *
+     * @param mouseEvent The mouse event.
+     */
+    private _handleTooltipEvent(mouseEvent: MouseEvent) {
         const x = d3.pointer(mouseEvent)[0];
         const date = this.xScale.invert(x);
         this.tooltipDate = roundDateToBeginningOfMonth(date);
         this._updateAllDiagrams();
     }
 
+    /**
+     * Updates all tooltips of all diagrams.
+     */
     private _updateAllDiagrams() {
         const investmentStepIndex = calculateInvestmentStepIndexForDate(this.tooltipDate, this.investmentSteps);
-        D3ChartStrategy._setInteractionDisplayForActiveDiagrams('visible');
+        D3ChartStrategy._setInteractionVisibilityForActiveDiagrams('visible');
         for (const activeDiagram of D3ChartStrategy.activeStrategies) {
             activeDiagram.hoverLine.attr('x1', this.xScale(this.tooltipDate)).attr('x2', this.xScale(this.tooltipDate));
             activeDiagram._updateTooltip(investmentStepIndex);
@@ -277,6 +349,9 @@ export class D3ChartStrategy {
         }
     }
 
+    /**
+     * Draws all text that is stored in the textProperties.
+     */
     private _drawText() {
         this.textGroup = this.svg.append('g').attr('class', 'textGroup');
         this.textGroup
@@ -293,10 +368,17 @@ export class D3ChartStrategy {
             .style('fill', d => d.color);
     }
 
+    /**
+     * Updates a single diagram. The update currently only consists of the text update.
+     */
     private _updateDiagram() {
         this.textGroup.selectAll('text').text(d => (d as ITextProperty).text);
     }
 
+    /**
+     * Prepares all text which should be displayed and stores them in the textProperties variable.
+     *  Default text is included. Thus a super call is expected.
+     */
     protected _prepareText() {
         const savingPhaseMid =
             this.xScale(this.dateExtent[0]) +
@@ -346,10 +428,13 @@ export class D3ChartStrategy {
         };
     }
 
+    /**
+     * Draws the opacity of the fade out years by using a svg linear gradient applied to a rectangle.
+     */
     private _drawFadeOut() {
         const fadeOutGroup = this.svg.append('g').attr('class', 'fadeOut');
         const fadeOutStartDate = new Date(this.dateExtent[1]);
-        fadeOutStartDate.setFullYear(fadeOutStartDate.getFullYear() - this.faceOutYearsLength);
+        fadeOutStartDate.setFullYear(fadeOutStartDate.getFullYear() - this.fadeOutYearsLength);
 
         const gradient = fadeOutGroup.append('linearGradient').attr('id', this.fadeOutGradientID);
 
@@ -376,15 +461,20 @@ export class D3ChartStrategy {
             .style('fill', `url(#${this.fadeOutGradientID})`);
     }
 
-    protected _prepareData() {
-        throw new Error('Abstract method. Not Implemented');
-    }
+    /**
+     * Prepares the data needed for the rendering.
+     */
+    protected abstract _prepareData(): void;
 
-    protected _drawContent() {
-        throw new Error('Abstract method. Not Implemented');
-    }
+    /**
+     * Draws the main content of the diagram.
+     */
+    protected abstract _drawContent(): void;
 
-    protected _updateTooltip(investmentStepIndex: number) {
-        throw new Error('Abstract method. Not Implemented');
-    }
+    /**
+     * Updates the textProperties according to the investment step the tooltip is currently on.
+     *
+     * @param investmentStepIndex The index of the investment step of at the current mouse position.
+     */
+    protected abstract _updateTooltip(investmentStepIndex: number): void;
 }
