@@ -59,9 +59,6 @@ interface IETFProperties {
     [etfIdentifier: string]: IETFProperty;
 }
 
-// USAGE: first call configure to set required static vars. Then the singleton can be accessed via getInstance. Never call the Constructor on your own.
-// Always call loadAndCacheHistoricalETFData of an etf before calling predict on that etf.
-
 /**
  * Singleton class that provided course and dividend forecasting of ETFs.
  * It uses [Alphavantage](https://www.alphavantage.co/) to load historic data which

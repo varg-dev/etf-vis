@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import {
     getTotalShareValue,
-    getTotalDividenShareValue,
+    getTotalDividendShareValue,
     InvestmentStep,
     NegativeInvestmentStepIdentifier,
     ETFIdentifier,
@@ -105,7 +105,7 @@ export class AreaChartD3 extends D3ChartStrategy {
             let heightOffset = 0;
             for (const etfIdentifier of this.etfIdentifiers) {
                 const totalShareValue = getTotalShareValue(etfIdentifier, investmentStep);
-                const totalDividendShareValue = getTotalDividenShareValue(etfIdentifier, investmentStep);
+                const totalDividendShareValue = getTotalDividendShareValue(etfIdentifier, investmentStep);
                 this.dataArray[this.dataToIndex[etfIdentifier + this.capitalIdentifier]].push({
                     yStart: totalShareValue + heightOffset,
                     yEnd: totalShareValue - totalDividendShareValue + heightOffset,
@@ -215,7 +215,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     _updateTooltip(investmentStepIndex: number) {
         for (const etfIdentifier of this.etfIdentifiers) {
             const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
-            const totalDividendValue = getTotalDividenShareValue(
+            const totalDividendValue = getTotalDividendShareValue(
                 etfIdentifier,
                 this.investmentSteps[investmentStepIndex]
             );
