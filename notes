@@ -90,3 +90,37 @@ orga:
 - 16. vortrag
 - code abgabe darf auch nach dem 16.
 - 
+
+
+
+neues feedback:
+
+- differenz der werte irgendwie visualisieren (history)
+- gesamtzahl - total ist wichtig.
+- nummern rechts aligned
+- unabhaenging
+- BUG!!!! your age: 36, life expectation: 100, saving phase 40 - done
+- responsive svg
+- automatic etf ratio als standard?
+
+- ggf. das echte quatal nehmen.
+
+- das erste datum eintragen auf der achse und erste auszahlungsdatum schreiben.
+
+- graph detail: monatsweise, quatalsweise, jahrweise - done
+
+- ui: spin box (wichtig) / slider (auch gut aber unwichtiger.)
+
+- share button welches die parameter in die url packt zu sharen. (react sollte tools haben)
+
+- visualisierung kleiner ist in ordnung.
+
+- ausscheutter einbauen.
+
+- api default key oder lokales speichern des keys
+
+- etf farbunterscheidung zu gross, unterschied pro etf ist gut
+
+- y = 0 duenner rendern.
+
+- grid lines in den hintergrund

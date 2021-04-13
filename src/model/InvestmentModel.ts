@@ -1,10 +1,5 @@
 import { ForecastModelSingleton, ETFIdentifier } from './ForecastModel';
-import {
-    numberOfMonthsOfAYear,
-    isLastMonthOfAYear,
-    clamp,
-    isFirstMonthOfAYear,
-} from '../helpers/utils';
+import { numberOfMonthsOfAYear, isLastMonthOfAYear, clamp, isFirstMonthOfAYear } from '../helpers/utils';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ICostConfiguration, IConfigOptions } from '../components/Visualization';
@@ -12,10 +7,6 @@ import { ICostConfiguration, IConfigOptions } from '../components/Visualization'
 type ETFShares = { [key in ETFIdentifier]: number };
 
 export type ETFRatio = { [key in ETFIdentifier]?: number };
-
-type ETFPrizes = ETFShares;
-
-type ETFMoney = ETFShares;
 
 export type NegativeInvestmentStepIdentifier = 'totalCosts' | 'totalTaxes' | 'inflation';
 
@@ -26,13 +17,13 @@ export interface InvestmentStep {
     dividendNewShares: ETFShares;
     dividendTotalShares: ETFShares;
     totalCosts: number;
-    sharePrizes: ETFPrizes;
-    totalInvestedMoney: ETFMoney;
-    newInvestedMoney: ETFMoney;
+    sharePrizes: ETFShares;
+    totalInvestedMoney: ETFShares;
+    newInvestedMoney: ETFShares;
     newInvestment: number;
     totalTaxes: number;
-    totalPayout: ETFMoney;
-    newPayout: ETFMoney;
+    totalPayout: ETFShares;
+    newPayout: ETFShares;
     inflation: number;
 }
 
@@ -338,7 +329,7 @@ function addAccumulationMonth(
 
     // Handle costs, taxes and inflation.
     newInvestmentStep.totalCosts += costs;
-    const [newTaxes, _] = calculateVorabpauschaleTaxes(investmentSteps, date, configOptions.taxFreeAmount, etfToRatio);
+    const [newTaxes] = calculateVorabpauschaleTaxes(investmentSteps, date, configOptions.taxFreeAmount, etfToRatio);
     newInvestmentStep.totalTaxes += newTaxes;
     calculateAndAddInflation(newInvestmentStep, initialDate);
     investmentSteps.push(newInvestmentStep);

@@ -6,7 +6,7 @@ import {
     NegativeInvestmentStepIdentifier,
     ETFRatio,
 } from '../model/InvestmentModel';
-import {ETFIdentifier} from '../model/ForecastModel'
+import { ETFIdentifier } from '../model/ForecastModel';
 import { D3ChartStrategy, generateLabelWithValueText, DataArrayEntry } from './D3ChartStrategy';
 import { ETF_SYMBOL_TO_NAME } from '../components/App';
 
@@ -51,6 +51,8 @@ export class AreaChartD3 extends D3ChartStrategy {
     private readonly negativeLabels: NegativeInvestmentStepIdentifier[] = ['totalCosts', 'totalTaxes', 'inflation'];
     private readonly investedIdentifier = 'invested';
     private readonly capitalIdentifier = 'capital';
+    private readonly totalIdentifier = 'total';
+    private readonly totalColor = 'black';
 
     private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
@@ -144,23 +146,20 @@ export class AreaChartD3 extends D3ChartStrategy {
      * Draws the data as lines instead of a stacked area chart.
      */
     _drawLines() {
-        // Draw line chart.
-        for (let i = 0; i < this.dataArray.length; i++) {
-            this.svg
-                .append('path')
-                .datum(this.dataArray[i])
-                .style('stroke', d => d[0].color)
-                .style('stroke-width', this.lineStrokeWidth)
-                .style('opacity', this.lineOpacity)
-                .style('fill', 'none')
-                .attr(
-                    'd',
-                    d3
-                        .line<DataArrayEntry>()
-                        .x(d => this.xScale(d.date))
-                        .y(d => this.yScale(d.yStart))
-                );
-        }
+        // Draw total line.
+        this.svg
+            .append('path')
+            .datum(this.dataArray[this.dataArray.length - 1])
+            .style('stroke', this.totalColor)
+            .style('stroke-width', this.lineStrokeWidth)
+            .style('fill', 'none')
+            .attr(
+                'd',
+                d3
+                    .line<DataArrayEntry>()
+                    .x(d => this.xScale(d.date))
+                    .y(d => this.yScale(d.yStart))
+            );
     }
 
     /**
@@ -168,6 +167,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      */
     _drawContent() {
         this._drawArea();
+        this._drawLines();
     }
 
     /**
@@ -240,6 +240,17 @@ export class AreaChartD3 extends D3ChartStrategy {
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             };
         }
+
+        // Add total label.
+        this.textProperties[this.totalIdentifier] = {
+            text: generateLabelWithValueText(this.totalIdentifier),
+            x: this.xScale(this.dateExtent[1]) + paddingW,
+            y: this.yScale(this.yExtent[1]),
+            fontSize: this.standardFontSize,
+            textAnchor: 'start',
+            fontWeight: 'normal',
+            color: this.totalColor,
+        };
     }
 
     /**
@@ -248,6 +259,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      * @param investmentStepIndex The index of the investment step of at the current mouse position.
      */
     _updateTooltip(investmentStepIndex: number) {
+        // Update ETF Values.
         for (const etfIdentifier of this.etfIdentifiers) {
             const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
             const totalDividendValue = getTotalDividendShareValue(
@@ -261,10 +273,18 @@ export class AreaChartD3 extends D3ChartStrategy {
             );
             this.textProperties[etfIdentifier + this.labelValueIdentifier].text = updatedValueText;
         }
+        // Update negative values.
         for (const negativeLabel of this.negativeLabels) {
             const value = this.investmentSteps[investmentStepIndex][negativeLabel];
             const updatedValueText = generateLabelWithValueText(negativeLabel, this.valueToDisplayText(value, true));
             this.textProperties[negativeLabel].text = updatedValueText;
         }
+        // Update total values.
+        let totalValue = 0;
+        for(const etfIdentifier of this.etfIdentifiers){
+            totalValue += this.investmentSteps[investmentStepIndex].totalShares[etfIdentifier];
+        }
+        const updatedValueText = generateLabelWithValueText(this.totalIdentifier, this.valueToDisplayText(totalValue, true));
+        this.textProperties[this.totalIdentifier].text = updatedValueText;
     }
 }

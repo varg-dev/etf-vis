@@ -38,7 +38,10 @@ const numberOfTicks = 7;
  * @returns The formatted text.
  */
 export function generateLabelWithValueText(name: string, value: string | undefined = undefined): string {
-    return `${name.charAt(0).toUpperCase()}${name.slice(1)}: ${value == null ? '-' : value}`;
+    name = name.charAt(0).toUpperCase() + name.slice(1);
+    // Regex from: https://stackoverflow.com/a/58861672
+    name = name.replace(/(?!^)([A-Z]|\d+)/g, " $1");
+    return `${name}: ${value == null ? '-' : value}`;
 }
 
 function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]): number {
@@ -309,6 +312,7 @@ export abstract class D3ChartStrategy {
             .attr('class', tooltipLineClass)
             .style('stroke', 'blue')
             .style('stroke-dasharray', '3,3')
+            .style('stroke-width', this.lineStrokeWidth)
             .style('opacity', 0.5)
             .attr('y1', this.height + 2 * this.marginH)
             .attr('y2', 0);

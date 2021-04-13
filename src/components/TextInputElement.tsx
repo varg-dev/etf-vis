@@ -1,4 +1,3 @@
-import { ChangeEvent } from 'react';
 import { ErrorMessage } from './ErrorMessageComponent';
 
 export interface ITextInputState {
@@ -39,7 +38,7 @@ export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
 
 /**
  * Renders a text input element.
- * 
+ *
  * @param props The text input properties.
  * @returns The rendered text input.
  */
@@ -64,11 +63,11 @@ export function TextInputElement(props: ITextInputState) {
 
 /**
  * Renders a text input element without hard identifier. Intended for the etf drop down.
- * 
+ *
  * @param props The text input properties.
  * @returns The rendered text input.
  */
- export function ETFTextInputElement(props: IETFTextInputState) {
+export function ETFTextInputElement(props: IETFTextInputState) {
     return (
         <div className="position-relative">
             <label className="form-label" htmlFor={props.identifier}>

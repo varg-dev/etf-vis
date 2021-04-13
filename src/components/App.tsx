@@ -270,7 +270,7 @@ export class App extends React.Component<{}, IAppState> {
         // Check the year values.
         const leftoverYears =
             stringToInt(state[LIFE_EXPECTATION_IDENTIFIER].value) - stringToInt(state[AGE_IDENTIFIER].value);
-        if (state[AGE_IDENTIFIER].value >= state[LIFE_EXPECTATION_IDENTIFIER].value) {
+        if (leftoverYears <= 0) {
             state[AGE_IDENTIFIER].errorMessage = 'You cannot be older than the life expectation';
             state[AGE_IDENTIFIER].isValid = false;
             state.isValid = false;
@@ -308,7 +308,7 @@ export class App extends React.Component<{}, IAppState> {
             state.isValid = false;
         } else if (sumOfPercentages !== 1.0) {
             state[ETF_DROPDOWN_SELECTION_IDENTIFIER].isValid = false;
-            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].errorMessage = 'The sum of all selected ETF needs to be 100%';
+            state[ETF_DROPDOWN_SELECTION_IDENTIFIER].errorMessage = 'The sum of all selected ETFs need to be 100%.';
             state.isValid = false;
         } else {
             state[ETF_DROPDOWN_SELECTION_IDENTIFIER].isValid = true;
@@ -408,7 +408,7 @@ function getInitialInputFormState(caller: App): IAppState {
         },
         [YEARLY_INVESTMENT_INCREASE_IDENTIFIER]: {
             value: '0.0',
-            label: 'Monthly Investment Increase',
+            label: 'Yearly Investment Increase',
             errorMessage: '',
             textAppending: '%',
             isValid: true,
@@ -428,7 +428,7 @@ function getInitialInputFormState(caller: App): IAppState {
         },
         [YEARLY_PAYOUT_INCREASE_IDENTIFIER]: {
             value: '0.0',
-            label: 'Monthly Payout Increase',
+            label: 'Yearly Payout Increase',
             errorMessage: '',
             textAppending: '%',
             isValid: true,
@@ -526,22 +526,17 @@ function getInitialInputFormState(caller: App): IAppState {
                 {
                     identifier: '12',
                     value: 12,
-                    label: 'All Months a Year (highest detail)',
-                },
-                {
-                    identifier: '6',
-                    value: 6,
-                    label: 'Every 2nd Month (higher detail)',
+                    label: 'All Months a Year (high detail)',
                 },
                 {
                     identifier: '3',
                     value: 3,
-                    label: 'Every 4th Month (lower detail)',
+                    label: 'Every 4th Month (middle detail)',
                 },
                 {
                     identifier: '1',
                     value: 1,
-                    label: 'One Month a Year (lowest detail) (default)',
+                    label: 'One Month a Year (low detail)',
                 },
             ],
         },
