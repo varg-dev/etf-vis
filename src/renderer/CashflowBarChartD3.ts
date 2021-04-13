@@ -185,7 +185,8 @@ export class CashflowBarChart extends D3ChartStrategy {
                 .attr('x', d => this.xScale(d.date))
                 .attr('width', this.rectWidth)
                 .attr('y', d => this.yScale(d.yStart))
-                .attr('height', d => this.yScale(d.yEnd) - this.yScale(d.yStart));
+                .attr('height', d => this.yScale(d.yEnd) - this.yScale(d.yStart))
+                .style('opacity', this.contentOpacity);
         }
     }
 }

@@ -29,7 +29,7 @@ export type DataArray = DataArrayEntry[][];
 const FIVE_MILLION = 5000000;
 const ONE_THOUSAND = 1000;
 const ONE_MILLION = 1000000;
-const numberOfTicks = 7;
+const numberOfTicks = 6;
 
 /**
  * Returns a formatted text to fit the text. If the value is undefined '-' is used.
@@ -75,6 +75,7 @@ export abstract class D3ChartStrategy {
 
     protected readonly lineStrokeWidth = 3;
     protected readonly standardFontSize = 18;
+    protected readonly contentOpacity = 0.7;
     protected readonly labelValueIdentifier = 'value';
     protected readonly monospaceFont = 'monospace';
 
@@ -97,12 +98,16 @@ export abstract class D3ChartStrategy {
     private static activeStrategies: D3ChartStrategy[] = [];
 
     private readonly fadeOutGradientID = 'fadeOutGradient';
-
-    private fadeOutYearsLength = 10;
+    private readonly fadeOutYearsLength = 10;
+    private readonly gridOpacity = 0.2;
+    private readonly gridColor = 'grey';
+    private readonly gridStrokeWidth = 2;
 
     private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
     private interaction: d3.Selection<SVGGElement, unknown, null, undefined>;
     private textGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
+    private xAxis: d3.Axis<d3.NumberValue | Date>;
+    private yAxis: d3.Axis<d3.NumberValue | Date>;
 
     /**
      * Constructs the strategy and registers the object.
@@ -159,6 +164,8 @@ export abstract class D3ChartStrategy {
         this.textGroup = this.svg;
         this.interaction = this.svg;
         this.hoverLine = this.svg.append('line');
+        this.yAxis = d3.axisLeft(this.yScale);
+        this.xAxis = d3.axisBottom(this.xScale);
     }
 
     /**
@@ -188,6 +195,8 @@ export abstract class D3ChartStrategy {
         this._prepareData();
         this._calculateExtents();
         this._createScales();
+        this._createAxis();
+        this._drawGrid();
         this._drawContent();
         this._drawFadeOut();
         this._prepareText();
@@ -214,10 +223,14 @@ export abstract class D3ChartStrategy {
         if (hasToBePositive && value != null) {
             value = Math.abs(value);
         }
-        return `${value != null ? (value / labelDivisionFactor).toLocaleString(undefined, {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-        }): ' - '}${numberIndicator} €`;
+        return `${
+            value != null
+                ? (value / labelDivisionFactor).toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                  })
+                : ' - '
+        }${numberIndicator} €`;
     }
 
     /**
@@ -253,24 +266,63 @@ export abstract class D3ChartStrategy {
     }
 
     /**
+     * Creates the axis but does not draw it.
+     */
+    private _createAxis() {
+        this.yAxis = d3
+            .axisLeft(this.yScale)
+            .tickFormat(d => this.valueToDisplayText(d as number))
+            .ticks(numberOfTicks);
+
+        this.xAxis = d3.axisBottom(this.xScale);
+    }
+
+    /**
+     * Draws the grid in the background which is aligned to the ticks of the axes.
+     */
+    private _drawGrid() {
+        const gridGroup = this.svg.append('g').attr('class', 'grid');
+        const yGridGroup = gridGroup.append('g').attr('class', 'yGrid');
+        const xGridGroup = gridGroup.append('g').attr('class', 'xGrid');
+
+        yGridGroup
+            .selectAll('line')
+            .data(this.yScale.ticks(numberOfTicks))
+            .enter()
+            .append('line')
+            .attr('x1', this.xScale(this.dateExtent[0]))
+            .attr('y1', d => this.yScale(d))
+            .attr('x2', this.xScale(this.dateExtent[1]))
+            .attr('y2', d => this.yScale(d))
+            .style('stroke-width', this.gridStrokeWidth)
+            .style('stroke', this.gridColor)
+            .style('opacity', this.gridOpacity);
+        console.log(this.xScale.ticks());
+        xGridGroup
+            .selectAll('line')
+            .data(this.xScale.ticks())
+            .enter()
+            .append('line')
+            .attr('x1', d => this.xScale(d))
+            .attr('y1', this.yScale(this.yExtent[0]))
+            .attr('x2', d => this.xScale(d))
+            .attr('y2', this.yScale(this.yExtent[1]))
+            .style('stroke-width', this.gridStrokeWidth)
+            .style('stroke', this.gridColor)
+            .style('opacity', this.gridOpacity);
+    }
+
+    /**
      * Draws both scales, the zero line and the line that separates the saving and payout phase.
      */
     private _drawAxis() {
-        this.svg
-            .append('g')
-            .style('font-size', '20px')
-            .call(
-                d3
-                    .axisLeft(this.yScale)
-                    .tickFormat(d => this.valueToDisplayText(d as number))
-                    .ticks(numberOfTicks)
-            );
+        this.svg.append('g').style('font-size', '20px').call(this.yAxis);
 
         this.svg
             .append('g')
             .style('font-size', '20px')
             .attr('transform', `translate(0, ${this.height})`)
-            .call(d3.axisBottom(this.xScale));
+            .call(this.xAxis);
 
         // Draw zero line.
         this.svg

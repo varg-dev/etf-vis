@@ -34,12 +34,11 @@ export class AreaChartD3 extends D3ChartStrategy {
         totalTaxes: '#e31a1c',
     };
     private readonly valueTextOffset = 200;
-    private readonly lineOpacity = 0.7;
     private readonly negativeLabels: NegativeInvestmentStepIdentifier[] = ['totalCosts', 'totalTaxes', 'inflation'];
     private readonly investedIdentifier = 'invested';
     private readonly capitalIdentifier = 'capital';
     private readonly totalIdentifier = 'total';
-    private readonly totalColor = 'black';
+    private readonly totalColor = '#ff557f';
 
     private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
@@ -179,7 +178,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 .attr('class', 'area')
                 .append('path')
                 .datum(this.dataArray[i])
-                .style('opacity', this.lineOpacity)
+                .style('opacity', this.contentOpacity)
                 .style('fill', d => d[0].color)
                 .attr(
                     'd',
