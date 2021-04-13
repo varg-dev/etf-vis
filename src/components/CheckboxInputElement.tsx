@@ -5,11 +5,16 @@ export interface ICheckboxState {
     onValueChange: (changedStateIdentifier: ICheckBoxStateIdentifier) => void;
 }
 
-export type ICheckBoxStateIdentifier = 'transactionCostsType' | 'etfAutomaticPercentage' | 'yAxisLock' | 'inflationUsedForTotal';
+export type ICheckBoxStateIdentifier =
+    | 'transactionCostsType'
+    | 'etfAutomaticPercentage'
+    | 'yAxisLock'
+    | 'inflationUsedForTotal'
+    | 'useDistributionModel';
 
 /**
  * Renders a checkbox from the given properties.
- * 
+ *
  * @param props The checkbox properties.
  * @returns The rendered checkbox.
  */

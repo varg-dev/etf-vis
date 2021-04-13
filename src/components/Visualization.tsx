@@ -12,6 +12,7 @@ import {
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
     Y_AXIS_LOCK_IDENTIFIER,
     INFLATION_USED_FOR_TOTAL,
+    USE_DISTRIBUTION_MODEL,
     generateCostConfig,
 } from './App';
 import { InvestmentModel, ETFRatio } from '../model/InvestmentModel';
@@ -84,7 +85,8 @@ export class Visualization extends React.Component<IAppState, {}> {
             etfIdentifierToRatio,
             configOptions,
             stringToInt(this.props[AGE_IDENTIFIER].value),
-            stringToInt(this.props[LIFE_EXPECTATION_IDENTIFIER].value)
+            stringToInt(this.props[LIFE_EXPECTATION_IDENTIFIER].value),
+            this.props[USE_DISTRIBUTION_MODEL].value
         );
     }
 

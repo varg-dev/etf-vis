@@ -31,6 +31,7 @@ export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
 export const API_KEY_IDENTIFIER = 'apiKey';
 export const Y_AXIS_LOCK_IDENTIFIER = 'yAxisLock';
 export const INFLATION_USED_FOR_TOTAL = 'inflationUsedForTotal';
+export const USE_DISTRIBUTION_MODEL = 'useDistributionModel';
 
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
@@ -54,6 +55,7 @@ export interface IAppState {
     etfAutomaticPercentage: ICheckboxState;
     yAxisLock: ICheckboxState;
     inflationUsedForTotal: ICheckboxState;
+    useDistributionModel: ICheckboxState;
 
     detailedGraph: IGraphDetailDropDown;
     brokerDropdown: IBrokerDropDown;
@@ -340,6 +342,7 @@ export class App extends React.Component<{}, IAppState> {
                                 <TextInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
                                 <TextInputElement {...this.state[YEARLY_PAYOUT_INCREASE_IDENTIFIER]} />
                                 <TextInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
+                                <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
                             </SidebarSectionHeading>
                             {/* Time Options */}
                             <SidebarSectionHeading title="Time Options" initiallyCollapsed={false}>
@@ -505,6 +508,12 @@ function getInitialInputFormState(caller: App): IAppState {
             value: false,
             label: 'Subtract Inflation of Total',
             identifier: INFLATION_USED_FOR_TOTAL,
+            onValueChange: caller.handleCheckBoxChange,
+        },
+        [USE_DISTRIBUTION_MODEL]: {
+            value: false,
+            label: 'Use Distribution Model',
+            identifier: USE_DISTRIBUTION_MODEL,
             onValueChange: caller.handleCheckBoxChange,
         },
         [Y_AXIS_LOCK_IDENTIFIER]: {

@@ -16,6 +16,7 @@ export interface InvestmentStep {
     totalShares: ETFShares;
     dividendNewShares: ETFShares;
     dividendTotalShares: ETFShares;
+    distributingNewAmount: ETFShares;
     totalCosts: number;
     sharePrizes: ETFShares;
     totalInvestedMoney: ETFShares;
@@ -225,6 +226,7 @@ function calculateVorabpauschaleTaxes(
             ? investmentSteps[investmentSteps.length - numberOfMonthsOfAYear]
             : investmentSteps[1];
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
+        const distributionsOfETF = decemberInvestmentStep.distributingNewAmount[etfIdentifier];
         // Sum up total Investment of the first date of this year.
         let accumulatedBasicProfit =
             (getTotalShareValue(etfIdentifier, firstInvestmentStepOfThisYear) *
@@ -237,6 +239,10 @@ function calculateVorabpauschaleTaxes(
                 (getNewShareValue(etfIdentifier, currentInvestmentStep) * i) / numberOfMonthsOfAYear;
         }
         accumulatedBasicProfit *= 0.7 * basicRateOfInterest;
+        // If there were more distributions than the base profit, no vorabpauschale needs to be paid.
+        if (distributionsOfETF >= accumulatedBasicProfit) {
+            continue;
+        }
         const currentShareValues = getTotalShareValue(etfIdentifier, decemberInvestmentStep);
         // Calculate profit of last year.
         const profitOverAllTime = currentShareValues - decemberInvestmentStep.totalInvestedMoney[etfIdentifier];
@@ -267,16 +273,20 @@ function calculateVorabpauschaleTaxes(
  * @param date The date of the new investment step.
  * @param initialDate The initial date of the investment model.
  * @param etfToRatio The etfIdentifier mapping to the ratio.
+ * @param leftoverTaxFreeAmount The leftover tax free amount of this year. Is automatically reset in January.
+ * @param useDistributingModel Determines the Model used for the calculation. Distributing vs. Accumulating.
  * @param configOptions The configuration options containing the tax free amount and cost configuration.
  */
-function addAccumulationMonth(
+function addSavingPhaseMonth(
     investmentSteps: InvestmentStep[],
     investment: number,
     date: Date,
     initialDate: Date,
     etfToRatio: ETFRatio,
-    configOptions: IConfigOptions
-): void {
+    configOptions: IConfigOptions,
+    leftoverTaxFreeAmount: number,
+    useDistributingModel: boolean
+): number {
     const forecast = ForecastModelSingleton.getInstance();
     let costs = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
@@ -286,6 +296,7 @@ function addAccumulationMonth(
         totalShares: { ...prevInvestmentStep.totalShares },
         dividendNewShares: { ...prevInvestmentStep.dividendNewShares },
         dividendTotalShares: { ...prevInvestmentStep.dividendTotalShares },
+        distributingNewAmount: { ...prevInvestmentStep.distributingNewAmount },
         totalCosts: prevInvestmentStep.totalCosts,
         sharePrizes: { ...prevInvestmentStep.sharePrizes },
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
@@ -296,7 +307,38 @@ function addAccumulationMonth(
         newPayout: { ...prevInvestmentStep.newPayout },
         inflation: 0,
     };
+    // Reset tax free amount every beginning year.
+    if (isFirstMonthOfAYear(date)) {
+        leftoverTaxFreeAmount = configOptions.taxFreeAmount;
+    }
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
+        const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
+         // Handle dividend.
+         const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
+         let dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
+ 
+         // Apply taxes if using distributing model.
+         if (useDistributingModel) {
+             const dividendPayoutMoneyBrutto = dividendPayoutMoney;
+             newInvestmentStep.distributingNewAmount[etfIdentifier] = dividendPayoutMoneyBrutto;
+             let leftoverDividendPayoutMoneyBrutto;
+             [leftoverDividendPayoutMoneyBrutto, leftoverTaxFreeAmount] = subtractTaxFreeGain(
+                 dividendPayoutMoneyBrutto,
+                 leftoverTaxFreeAmount
+             );
+             let taxesToPay = leftoverDividendPayoutMoneyBrutto * partialExemption * corporateTaxRatio;
+             newInvestmentStep.totalTaxes += taxesToPay;
+             dividendPayoutMoney = dividendPayoutMoneyBrutto - taxesToPay;
+         }
+ 
+         // Add dividend shares.
+         const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
+         newInvestmentStep.newShares[etfIdentifier] += newSharesByDividend;
+         if (!useDistributingModel) {
+             newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
+             newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
+         }
+
         // Handle investment amount and costs.
         const investmentOfEtfWithCosts = (etfToRatio[etfIdentifier] as number) * investment;
         newInvestmentStep.newInvestment += investmentOfEtfWithCosts;
@@ -309,18 +351,9 @@ function addAccumulationMonth(
         newInvestmentStep.totalInvestedMoney[etfIdentifier] += investmentOfEtfWithoutCosts;
 
         // Handle new shares and prize.
-        const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         const newShares = investmentOfEtfWithoutCosts / etfSharePrize;
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
         newInvestmentStep.newShares[etfIdentifier] = newShares;
-
-        // Handle dividend.
-        const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
-        const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
-        const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
-        newInvestmentStep.newShares[etfIdentifier] += newSharesByDividend;
-        newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
-        newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
 
         // Adjust other values.
         newInvestmentStep.totalShares[etfIdentifier] += newInvestmentStep.newShares[etfIdentifier];
@@ -333,6 +366,7 @@ function addAccumulationMonth(
     newInvestmentStep.totalTaxes += newTaxes;
     calculateAndAddInflation(newInvestmentStep, initialDate);
     investmentSteps.push(newInvestmentStep);
+    return leftoverTaxFreeAmount;
 }
 
 /**
@@ -347,6 +381,7 @@ function addAccumulationMonth(
  * @param leftoverAlreadyPaidTaxes The leftover amount of taxes that have already been paid.
  * @param leftoverTaxFreeAmount The leftover tax free amount.
  * @param payoutStats The payout stats containing which investment step is next and what shares are left according to the FIFO principle.
+ * @param useDistributingModel Determines the Model used for the calculation. Distributing vs. Accumulating.
  * @returns The updated leftoverAlreadyPaidTaxes and leftoverTaxFreeAmount.
  */
 function addPayoutMonth(
@@ -358,7 +393,8 @@ function addPayoutMonth(
     configOptions: IConfigOptions,
     leftoverAlreadyPaidTaxes: number,
     leftoverTaxFreeAmount: number,
-    payoutStats: IPayoutStats
+    payoutStats: IPayoutStats,
+    useDistributingModel: boolean
 ) {
     if (isFirstMonthOfAYear(date)) {
         leftoverTaxFreeAmount = configOptions.taxFreeAmount;
@@ -373,6 +409,7 @@ function addPayoutMonth(
         totalShares: { ...prevInvestmentStep.totalShares },
         dividendNewShares: { ...prevInvestmentStep.dividendNewShares },
         dividendTotalShares: { ...prevInvestmentStep.dividendTotalShares },
+        distributingNewAmount: { ...prevInvestmentStep.distributingNewAmount },
         totalCosts: prevInvestmentStep.totalCosts,
         sharePrizes: { ...prevInvestmentStep.sharePrizes },
         totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
@@ -389,11 +426,35 @@ function addPayoutMonth(
         newInvestmentStep.sharePrizes[etfIdentifier] = etfSharePrize;
         newInvestmentStep.newPayout[etfIdentifier] = 0;
         newInvestmentStep.newInvestedMoney[etfIdentifier] = 0;
+        // Handle dividend.
+        const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
+        const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
+
+        // Apply taxes if using distributing model.
+        if (useDistributingModel) {
+            newInvestmentStep.distributingNewAmount[etfIdentifier] = dividendPayoutMoney;
+            let dividendPayoutMoneyBrutto = dividendPayoutMoney;
+            let leftoverDividendPayoutMoneyBrutto;
+            [leftoverDividendPayoutMoneyBrutto, leftoverTaxFreeAmount] = subtractTaxFreeGain(
+                dividendPayoutMoneyBrutto,
+                leftoverTaxFreeAmount
+            );
+            let taxesToPay = leftoverDividendPayoutMoneyBrutto * partialExemption * corporateTaxRatio;
+            [taxesToPay, leftoverAlreadyPaidTaxes] = subtractTaxFreeGain(taxesToPay, leftoverAlreadyPaidTaxes);
+            newInvestmentStep.totalTaxes += taxesToPay;
+            newInvestmentStep.newPayout[etfIdentifier] = dividendPayoutMoneyBrutto - taxesToPay;
+        } else {
+            const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
+            newInvestmentStep.newShares[etfIdentifier] = newSharesByDividend;
+            newInvestmentStep.totalShares[etfIdentifier] += newSharesByDividend;
+            newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
+            newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
+        }
+        const amountToSell = (etfToRatio[etfIdentifier] as number) * sellingAmount - newInvestmentStep.newPayout[etfIdentifier];
+        let amountAlreadySold = 0;
         // Skip payout if there are no shares left to sell.
         if (payoutStats[etfIdentifier].investmentStepsIdx < investmentSteps.length) {
             // Prepare amount and costs.
-            const amountToSell = (etfToRatio[etfIdentifier] as number) * sellingAmount;
-            let amountAlreadySold = 0;
             const costsToPay = calculateCosts(amountToSell, configOptions.costConfig)[1];
             let alreadyPaidCosts = 0;
             let payoutInvestmentStepIdxForFIFO = payoutStats[etfIdentifier].investmentStepsIdx;
@@ -475,15 +536,6 @@ function addPayoutMonth(
                     ? investmentSteps[payoutInvestmentStepIdxForFIFO].newShares[etfIdentifier] - currentSharesLeft
                     : 0;
         }
-        // Handle dividend.
-        const dividendPayoutMoney =
-            newInvestmentStep.totalShares[etfIdentifier] * calculateDividend(etfIdentifier, date);
-        const newSharesByDividend = dividendPayoutMoney / etfSharePrize;
-        newInvestmentStep.newShares[etfIdentifier] = newSharesByDividend;
-        newInvestmentStep.totalShares[etfIdentifier] += newSharesByDividend;
-        newInvestmentStep.dividendNewShares[etfIdentifier] = newSharesByDividend;
-        newInvestmentStep.dividendTotalShares[etfIdentifier] += newSharesByDividend;
-
         // Handle Vorabpauschale.
         const [newTaxes, newLeftoverTaxFreeAmount] = calculateVorabpauschaleTaxes(
             investmentSteps,
@@ -523,6 +575,7 @@ function generateEmptyInvestmentStep(etfToRatio: ETFRatio, date: Date): Investme
         totalShares: { ...dummyData },
         dividendNewShares: { ...dummyData },
         dividendTotalShares: { ...dummyData },
+        distributingNewAmount: { ...dummyData },
         totalInvestedMoney: { ...dummyData },
         totalPayout: { ...dummyData },
         newPayout: { ...dummyData },
@@ -568,6 +621,7 @@ export class InvestmentModel {
     private configOptions: IConfigOptions;
     private expectationOfLife: number;
     private age: number;
+    private useDistributingModel: boolean;
 
     private savingDates: Date[] = [];
     private payoutDates: Date[] = [];
@@ -587,6 +641,7 @@ export class InvestmentModel {
      * @param configOptions The config options containing the tax free amount and cost configuration.
      * @param age The current age of the person.
      * @param expectationOfLife The life expectation of the person.
+     * @param useDistributingModel Indicate which model should be used.
      */
     constructor(
         startCapital: number,
@@ -598,7 +653,8 @@ export class InvestmentModel {
         etfToRatio: ETFRatio,
         configOptions: IConfigOptions,
         age: number,
-        expectationOfLife: number
+        expectationOfLife: number,
+        useDistributingModel: boolean
     ) {
         this.startCapital = startCapital;
         this.monthlyInvestment = monthlyInvestment;
@@ -610,6 +666,7 @@ export class InvestmentModel {
         this.age = age;
         this.yearlyInvestmentIncrease = yearlyInvestmentIncrease;
         this.yearlyPayoutIncrease = yearlyPayoutIncrease;
+        this.useDistributingModel = useDistributingModel;
 
         this._calculateDatesForModel();
         this._calculateModel();
@@ -646,30 +703,33 @@ export class InvestmentModel {
      */
     private _calculateModel() {
         let investmentSteps = [generateEmptyInvestmentStep(this.etfToRatio, this.savingDates[0])];
-        addAccumulationMonth(
+        let leftoverTaxFreeAmount = addSavingPhaseMonth(
             investmentSteps,
             this.monthlyInvestment + this.startCapital,
             this.savingDates[0],
             this.initialDate,
             this.etfToRatio,
-            this.configOptions
+            this.configOptions,
+            this.configOptions.taxFreeAmount,
+            this.useDistributingModel
         );
         for (let i = 1; i < this.savingDates.length; i++) {
             const investmentAmount = calculateAmountIncrease(this.monthlyInvestment, this.yearlyInvestmentIncrease, i);
-            addAccumulationMonth(
+            addSavingPhaseMonth(
                 investmentSteps,
                 investmentAmount,
                 this.savingDates[i],
                 this.initialDate,
                 this.etfToRatio,
-                this.configOptions
+                this.configOptions,
+                leftoverTaxFreeAmount,
+                this.useDistributingModel
             );
         }
         // Discard the empty investment step.
         investmentSteps = investmentSteps.slice(1);
 
         let leftoverAlreadyPaidTaxes = investmentSteps[investmentSteps.length - 1].totalTaxes;
-        let leftoverTaxFreeAmount = this.configOptions.taxFreeAmount;
         const payoutStats: IPayoutStats = {
             'SP5C.PAR': { investmentStepsIdx: 0, alreadySoldShares: 0 },
             ESGE: { investmentStepsIdx: 0, alreadySoldShares: 0 },
@@ -686,7 +746,8 @@ export class InvestmentModel {
                 this.configOptions,
                 leftoverAlreadyPaidTaxes,
                 leftoverTaxFreeAmount,
-                payoutStats
+                payoutStats,
+                this.useDistributingModel
             );
         }
         this.investmentSteps = investmentSteps;
