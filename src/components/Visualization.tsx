@@ -11,6 +11,7 @@ import {
     LIFE_EXPECTATION_IDENTIFIER,
     DETAILED_GRAPH_DROPDOWN_IDENTIFIER,
     Y_AXIS_LOCK_IDENTIFIER,
+    INFLATION_USED_FOR_TOTAL,
     generateCostConfig,
 } from './App';
 import { InvestmentModel, ETFRatio } from '../model/InvestmentModel';
@@ -136,7 +137,8 @@ export class Visualization extends React.Component<IAppState, {}> {
                     firstPayoutPhaseDate,
                     tooltipDate,
                     this._getYAxisExtent(this.areaChart),
-                    etfIdentifierToRatio
+                    etfIdentifierToRatio,
+                    this.props[INFLATION_USED_FOR_TOTAL].value
                 );
                 this.areaChart.render();
                 this.barChart = new CashflowBarChart(

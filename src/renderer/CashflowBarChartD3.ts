@@ -1,6 +1,6 @@
 import { InvestmentStep } from '../model/InvestmentModel';
 import { ETFIdentifier } from '../model/ForecastModel';
-import { D3ChartStrategy, generateLabelWithValueText } from './D3ChartStrategy';
+import { D3ChartStrategy } from './D3ChartStrategy';
 
 /**
  * Calculates the sum of all payout over all used etfs.
@@ -21,6 +21,9 @@ function getSumNewPayout(investmentStep: InvestmentStep) {
  */
 export class CashflowBarChart extends D3ChartStrategy {
     private readonly barPaddingPercentage = 0.9;
+    private readonly payoutIdentifier = 'payout';
+    private readonly investedIdentifier = 'invested';
+    private readonly maxNumberTextLength = 100;
     private readonly colors = {
         payout: { first: '#3acc5c', second: '#2d9e45' },
         invested: { first: '#ff3e58', second: '#c32f46' },
@@ -94,15 +97,26 @@ export class CashflowBarChart extends D3ChartStrategy {
             (this.xScale(this.dateExtent[1]) - this.xScale(this.payoutPhaseStartDate)) / 2;
         const payoutY = this.yScale(0) + (this.yScale(this.yExtent[0]) - this.yScale(0)) / 2;
 
-        const payoutIdentifier = 'payout';
-        this.textProperties[payoutIdentifier] = {
-            text: generateLabelWithValueText(payoutIdentifier),
+        this.textProperties[this.payoutIdentifier] = {
+            text: this.payoutIdentifier,
             x: payoutX,
             y: payoutY,
             fontSize: this.standardFontSize,
-            textAnchor: 'middle',
+            fontFamily: null,
+            textAnchor: 'end',
             fontWeight: 'normal',
-            color: this.colors[payoutIdentifier].first,
+            color: this.colors[this.payoutIdentifier].first,
+        };
+
+        this.textProperties[this.payoutIdentifier + this.labelValueIdentifier] = {
+            text: this.valueToDisplayText(undefined),
+            x: payoutX + this.maxNumberTextLength,
+            y: payoutY,
+            fontSize: this.standardFontSize,
+            fontFamily: this.monospaceFont,
+            textAnchor: 'end',
+            fontWeight: 'bold',
+            color: this.colors[this.payoutIdentifier].first,
         };
 
         const investedX =
@@ -110,15 +124,25 @@ export class CashflowBarChart extends D3ChartStrategy {
             (this.xScale(this.payoutPhaseStartDate) - this.xScale(this.dateExtent[0])) / 2;
         const investedY = this.yScale(0) - (this.yScale(0) - this.yScale(this.yExtent[1])) / 2;
 
-        const investedIdentifier = 'invested';
-        this.textProperties[investedIdentifier] = {
-            text: generateLabelWithValueText(investedIdentifier),
+        this.textProperties[this.investedIdentifier] = {
+            text: this.investedIdentifier,
             x: investedX,
             y: investedY,
             fontSize: this.standardFontSize,
-            textAnchor: 'middle',
+            fontFamily: null,
+            textAnchor: 'end',
             fontWeight: 'normal',
-            color: this.colors[investedIdentifier].first,
+            color: this.colors[this.investedIdentifier].first,
+        };
+        this.textProperties[this.investedIdentifier + this.labelValueIdentifier] = {
+            text: this.valueToDisplayText(undefined),
+            x: investedX + this.maxNumberTextLength,
+            y: investedY,
+            fontSize: this.standardFontSize,
+            fontFamily: this.monospaceFont,
+            textAnchor: 'end',
+            fontWeight: 'bold',
+            color: this.colors[this.investedIdentifier].first,
         };
     }
 
@@ -130,10 +154,12 @@ export class CashflowBarChart extends D3ChartStrategy {
     _updateTooltip(investmentStepIndex: number) {
         const payoutValue = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
         const investedValue = this.investmentSteps[investmentStepIndex].newInvestment;
-        this.textProperties.payout.text = generateLabelWithValueText('payout', this.valueToDisplayText(payoutValue));
-        this.textProperties.invested.text = generateLabelWithValueText(
-            'invested',
-            this.valueToDisplayText(investedValue)
+        this.textProperties[this.payoutIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
+            payoutValue
+        );
+
+        this.textProperties[this.investedIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
+            investedValue
         );
     }
 

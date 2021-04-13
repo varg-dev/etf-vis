@@ -7,6 +7,7 @@ interface ITextProperty {
     x: number;
     y: number;
     fontSize: number;
+    fontFamily: string | null;
     textAnchor: string;
     fontWeight: string;
     color: string;
@@ -31,17 +32,17 @@ const ONE_MILLION = 1000000;
 const numberOfTicks = 7;
 
 /**
- * Returns a formatted text containing the label and value. If the value is undefined '-' is used.
+ * Returns a formatted text to fit the text. If the value is undefined '-' is used.
  *
  * @param name The label.
  * @param value The value of the data referenced by the label.
  * @returns The formatted text.
  */
-export function generateLabelWithValueText(name: string, value: string | undefined = undefined): string {
+export function generateLabel(name: string): string {
     name = name.charAt(0).toUpperCase() + name.slice(1);
     // Regex from: https://stackoverflow.com/a/58861672
-    name = name.replace(/(?!^)([A-Z]|\d+)/g, " $1");
-    return `${name}: ${value == null ? '-' : value}`;
+    name = name.replace(/(?!^)([A-Z]|\d+)/g, ' $1');
+    return `${name}:`;
 }
 
 function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]): number {
@@ -65,7 +66,7 @@ function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: Invest
  * In order to adjust the visualization to a new investment model, a complete re rendering is required.
  *
  * Keeps track of all active diagrams. Thus needs to be reset in the case of a redrawing of the graphs.
- * 
+ *
  * It ensures that all active diagrams are synced regarding the tooltip and x axis.
  */
 export abstract class D3ChartStrategy {
@@ -73,8 +74,9 @@ export abstract class D3ChartStrategy {
     yExtent: [number, number];
 
     protected readonly lineStrokeWidth = 3;
-    protected readonly standardFontSize = 20;
+    protected readonly standardFontSize = 18;
     protected readonly labelValueIdentifier = 'value';
+    protected readonly monospaceFont = 'monospace';
 
     protected investmentSteps: InvestmentStep[];
     protected dateExtent: [Date, Date] = [new Date(), new Date()];
@@ -199,22 +201,23 @@ export abstract class D3ChartStrategy {
     }
 
     /**
-     * Generates a human readable display text from the value.
+     * Generates a human readable display text from the value. Returns '-' as a placeholder when value is undefined.
      *
      * @param value The value to display.
      * @param hasToBePositive Optional parameter which can bes et to ensure the value is positive by ignoring the sign.
      * @returns The resulting text.
      */
-    protected valueToDisplayText(value: number, hasToBePositive = false): string {
+    protected valueToDisplayText(value: number | undefined, hasToBePositive = false): string {
         const labelDivisionFactor =
             Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
         const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
-        if (hasToBePositive) {
+        if (hasToBePositive && value != null) {
             value = Math.abs(value);
         }
-        return `${(value / labelDivisionFactor).toLocaleString(undefined, {
+        return `${value != null ? (value / labelDivisionFactor).toLocaleString(undefined, {
             maximumFractionDigits: 2,
-        })}${numberIndicator} €`;
+            minimumFractionDigits: 2,
+        }): ' - '}${numberIndicator} €`;
     }
 
     /**
@@ -369,6 +372,7 @@ export abstract class D3ChartStrategy {
             .attr('x', d => d.x)
             .attr('y', d => d.y)
             .style('font-size', d => d.fontSize)
+            .style('font-family', d => d.fontFamily)
             .style('font-weight', d => d.fontWeight)
             .style('text-anchor', d => d.textAnchor)
             .style('fill', d => d.color);
@@ -400,6 +404,7 @@ export abstract class D3ChartStrategy {
                 x: savingPhaseMid,
                 y: yPos,
                 fontSize: this.standardFontSize,
+                fontFamily: null,
                 textAnchor: 'end',
                 fontWeight: 'bold',
                 color: 'black',
@@ -409,6 +414,7 @@ export abstract class D3ChartStrategy {
                 x: savingPhaseMid,
                 y: yPos,
                 fontSize: this.standardFontSize,
+                fontFamily: null,
                 textAnchor: 'start',
                 fontWeight: 'normal',
                 color: 'black',
@@ -418,6 +424,7 @@ export abstract class D3ChartStrategy {
                 x: payoutPhaseMid,
                 y: yPos,
                 fontSize: this.standardFontSize,
+                fontFamily: null,
                 textAnchor: 'end',
                 fontWeight: 'bold',
                 color: 'black',
@@ -427,6 +434,7 @@ export abstract class D3ChartStrategy {
                 x: payoutPhaseMid,
                 y: yPos,
                 fontSize: this.standardFontSize,
+                fontFamily: null,
                 textAnchor: 'start',
                 fontWeight: 'normal',
                 color: 'black',

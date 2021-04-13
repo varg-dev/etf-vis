@@ -30,6 +30,7 @@ export const DETAILED_GRAPH_DROPDOWN_IDENTIFIER = 'detailedGraph';
 export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
 export const API_KEY_IDENTIFIER = 'apiKey';
 export const Y_AXIS_LOCK_IDENTIFIER = 'yAxisLock';
+export const INFLATION_USED_FOR_TOTAL = 'inflationUsedForTotal';
 
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
@@ -52,6 +53,7 @@ export interface IAppState {
     transactionCostsType: ICheckboxState;
     etfAutomaticPercentage: ICheckboxState;
     yAxisLock: ICheckboxState;
+    inflationUsedForTotal: ICheckboxState;
 
     detailedGraph: IGraphDetailDropDown;
     brokerDropdown: IBrokerDropDown;
@@ -358,6 +360,7 @@ export class App extends React.Component<{}, IAppState> {
                             <SidebarSectionHeading title="Visualization Options" initiallyCollapsed={true}>
                                 <GraphDetailDropDown {...this.state[DETAILED_GRAPH_DROPDOWN_IDENTIFIER]} />
                                 <CheckboxInputElement {...this.state[Y_AXIS_LOCK_IDENTIFIER]} />
+                                <CheckboxInputElement {...this.state[INFLATION_USED_FOR_TOTAL]} />
                                 <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
                                 <ETFSelectionDropDown
                                     autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
@@ -496,6 +499,12 @@ function getInitialInputFormState(caller: App): IAppState {
             value: false,
             label: 'Automatic ETF Ratio',
             identifier: ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER,
+            onValueChange: caller.handleCheckBoxChange,
+        },
+        [INFLATION_USED_FOR_TOTAL]: {
+            value: false,
+            label: 'Subtract Inflation of Total',
+            identifier: INFLATION_USED_FOR_TOTAL,
             onValueChange: caller.handleCheckBoxChange,
         },
         [Y_AXIS_LOCK_IDENTIFIER]: {
