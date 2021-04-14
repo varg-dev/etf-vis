@@ -342,7 +342,7 @@ export class App extends React.Component<{}, IAppState> {
                                 <TextInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
                                 <TextInputElement {...this.state[YEARLY_PAYOUT_INCREASE_IDENTIFIER]} />
                                 <TextInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
-                                <CheckboxInputElement {...this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]} />
+                                <CheckboxInputElement {...this.state[USE_DISTRIBUTION_MODEL]} />
                             </SidebarSectionHeading>
                             {/* Time Options */}
                             <SidebarSectionHeading title="Time Options" initiallyCollapsed={false}>

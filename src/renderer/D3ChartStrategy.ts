@@ -132,7 +132,7 @@ export abstract class D3ChartStrategy {
         yExtent: [number, number] | undefined,
         width = 1100,
         height = 300,
-        marginW = 200,
+        marginW = 250,
         marginH = 40
     ) {
         if (this.constructor === D3ChartStrategy) {
@@ -216,18 +216,23 @@ export abstract class D3ChartStrategy {
      * @param hasToBePositive Optional parameter which can bes et to ensure the value is positive by ignoring the sign.
      * @returns The resulting text.
      */
-    protected valueToDisplayText(value: number | undefined, hasToBePositive = false): string {
+    protected valueToDisplayText(
+        value: number | undefined,
+        hasToBePositive = false,
+        skipDecimalPlaces = false
+    ): string {
         const labelDivisionFactor =
             Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
         const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
         if (hasToBePositive && value != null) {
             value = Math.abs(value);
         }
+        const decimalPlaces = skipDecimalPlaces ? 0 : 2;
         return `${
             value != null
                 ? (value / labelDivisionFactor).toLocaleString(undefined, {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
+                      maximumFractionDigits: decimalPlaces,
+                      minimumFractionDigits: decimalPlaces,
                   })
                 : ' - '
         }${numberIndicator} €`;
@@ -271,7 +276,7 @@ export abstract class D3ChartStrategy {
     private _createAxis() {
         this.yAxis = d3
             .axisLeft(this.yScale)
-            .tickFormat(d => this.valueToDisplayText(d as number))
+            .tickFormat(d => this.valueToDisplayText(d as number, false, true))
             .ticks(numberOfTicks);
 
         this.xAxis = d3.axisBottom(this.xScale);
@@ -297,7 +302,7 @@ export abstract class D3ChartStrategy {
             .style('stroke-width', this.gridStrokeWidth)
             .style('stroke', this.gridColor)
             .style('opacity', this.gridOpacity);
-        console.log(this.xScale.ticks());
+
         xGridGroup
             .selectAll('line')
             .data(this.xScale.ticks())

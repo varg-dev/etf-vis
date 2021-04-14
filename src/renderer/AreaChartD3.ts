@@ -198,7 +198,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     _prepareText() {
         super._prepareText();
         const paddingW = this.width * 0.005;
-        const paddingH = this.standardFontSize * 0.35;
+        const paddingH = this.standardFontSize * 0.4;
 
         // Negative labels.
         for (let i = 0; i < this.negativeLabels.length; i++) {
