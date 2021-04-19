@@ -18,6 +18,8 @@ type ETFIdentifierToColors = { [key in ETFIdentifier]: { total: string; invested
 
 type NegativeInvestmentToColorMap = { [key in NegativeInvestmentStepIdentifier]: string };
 
+const captionSpaceForDeltaValues = 200;
+
 /**
  * A class that draws an area chart that contains the value of costs, taxes,
  * inflation and the total value and invested value of all used ETFs.
@@ -28,6 +30,7 @@ export class AreaChartD3 extends D3ChartStrategy {
         ESGE: { total: '#ff1eff', invested: '#ff63ff' },
         SUSA: { total: '#23ff01', invested: '#7dff69' },
     };
+
     private readonly colors: NegativeInvestmentToColorMap = {
         inflation: '#ff7f00',
         totalCosts: '#be3bff',
@@ -42,7 +45,8 @@ export class AreaChartD3 extends D3ChartStrategy {
 
     private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
-    private subtractInflationFromTotal;
+    private subtractInflationFromTotal: boolean;
+    private previousInvestmentSteps: InvestmentStep[] | undefined;
 
     /**
      * Constructs the area chart by calling the base class constructor and determining all used ETFs.
@@ -54,10 +58,19 @@ export class AreaChartD3 extends D3ChartStrategy {
         tooltipDate: Date | undefined,
         yExtent: [number, number] | undefined,
         etfRatio: ETFRatio,
-        subtractInflationFromTotal: boolean
+        subtractInflationFromTotal: boolean,
+        previousInvestmentSteps: InvestmentStep[] | undefined
     ) {
-        super(investmentSteps, renderDivRef, payoutPhaseStartDate, 'firstSVG', tooltipDate, yExtent);
-
+        super(
+            investmentSteps,
+            renderDivRef,
+            payoutPhaseStartDate,
+            'firstSVG',
+            tooltipDate,
+            yExtent,
+            captionSpaceForDeltaValues
+        );
+        this.previousInvestmentSteps = previousInvestmentSteps;
         this.subtractInflationFromTotal = subtractInflationFromTotal;
 
         this.etfIdentifiers = [];
@@ -194,7 +207,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      */
     _prepareText() {
         super._prepareText();
-        const paddingW = this.width * 0.005;
+        const paddingW = this.width * 0.02;
         const paddingH = this.standardFontSize * 0.4;
 
         // Negative labels.
@@ -303,6 +316,131 @@ export class AreaChartD3 extends D3ChartStrategy {
             fontWeight: 'bold',
             color: this.totalColor,
         };
+
+        const yOffset = this.height * 1.15;
+        const xPadding = this.width / this.negativeLabels.length;
+        // Add delta labels.
+        this.textProperties[this.deltaIdentifier] = {
+            text: 'Differences to Previous Configuration:',
+            x: this.xScale(
+                this.dateExtent[0].valueOf() + (this.dateExtent[1].valueOf() - this.dateExtent[0].valueOf()) / 2
+            ),
+            y: yOffset + this.standardFontSize,
+            fontSize: this.standardFontSize,
+            fontFamily: null,
+            textAnchor: 'middle',
+            fontWeight: 'bold',
+            color: 'black',
+        };
+        // Negative labels (delta).
+        for (let i = 0; i < this.negativeLabels.length; i++) {
+            this.textProperties[this.negativeLabels[i] + this.deltaIdentifier] = {
+                text: generateLabel(this.negativeLabels[i]),
+                x: xPadding * i,
+                y: yOffset + (this.standardFontSize + paddingH) * (4 + this.etfIdentifiers.length),
+                fontSize: this.standardFontSize,
+                fontFamily: null,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.colors[this.negativeLabels[i]],
+            };
+
+            this.textProperties[this.negativeLabels[i] + this.deltaIdentifier + this.labelValueIdentifier] = {
+                text: this.valueToDisplayText(undefined),
+                x: xPadding * i + this.valueTextOffset + paddingW,
+                y: yOffset + (this.standardFontSize + paddingH) * (4 + this.etfIdentifiers.length),
+                fontSize: this.standardFontSize,
+                fontFamily: this.monospaceFont,
+                textAnchor: 'end',
+                fontWeight: 'bold',
+                color: this.colors[this.negativeLabels[i]],
+            };
+        }
+        const numberOfEntriesPerRow = 3;
+        // Add ETF values of Labels (delta).
+        for (let i = 0; i < this.etfIdentifiers.length; i++) {
+            // ETF Label.
+            this.textProperties[this.etfIdentifiers[i] + this.deltaIdentifier] = {
+                text: ETF_SYMBOL_TO_NAME[this.etfIdentifiers[i]],
+                x: (this.width / numberOfEntriesPerRow) * 0,
+                y: yOffset + (this.standardFontSize + paddingH) * (i + 2),
+                fontSize: this.standardFontSize,
+                fontFamily: null,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.etfLineColors[this.etfIdentifiers[i]].total,
+            };
+            // Total
+            this.textProperties[this.etfIdentifiers[i] + this.deltaIdentifier + this.totalIdentifier] = {
+                text: generateLabel(this.totalIdentifier),
+                x: (this.width / numberOfEntriesPerRow) * 1,
+                y: yOffset + (this.standardFontSize + paddingH) * (i + 2),
+                fontSize: this.standardFontSize,
+                fontFamily: null,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.etfLineColors[this.etfIdentifiers[i]].total,
+            };
+
+            this.textProperties[
+                this.etfIdentifiers[i] + this.deltaIdentifier + this.labelValueIdentifier + this.totalIdentifier
+            ] = {
+                text: this.valueToDisplayText(undefined),
+                x: (this.width / numberOfEntriesPerRow) * 1 + this.valueTextOffset + paddingW,
+                y: yOffset + (this.standardFontSize + paddingH) * (i + 2),
+                fontSize: this.standardFontSize,
+                fontFamily: this.monospaceFont,
+                textAnchor: 'end',
+                fontWeight: 'bold',
+                color: this.etfLineColors[this.etfIdentifiers[i]].total,
+            };
+            // Invested
+            this.textProperties[this.etfIdentifiers[i] + this.deltaIdentifier + this.investedIdentifier] = {
+                text: generateLabel(this.investedIdentifier),
+                x: (this.width / numberOfEntriesPerRow) * 2,
+                y: yOffset + (this.standardFontSize + paddingH) * (i + 2),
+                fontSize: this.standardFontSize,
+                fontFamily: null,
+                textAnchor: 'start',
+                fontWeight: 'normal',
+                color: this.etfLineColors[this.etfIdentifiers[i]].invested,
+            };
+
+            this.textProperties[
+                this.etfIdentifiers[i] + this.deltaIdentifier + this.labelValueIdentifier + this.investedIdentifier
+            ] = {
+                text: this.valueToDisplayText(undefined),
+                x: (this.width / numberOfEntriesPerRow) * 2 + this.valueTextOffset + paddingW,
+                y: yOffset + (this.standardFontSize + paddingH) * (i + 2),
+                fontSize: this.standardFontSize,
+                fontFamily: this.monospaceFont,
+                textAnchor: 'end',
+                fontWeight: 'bold',
+                color: this.etfLineColors[this.etfIdentifiers[i]].invested,
+            };
+        }
+        // Add total label.
+        this.textProperties[this.totalIdentifier + this.deltaIdentifier] = {
+            text: generateLabel(this.totalIdentifier),
+            x: (this.width / numberOfEntriesPerRow) * 0,
+            y: yOffset + (this.standardFontSize + paddingH) * (this.etfIdentifiers.length + 2),
+            fontSize: this.standardFontSize,
+            fontFamily: null,
+            textAnchor: 'start',
+            fontWeight: 'normal',
+            color: this.totalColor,
+        };
+
+        this.textProperties[this.totalIdentifier + this.deltaIdentifier + this.labelValueIdentifier] = {
+            text: this.valueToDisplayText(undefined),
+            x: (this.width / numberOfEntriesPerRow) * 0 + this.valueTextOffset + paddingW,
+            y: yOffset + (this.standardFontSize + paddingH) * (this.etfIdentifiers.length + 2),
+            fontSize: this.standardFontSize,
+            fontFamily: this.monospaceFont,
+            textAnchor: 'end',
+            fontWeight: 'bold',
+            color: this.totalColor,
+        };
     }
 
     /**
@@ -340,5 +478,67 @@ export class AreaChartD3 extends D3ChartStrategy {
         this.textProperties[this.totalIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
             totalValue
         );
+
+        // Set the delta Values if the previous model exists.
+        if (this.previousInvestmentSteps != null && this.previousInvestmentSteps.length > investmentStepIndex) {
+            // Negative labels.
+            for (const negativeLabel of this.negativeLabels) {
+                const currentValue = this.investmentSteps[investmentStepIndex][negativeLabel];
+                const previousValue = this.previousInvestmentSteps[investmentStepIndex][negativeLabel];
+                const value = currentValue - previousValue;
+                this.textProperties[
+                    negativeLabel + this.deltaIdentifier + this.labelValueIdentifier
+                ].text = this.valueToDisplayText(value, true);
+            }
+            // ETF labels.
+            for (const etfIdentifier of this.etfIdentifiers) {
+                const currentTotalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
+                const currentTotalDividendValue = getTotalDividendShareValue(
+                    etfIdentifier,
+                    this.investmentSteps[investmentStepIndex]
+                );
+                const currentInvestedValue = currentTotalValue - currentTotalDividendValue;
+
+                const previousTotalValue = getTotalShareValue(
+                    etfIdentifier,
+                    this.previousInvestmentSteps[investmentStepIndex]
+                );
+                const previousTotalDividendValue = getTotalDividendShareValue(
+                    etfIdentifier,
+                    this.previousInvestmentSteps[investmentStepIndex]
+                );
+                const previousInvestedValue = previousTotalValue - previousTotalDividendValue;
+
+                const investedValue = currentInvestedValue - previousInvestedValue;
+                const totalValue = currentTotalValue - previousTotalValue;
+                this.textProperties[
+                    etfIdentifier + this.deltaIdentifier + this.labelValueIdentifier + this.investedIdentifier
+                ].text = this.valueToDisplayText(investedValue);
+                this.textProperties[
+                    etfIdentifier + this.deltaIdentifier + this.labelValueIdentifier + this.totalIdentifier
+                ].text = this.valueToDisplayText(totalValue);
+            }
+            // Total Value.
+            let previousTotalValue = 0;
+            for (const etfIdentifier of this.etfIdentifiers) {
+                previousTotalValue += getTotalShareValue(
+                    etfIdentifier,
+                    this.previousInvestmentSteps[investmentStepIndex]
+                );
+            }
+            previousTotalValue -= this.subtractInflationFromTotal
+                ? this.previousInvestmentSteps[investmentStepIndex].inflation
+                : 0;
+            this.textProperties[
+                this.totalIdentifier + this.deltaIdentifier + this.labelValueIdentifier
+            ].text = this.valueToDisplayText(totalValue - previousTotalValue);
+            // Set all delta value to undefined if the investmentStep is not included in the previous investment steps.
+        } else if (this.previousInvestmentSteps != null && this.previousInvestmentSteps.length <= investmentStepIndex) {
+            for (const textPropertyIdentifier in this.textProperties) {
+                if (textPropertyIdentifier.includes(this.deltaIdentifier) && textPropertyIdentifier.includes(this.labelValueIdentifier)) {
+                    this.textProperties[textPropertyIdentifier].text = this.valueToDisplayText(undefined);
+                }
+            }
+        }
     }
 }

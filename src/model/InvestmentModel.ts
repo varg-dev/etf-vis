@@ -391,7 +391,7 @@ function addPayoutMonth(
     const newInvestmentStep = cloneDeep(prevInvestmentStep);
     newInvestmentStep.date = date;
     newInvestmentStep.newInvestment = 0;
-    
+
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         let amountToSell = (etfToRatio[etfIdentifier] as number) * sellingAmount;
@@ -402,6 +402,12 @@ function addPayoutMonth(
         // Handle dividend.
         const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
         const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
+        if (date.getFullYear() > 2080 && date.getFullYear() < 2100) {
+            console.log(date, newInvestmentStep.totalShares[etfIdentifier]);
+        }
+        if (date.getFullYear() === 2086 && date.getMonth() === 11) {
+            console.log('hi');
+        }
 
         // Apply taxes if using distributing model.
         if (useDistributingModel) {
@@ -512,7 +518,6 @@ function addPayoutMonth(
             // Handle update payoutStats.
             costs += alreadyPaidCosts;
             payoutStats[etfIdentifier].investmentStepsIdx = payoutInvestmentStepIdxForFIFO;
-            payoutStats[etfIdentifier].investmentStepsIdx += currentSharesLeft === 0 ? 1 : 0;
 
             payoutStats[etfIdentifier].alreadySoldShares =
                 payoutInvestmentStepIdxForFIFO < investmentSteps.length

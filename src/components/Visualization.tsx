@@ -127,6 +127,10 @@ export class Visualization extends React.Component<IAppState, {}> {
                 this.secondSVGRef.current != null
             ) {
                 const etfIdentifierToRatio = this._getETFIdentifierToRatio();
+                const previousInvestmentSteps =
+                    this.investmentModel != null
+                        ? this.investmentModel.getInvestmentSteps(this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value)
+                        : undefined;
                 this.investmentModel = this._getInvestmentModel(etfIdentifierToRatio);
                 const firstPayoutPhaseDate = this.investmentModel.getPayoutPhaseBeginDate();
                 const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
@@ -140,7 +144,8 @@ export class Visualization extends React.Component<IAppState, {}> {
                     tooltipDate,
                     this._getYAxisExtent(this.areaChart),
                     etfIdentifierToRatio,
-                    this.props[INFLATION_USED_FOR_TOTAL].value
+                    this.props[INFLATION_USED_FOR_TOTAL].value,
+                    previousInvestmentSteps
                 );
                 this.areaChart.render();
                 this.barChart = new CashflowBarChart(

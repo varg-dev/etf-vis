@@ -77,6 +77,7 @@ export abstract class D3ChartStrategy {
     protected readonly standardFontSize = 18;
     protected readonly contentOpacity = 0.7;
     protected readonly labelValueIdentifier = 'value';
+    protected readonly deltaIdentifier = 'delta';
     protected readonly monospaceFont = 'monospace';
 
     protected investmentSteps: InvestmentStep[];
@@ -132,10 +133,11 @@ export abstract class D3ChartStrategy {
         svgID: string,
         tooltipDate: Date | undefined,
         yExtent: [number, number] | undefined,
+        captionSpace = 0,
         width = 1100,
         height = 300,
         marginW = 250,
-        marginH = 40
+        marginH = 40,
     ) {
         if (this.constructor === D3ChartStrategy) {
             throw new Error("Abstract classes can't be instantiated.");
@@ -157,8 +159,9 @@ export abstract class D3ChartStrategy {
         this.svg = d3
             .select(renderDivRef)
             .append('svg')
+            .attr('class', 'img-fluid')
             .attr('id', svgID)
-            .attr('viewBox', `0 0 ${this.width + 2 * this.marginW} ${this.height + 2 * this.marginH}`)
+            .attr('viewBox', `0 0 ${this.width + 2 * this.marginW} ${this.height + 2 * this.marginH + captionSpace}`)
             .append('g')
             .attr('transform', `translate(${[this.marginW / 2, this.marginH]})`);
 

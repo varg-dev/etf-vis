@@ -66,7 +66,7 @@ type ETFIdentifierToString = { [key in ETFIdentifier]: string };
 
 export const ETF_SYMBOL_TO_NAME: ETFIdentifierToString = {
     'SP5C.PAR': 'S & P 500',
-    ESGE: 'iShare',
+    ESGE: 'MSCI EM',
     SUSA: 'MSCI USA ESG',
 };
 
@@ -331,7 +331,7 @@ export class App extends React.Component<{}, IAppState> {
         return (
             <div className="container-fluid">
                 <Overlay {...this.state[API_KEY_IDENTIFIER]} />
-                <div className="row">
+                <div className="row row-cols-3">
                     <nav id="sidebarMenu" className="col-md-3 col-lg-2 bg-light sidebar">
                         <form className="position-sticky needs-validation" noValidate>
                             {/* Money Options */}
@@ -372,10 +372,17 @@ export class App extends React.Component<{}, IAppState> {
                             </SidebarSectionHeading>
                         </form>
                     </nav>
-                    <main className="col-md-9 col-lg-10 ms-sm-auto">
+                    <div id="sidebarMenu" className="col-md-3 col-lg-2">
+                        <h1>Test</h1>
+                    </div>
+                    <main className="col-md-8 col-lg-9">
                         <h1>Etf Pension Plan Visualization</h1>
                         <Visualization {...this.state} />
                     </main>
+                    <div className="col-md-1 col-lg-1">
+                        <h1>History</h1>
+                        <h5>TODO</h5>
+                    </div>
                 </div>
             </div>
         );
