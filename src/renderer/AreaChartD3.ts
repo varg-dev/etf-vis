@@ -148,14 +148,11 @@ export class AreaChartD3 extends D3ChartStrategy {
                 d3
                     .line<DataArrayEntry>()
                     .x(d => this.xScale(d.date))
-                    .y((d, i) =>
-                        this.yScale(
-                            d.yStart +
-                                (this.subtractInflationFromTotal
-                                    ? this.dataArray[this.dataToIndex.inflation][i].yEnd
-                                    : 0)
-                        )
-                    )
+                    .y((d, i) => {
+                        return this.yScale(
+                            d.yStart - (this.subtractInflationFromTotal ? this.investmentSteps[i].inflation : 0)
+                        );
+                    })
             );
     }
 

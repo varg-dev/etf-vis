@@ -295,24 +295,10 @@ function addSavingPhaseMonth(
     const forecast = ForecastModelSingleton.getInstance();
     let costs = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
-    const newInvestmentStep: InvestmentStep = {
-        date: date,
-        newShares: { ...prevInvestmentStep.newShares },
-        totalShares: { ...prevInvestmentStep.totalShares },
-        distributingAmountUsableForPayout: { ...prevInvestmentStep.distributingAmountUsableForPayout },
-        dividendNewShares: { ...prevInvestmentStep.dividendNewShares },
-        dividendTotalShares: { ...prevInvestmentStep.dividendTotalShares },
-        distributingNewAmount: { ...prevInvestmentStep.distributingNewAmount },
-        totalCosts: prevInvestmentStep.totalCosts,
-        sharePrizes: { ...prevInvestmentStep.sharePrizes },
-        totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
-        newInvestedMoney: { ...prevInvestmentStep.newInvestedMoney },
-        newInvestment: 0,
-        totalTaxes: prevInvestmentStep.totalTaxes,
-        totalPayout: { ...prevInvestmentStep.totalPayout },
-        newPayout: { ...prevInvestmentStep.newPayout },
-        inflation: 0,
-    };
+    const newInvestmentStep = cloneDeep(prevInvestmentStep);
+    newInvestmentStep.date = date;
+    newInvestmentStep.newInvestment = 0;
+
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
         // Handle investment amount and costs.
         const investmentOfEtfWithCosts = (etfToRatio[etfIdentifier] as number) * investment;
@@ -402,24 +388,10 @@ function addPayoutMonth(
     let costs = 0;
     let taxes = 0;
     const prevInvestmentStep = investmentSteps[investmentSteps.length - 1];
-    const newInvestmentStep: InvestmentStep = {
-        date: date,
-        newShares: { ...prevInvestmentStep.newShares },
-        totalShares: { ...prevInvestmentStep.totalShares },
-        dividendNewShares: { ...prevInvestmentStep.dividendNewShares },
-        dividendTotalShares: { ...prevInvestmentStep.dividendTotalShares },
-        distributingNewAmount: { ...prevInvestmentStep.distributingNewAmount },
-        distributingAmountUsableForPayout: { ...prevInvestmentStep.distributingAmountUsableForPayout },
-        totalCosts: prevInvestmentStep.totalCosts,
-        sharePrizes: { ...prevInvestmentStep.sharePrizes },
-        totalInvestedMoney: { ...prevInvestmentStep.totalInvestedMoney },
-        newInvestedMoney: { ...prevInvestmentStep.newInvestedMoney },
-        newInvestment: 0,
-        totalTaxes: prevInvestmentStep.totalTaxes,
-        totalPayout: { ...prevInvestmentStep.totalPayout },
-        newPayout: { ...prevInvestmentStep.newPayout },
-        inflation: 0,
-    };
+    const newInvestmentStep = cloneDeep(prevInvestmentStep);
+    newInvestmentStep.date = date;
+    newInvestmentStep.newInvestment = 0;
+    
     for (const etfIdentifier of Object.keys(etfToRatio) as ETFIdentifier[]) {
         const etfSharePrize = forecast.predictCourse(etfIdentifier, date);
         let amountToSell = (etfToRatio[etfIdentifier] as number) * sellingAmount;

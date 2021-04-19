@@ -103,8 +103,6 @@ neues feedback:
 - responsive svg
 - automatic etf ratio als standard?
 
-- ggf. das echte quatal nehmen.
-
 - das erste datum eintragen auf der achse und erste auszahlungsdatum schreiben.
 
 - graph detail: monatsweise, quatalsweise, jahrweise - done
@@ -115,7 +113,7 @@ neues feedback:
 
 - visualisierung kleiner ist in ordnung.
 
-- ausscheutter einbauen.
+- ausscheutter einbauen. - done
 
 - api default key oder lokales speichern des keys
 

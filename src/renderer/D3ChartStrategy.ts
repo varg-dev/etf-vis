@@ -103,6 +103,8 @@ export abstract class D3ChartStrategy {
     private readonly gridColor = 'grey';
     private readonly gridStrokeWidth = 2;
 
+    private labelDivisionFactor = 1;
+    private numberIndicator = 'K';
     private hoverLine: d3.Selection<SVGLineElement, unknown, null, undefined>;
     private interaction: d3.Selection<SVGGElement, unknown, null, undefined>;
     private textGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -210,10 +212,26 @@ export abstract class D3ChartStrategy {
     }
 
     /**
+     * Transforms the value to the number that would be used to display it.
+     * Is used by valueToDisplayText().
+     *
+     * @param value The value to display.
+     * @param hasToBePositive Optional parameter which can bes et to ensure the value is positive by ignoring the sign.
+     * @returns The resulting text.
+     */
+    protected valueToDisplayNumber(value: number, hasToBePositive = false): number {
+        if (hasToBePositive && value != null) {
+            value = Math.abs(value);
+        }
+        return value / this.labelDivisionFactor;
+    }
+
+    /**
      * Generates a human readable display text from the value. Returns '-' as a placeholder when value is undefined.
      *
      * @param value The value to display.
      * @param hasToBePositive Optional parameter which can bes et to ensure the value is positive by ignoring the sign.
+     * @param skipDecimalPlaces Optional parameter which can be used to force skipping the decimal places.
      * @returns The resulting text.
      */
     protected valueToDisplayText(
@@ -221,21 +239,15 @@ export abstract class D3ChartStrategy {
         hasToBePositive = false,
         skipDecimalPlaces = false
     ): string {
-        const labelDivisionFactor =
-            Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
-        const numberIndicator = labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
-        if (hasToBePositive && value != null) {
-            value = Math.abs(value);
-        }
         const decimalPlaces = skipDecimalPlaces ? 0 : 2;
         return `${
             value != null
-                ? (value / labelDivisionFactor).toLocaleString(undefined, {
+                ? this.valueToDisplayNumber(value, hasToBePositive).toLocaleString(undefined, {
                       maximumFractionDigits: decimalPlaces,
                       minimumFractionDigits: decimalPlaces,
                   })
                 : ' - '
-        }${numberIndicator} €`;
+        }${this.numberIndicator} €`;
     }
 
     /**
@@ -260,6 +272,10 @@ export abstract class D3ChartStrategy {
             const minVal = d3.min(filteredDataArrayForYMin.map(e => e.yEnd)) as number;
             this.yExtent = [minVal, maxVal];
         }
+        // Set label constants.
+        this.labelDivisionFactor =
+            Math.max(-this.yExtent[0], this.yExtent[1] as number) >= FIVE_MILLION ? ONE_MILLION : ONE_THOUSAND;
+        this.numberIndicator = this.labelDivisionFactor === ONE_MILLION ? 'M' : 'K';
     }
 
     /**
@@ -274,9 +290,13 @@ export abstract class D3ChartStrategy {
      * Creates the axis but does not draw it.
      */
     private _createAxis() {
+        // Only skip decimal Places if all axis numbers are integers.
+        const skipDecimalPlaces = this.yScale
+            .ticks(numberOfTicks)
+            .every(tick => Number.isInteger(this.valueToDisplayNumber(tick, false)));
         this.yAxis = d3
             .axisLeft(this.yScale)
-            .tickFormat(d => this.valueToDisplayText(d as number, false, true))
+            .tickFormat(d => this.valueToDisplayText(d as number, false, skipDecimalPlaces))
             .ticks(numberOfTicks);
 
         this.xAxis = d3.axisBottom(this.xScale);
