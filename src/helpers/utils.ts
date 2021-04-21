@@ -17,35 +17,13 @@ export interface IHistoricEntry {
 }
 
 /**
- * Converts the string to an integer and return 0 in the case the parsing fails.
- *
- * @param value The concerning value.
- * @returns The value as an integer.
- */
-export function stringToInt(value: string) {
-    const int = Number(value);
-    return Number.isNaN(int) || !Number.isInteger(int) ? 0 : int;
-}
-
-/**
- * Converts the string to a float and return 0 in the case the parsing fails.
+ * Converts the percentage to a float and return 0 in the case the parsing fails.
  *
  * @param value The concerning value.
  * @returns The value as a float.
  */
-export function stringToFloat(value: string) {
-    const float = Number(value);
-    return Number.isNaN(float) ? 0.0 : float;
-}
-
-/**
- * Converts the string to a float and return 0 in the case the parsing fails.
- *
- * @param value The concerning value.
- * @returns The value as a float.
- */
-export function percentageStringToFloat(value: string) {
-    return stringToFloat(value) / 100;
+export function percentageToFloat(value: number) {
+    return Number.isNaN(value) ? 0.0 : value / 100;
 }
 
 /**
@@ -55,8 +33,8 @@ export function percentageStringToFloat(value: string) {
  * @param val The concerning value.
  * @returns If the value is a valid percentage.
  */
-export function isPercentage(val: string): boolean {
-    const float = Number(val) / 100;
+export function isPercentage(val: number): boolean {
+    const float = val / 100;
     return !Number.isNaN(float) && float >= 0 && float <= 1.0;
 }
 
@@ -67,9 +45,8 @@ export function isPercentage(val: string): boolean {
  * @param val The concerning value.
  * @returns If the value is a valid integer.
  */
-export function isPositiveInt(val: string): boolean {
-    const int = Number(val);
-    return !Number.isNaN(int) && Number.isInteger(int) && int >= 0;
+export function isPositiveInt(val: number): boolean {
+    return !Number.isNaN(val) && Number.isInteger(val) && val >= 0;
 }
 
 /**

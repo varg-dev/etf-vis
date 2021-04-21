@@ -402,12 +402,6 @@ function addPayoutMonth(
         // Handle dividend.
         const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date);
         const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
-        if (date.getFullYear() > 2080 && date.getFullYear() < 2100) {
-            console.log(date, newInvestmentStep.totalShares[etfIdentifier]);
-        }
-        if (date.getFullYear() === 2086 && date.getMonth() === 11) {
-            console.log('hi');
-        }
 
         // Apply taxes if using distributing model.
         if (useDistributingModel) {

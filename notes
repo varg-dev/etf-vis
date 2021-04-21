@@ -100,18 +100,18 @@ neues feedback:
 - nummern rechts aligned - done
 - unabhaenging
 - BUG!!!! your age: 36, life expectation: 100, saving phase 40 - done
-- responsive svg
+- responsive svg - done ?
 - automatic etf ratio als standard?
 
 - das erste datum eintragen auf der achse und erste auszahlungsdatum schreiben.
 
 - graph detail: monatsweise, quatalsweise, jahrweise - done
 
-- ui: spin box (wichtig) / slider (auch gut aber unwichtiger.)
+- ui: spin box (wichtig) / slider (auch gut aber unwichtiger.) - done
 
 - share button welches die parameter in die url packt zu sharen. (react sollte tools haben)
 
-- visualisierung kleiner ist in ordnung.
+- visualisierung kleiner ist in ordnung. - done
 
 - ausscheutter einbauen. - done
 
@@ -122,3 +122,10 @@ neues feedback:
 - y = 0 duenner rendern. - done
 
 - grid lines in den hintergrund - done
+
+
+TODO:
+- fix color schema
+- fixed cost checkbox to fixed text input - done
+- fix broker - done
+- heiko feedback einbauen, also checkbox und dann die areas als linien rendern.

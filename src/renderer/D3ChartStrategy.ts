@@ -137,7 +137,7 @@ export abstract class D3ChartStrategy {
         width = 1100,
         height = 300,
         marginW = 250,
-        marginH = 40,
+        marginH = 40
     ) {
         if (this.constructor === D3ChartStrategy) {
             throw new Error("Abstract classes can't be instantiated.");

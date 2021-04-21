@@ -1,4 +1,4 @@
-@import "~bootstrap/scss/bootstrap";
+@import '~bootstrap/scss/bootstrap';
 
 .sidebar {
     position: fixed;
@@ -40,4 +40,8 @@ h1 {
 
 input {
     pointer-events: auto;
+}
+
+.inputUnit {
+    font-weight: bold;
 }

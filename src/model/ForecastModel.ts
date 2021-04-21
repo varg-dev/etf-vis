@@ -53,7 +53,7 @@ export interface IETFProperty {
     identifier: string;
     symbol: ETFIdentifier;
     label: string;
-    value: string;
+    value: number;
     selected: boolean;
 }
 

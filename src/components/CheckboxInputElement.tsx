@@ -6,7 +6,6 @@ export interface ICheckboxState {
 }
 
 export type ICheckBoxStateIdentifier =
-    | 'transactionCostsType'
     | 'etfAutomaticPercentage'
     | 'yAxisLock'
     | 'inflationUsedForTotal'
