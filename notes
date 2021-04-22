@@ -125,7 +125,16 @@ neues feedback:
 
 
 TODO:
-- fix color schema
+- fix color schema (zu grell, qualitatives, https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=11)
 - fixed cost checkbox to fixed text input - done
 - fix broker - done
 - heiko feedback einbauen, also checkbox und dann die areas als linien rendern.
+- bar chart tooltip text grossschrieben und rechts alignen
+
+- kosten koennen gegengerechnet werden.  (fallen beim kauf und verkauf an). beim verkaufen: 
+finde die kaufkosten von den zu verkaufenden anteilen raus und die verkaufskosten davon und subtrahieren beide betraege von den gewinn.
+ (= > new costs speichern).
+
+- wenn der gewinn negativ war kann die differenz auch gegengerechnet werden.
+
+

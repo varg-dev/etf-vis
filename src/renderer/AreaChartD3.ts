@@ -25,23 +25,25 @@ const captionSpaceForDeltaValues = 200;
  * inflation and the total value and invested value of all used ETFs.
  */
 export class AreaChartD3 extends D3ChartStrategy {
+
+    // Color schema taken from: https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=11
     private readonly etfLineColors: ETFIdentifierToColors = {
-        'SP5C.PAR': { total: '#0562a0', invested: '#71c1f7' },
-        ESGE: { total: '#ff1eff', invested: '#ff63ff' },
-        SUSA: { total: '#23ff01', invested: '#7dff69' },
+        'SP5C.PAR': { total: '#1f78b4', invested: '#a6cee3' },
+        ESGE: { total: '#33a02c', invested: '#b2df8a' },
+        SUSA: { total: '#ff7f00', invested: '#fdbf6f' },
     };
 
     private readonly colors: NegativeInvestmentToColorMap = {
-        inflation: '#ff7f00',
-        totalCosts: '#be3bff',
-        totalTaxes: '#e31a1c',
+        inflation: '#F7528E',
+        totalCosts: '#6a3d9a',
+        totalTaxes: '#b15928',
     };
     private readonly valueTextOffset = 200;
     private readonly negativeLabels: NegativeInvestmentStepIdentifier[] = ['totalCosts', 'totalTaxes', 'inflation'];
     private readonly investedIdentifier = 'invested';
     private readonly capitalIdentifier = 'capital';
     private readonly totalIdentifier = 'total';
-    private readonly totalColor = '#ff557f';
+    private readonly totalColor = '#e31a1c';
 
     private etfIdentifiers: ETFIdentifier[];
     private dataToIndex: IDataToIndex = {};
@@ -219,7 +221,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.colors[this.negativeLabels[i]],
             };
 
@@ -245,7 +247,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             };
             // Total
@@ -256,7 +258,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             };
 
@@ -278,7 +280,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].invested,
             };
 
@@ -302,7 +304,7 @@ export class AreaChartD3 extends D3ChartStrategy {
             fontSize: this.standardFontSize,
             fontFamily: null,
             textAnchor: 'start',
-            fontWeight: 'normal',
+            fontWeight: 'bold',
             color: this.totalColor,
         };
 
@@ -341,7 +343,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.colors[this.negativeLabels[i]],
             };
 
@@ -367,7 +369,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             };
             // Total
@@ -378,7 +380,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             };
 
@@ -402,7 +404,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 fontSize: this.standardFontSize,
                 fontFamily: null,
                 textAnchor: 'start',
-                fontWeight: 'normal',
+                fontWeight: 'bold',
                 color: this.etfLineColors[this.etfIdentifiers[i]].invested,
             };
 
@@ -427,7 +429,7 @@ export class AreaChartD3 extends D3ChartStrategy {
             fontSize: this.standardFontSize,
             fontFamily: null,
             textAnchor: 'start',
-            fontWeight: 'normal',
+            fontWeight: 'bold',
             color: this.totalColor,
         };
 

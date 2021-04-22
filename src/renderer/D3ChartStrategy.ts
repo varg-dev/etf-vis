@@ -75,7 +75,7 @@ export abstract class D3ChartStrategy {
 
     protected readonly lineStrokeWidth = 3;
     protected readonly standardFontSize = 18;
-    protected readonly contentOpacity = 0.7;
+    protected readonly contentOpacity = 0.65;
     protected readonly labelValueIdentifier = 'value';
     protected readonly deltaIdentifier = 'delta';
     protected readonly monospaceFont = 'monospace';
