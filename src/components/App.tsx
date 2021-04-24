@@ -13,7 +13,8 @@ import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropD
 import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
 import { ETFSelectionDropDown, IETFSelection } from './ETFSelectionDropDown';
 import { ForecastModelSingleton, ETFIdentifier, IETFProperty } from '../model/ForecastModel';
-import { percentageToFloat, isPercentage, isPositiveInt } from '../helpers/utils';
+import { percentageToFloat, isPercentage, isPositiveInt, clamp } from '../helpers/utils';
+import { ConfidenceElement } from './ConfidenceElement';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
 export const MONTHLY_INVESTMENT_IDENTIFIER = 'monthlyInvestment';
@@ -31,7 +32,11 @@ export const ETF_DROPDOWN_SELECTION_IDENTIFIER = 'etfDropdownSelection';
 export const API_KEY_IDENTIFIER = 'apiKey';
 export const Y_AXIS_LOCK_IDENTIFIER = 'yAxisLock';
 export const INFLATION_USED_FOR_TOTAL = 'inflationUsedForTotal';
+export const MIN_CONFIDENCE = 'minConfidence';
+export const MAX_CONFIDENCE = 'maxConfidence';
+export const MIDDLE_CONFIDENCE = 'middleConfidence';
 export const USE_DISTRIBUTION_MODEL = 'useDistributionModel';
+export const USE_CONFIDENCE_VISUALIZATION = 'useConfidenceVisualization';
 
 const BROKER_DROPDOWN_IDENTIFIER = 'brokerDropdown';
 const ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER = 'etfAutomaticPercentage';
@@ -49,6 +54,9 @@ export interface IAppState {
     age: INumberInputState;
     lifeExpectation: INumberInputState;
     taxFreeAmount: INumberInputState;
+    minConfidence: INumberInputState;
+    maxConfidence: INumberInputState;
+    middleConfidence: INumberInputState;
 
     apiKey: IAPIKey;
 
@@ -56,6 +64,7 @@ export interface IAppState {
     yAxisLock: ICheckboxState;
     inflationUsedForTotal: ICheckboxState;
     useDistributionModel: ICheckboxState;
+    useConfidenceVisualization: ICheckboxState;
 
     detailedGraph: IGraphDetailDropDown;
     brokerDropdown: IBrokerDropDown;
@@ -253,6 +262,9 @@ export class App extends React.Component<{}, IAppState> {
             YEARLY_PAYOUT_INCREASE_IDENTIFIER,
             TRANSACTION_FIXED_COSTS_IDENTIFIER,
             TRANSACTION_PERCENTAGE_COSTS_IDENTIFIER,
+            MIN_CONFIDENCE,
+            MAX_CONFIDENCE,
+            MIDDLE_CONFIDENCE,
         ];
 
         state.isValid = true;
@@ -281,6 +293,20 @@ export class App extends React.Component<{}, IAppState> {
             state[SAVING_PHASE_IDENTIFIER].isValid = false;
             state.isValid = false;
         }
+
+        // Check the confidence.
+        if (state[MIN_CONFIDENCE].value > state[MAX_CONFIDENCE].value) {
+            state[MIN_CONFIDENCE].isValid = false;
+            state.isValid = false;
+            state[MIN_CONFIDENCE].errorMessage = 'The minimum confidence cannot be higher than the maximum confidence.';
+        }
+
+        // Clamp middle confidence.
+        state[MIDDLE_CONFIDENCE].value = clamp(
+            state[MIDDLE_CONFIDENCE].value,
+            state[MIN_CONFIDENCE].value,
+            state[MAX_CONFIDENCE].value
+        );
 
         // Check the etf percentages.
         let sumOfPercentages = 0;
@@ -353,20 +379,23 @@ export class App extends React.Component<{}, IAppState> {
                                     autoPercentage={this.state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value}
                                     {...this.state[ETF_DROPDOWN_SELECTION_IDENTIFIER]}
                                 />
+                                <CheckboxInputElement {...this.state[USE_CONFIDENCE_VISUALIZATION]} />
+                                <ConfidenceElement
+                                    minConfidence={this.state[MIN_CONFIDENCE]}
+                                    maxConfidence={this.state[MAX_CONFIDENCE]}
+                                    middleConfidence={this.state[MIDDLE_CONFIDENCE]}
+                                />
                             </SidebarSectionHeading>
                         </form>
                     </nav>
+                    {/* Needed as padding since the sidebar is not part of the row */}
                     <div id="sidebarMenu" className="col-md-3 col-lg-2">
-                        <h1>Test</h1>
+                        <h1>Padding</h1>
                     </div>
-                    <main className="col-md-8 col-lg-9">
+                    <main className="col-md-9 col-lg-10">
                         <h1>Etf Pension Plan Visualization</h1>
                         <Visualization {...this.state} />
                     </main>
-                    <div className="col-md-1 col-lg-1">
-                        <h1>History</h1>
-                        <h5>TODO</h5>
-                    </div>
                 </div>
             </div>
         );
@@ -493,6 +522,36 @@ function getInitialInputFormState(caller: App): IAppState {
             onValueChange: caller.handleTextChange,
             disabled: false,
         },
+        [MIN_CONFIDENCE]: {
+            value: 70,
+            label: 'Confidence Interval',
+            errorMessage: '',
+            isValid: true,
+            textAppending: '%',
+            identifier: MIN_CONFIDENCE,
+            onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
+        [MAX_CONFIDENCE]: {
+            value: 100,
+            label: '',
+            errorMessage: '',
+            isValid: true,
+            textAppending: '',
+            identifier: MAX_CONFIDENCE,
+            onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
+        [MIDDLE_CONFIDENCE]: {
+            value: 90,
+            label: '',
+            errorMessage: '',
+            isValid: true,
+            textAppending: '',
+            identifier: MIDDLE_CONFIDENCE,
+            onValueChange: caller.handleTextChange,
+            disabled: false,
+        },
         [ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER]: {
             value: false,
             label: 'Automatic ETF Ratio',
@@ -503,6 +562,12 @@ function getInitialInputFormState(caller: App): IAppState {
             value: false,
             label: 'Subtract Inflation of Total',
             identifier: INFLATION_USED_FOR_TOTAL,
+            onValueChange: caller.handleCheckBoxChange,
+        },
+        [USE_CONFIDENCE_VISUALIZATION]: {
+            value: false,
+            label: 'Show Confidence',
+            identifier: USE_CONFIDENCE_VISUALIZATION,
             onValueChange: caller.handleCheckBoxChange,
         },
         [USE_DISTRIBUTION_MODEL]: {

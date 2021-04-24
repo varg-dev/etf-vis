@@ -9,7 +9,8 @@ export type ICheckBoxStateIdentifier =
     | 'etfAutomaticPercentage'
     | 'yAxisLock'
     | 'inflationUsedForTotal'
-    | 'useDistributionModel';
+    | 'useDistributionModel'
+    | 'useConfidenceVisualization';
 
 /**
  * Renders a checkbox from the given properties.

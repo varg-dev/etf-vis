@@ -1,33 +1,18 @@
-import { InvestmentStep } from '../model/InvestmentModel';
-import { ETFIdentifier } from '../model/ForecastModel';
-import { D3ChartStrategy } from './D3ChartStrategy';
+import { InvestmentStep, getSumNewPayout } from '../model/InvestmentModel';
+import { D3ChartStrategy, generateLabel } from './D3ChartStrategy';
 
-/**
- * Calculates the sum of all payout over all used etfs.
- *
- * @param investmentStep The concerning investmentStep.
- * @returns The sum of all payouts.
- */
-function getSumNewPayout(investmentStep: InvestmentStep) {
-    let sumNewPayout = 0;
-    for (const etfIdentifier of Object.keys(investmentStep.newPayout) as ETFIdentifier[]) {
-        sumNewPayout += investmentStep.newPayout[etfIdentifier];
-    }
-    return sumNewPayout;
-}
+export const payoutIdentifier = 'payout';
+export const investedIdentifier = 'invested';
+export const cashflowChartColors = {
+    payout: { first: '#3acc5c', second: '#2d9e45' },
+    invested: { first: '#ff3e58', second: '#c32f46' },
+};
 
 /**
  * Renders a cashflow diagram of the investment model.
  */
 export class CashflowBarChart extends D3ChartStrategy {
     private readonly barPaddingPercentage = 0.9;
-    private readonly payoutIdentifier = 'payout';
-    private readonly investedIdentifier = 'invested';
-    private readonly maxNumberTextLength = 100;
-    private readonly colors = {
-        payout: { first: '#3acc5c', second: '#2d9e45' },
-        invested: { first: '#ff3e58', second: '#c32f46' },
-    };
 
     private rectWidth = 0;
 
@@ -73,13 +58,13 @@ export class CashflowBarChart extends D3ChartStrategy {
                 yStart: 0,
                 yEnd: -investmentStep.newInvestment,
                 date: investmentStep.date,
-                color: this.colors.invested[colorIdentifier],
+                color: cashflowChartColors.invested[colorIdentifier],
             });
             this.dataArray[dataToIndex.payout].push({
                 yStart: sumNewPayout,
                 yEnd: 0,
                 date: investmentStep.date,
-                color: this.colors.payout[colorIdentifier],
+                color: cashflowChartColors.payout[colorIdentifier],
             });
         }
 
@@ -92,57 +77,47 @@ export class CashflowBarChart extends D3ChartStrategy {
     _prepareText() {
         super._prepareText();
 
-        const payoutX =
-            this.xScale(this.payoutPhaseStartDate) +
-            (this.xScale(this.dateExtent[1]) - this.xScale(this.payoutPhaseStartDate)) / 2;
-        const payoutY = this.yScale(0) + (this.yScale(this.yExtent[0]) - this.yScale(0)) / 2;
-
-        this.textProperties[this.payoutIdentifier] = {
-            text: this.payoutIdentifier,
-            x: payoutX,
-            y: payoutY,
+        this.textProperties[payoutIdentifier] = {
+            text: generateLabel(payoutIdentifier),
+            x: this.xTextOffset,
+            y: this.height * 0.25 - this.standardFontSize * 0.5,
             fontSize: this.standardFontSize,
-            fontFamily: null,
-            textAnchor: 'end',
-            fontWeight: 'normal',
-            color: this.colors[this.payoutIdentifier].first,
+            fontFamily: this.standardFont,
+            textAnchor: this.startTextAnchor,
+            fontWeight: this.boldText,
+            color: cashflowChartColors[payoutIdentifier].second,
         };
 
-        this.textProperties[this.payoutIdentifier + this.labelValueIdentifier] = {
+        this.textProperties[payoutIdentifier + this.labelValueIdentifier] = {
             text: this.valueToDisplayText(undefined),
-            x: payoutX + this.maxNumberTextLength,
-            y: payoutY,
+            x: this.xTextOffset + this.valueTextOffset,
+            y: this.height * 0.25 - this.standardFontSize * 0.5,
             fontSize: this.standardFontSize,
             fontFamily: this.monospaceFont,
-            textAnchor: 'end',
-            fontWeight: 'bold',
-            color: this.colors[this.payoutIdentifier].first,
+            textAnchor: this.endTextAnchor,
+            fontWeight: this.boldText,
+            color: cashflowChartColors[payoutIdentifier].second,
         };
 
-        const investedX =
-            this.xScale(this.dateExtent[0]) +
-            (this.xScale(this.payoutPhaseStartDate) - this.xScale(this.dateExtent[0])) / 2;
-        const investedY = this.yScale(0) - (this.yScale(0) - this.yScale(this.yExtent[1])) / 2;
-
-        this.textProperties[this.investedIdentifier] = {
-            text: this.investedIdentifier,
-            x: investedX,
-            y: investedY,
+        this.textProperties[investedIdentifier] = {
+            text: generateLabel(investedIdentifier),
+            x: this.xTextOffset,
+            y: this.height * 0.75 - this.standardFontSize * 0.5,
             fontSize: this.standardFontSize,
-            fontFamily: null,
-            textAnchor: 'end',
-            fontWeight: 'normal',
-            color: this.colors[this.investedIdentifier].first,
+            fontFamily: this.standardFont,
+            textAnchor: this.startTextAnchor,
+            fontWeight: this.boldText,
+            color: cashflowChartColors[investedIdentifier].second,
         };
-        this.textProperties[this.investedIdentifier + this.labelValueIdentifier] = {
+        this.textProperties[investedIdentifier + this.labelValueIdentifier] = {
             text: this.valueToDisplayText(undefined),
-            x: investedX + this.maxNumberTextLength,
-            y: investedY,
+            x: this.xTextOffset + this.valueTextOffset,
+            y: this.height * 0.75 - this.standardFontSize * 0.5,
             fontSize: this.standardFontSize,
             fontFamily: this.monospaceFont,
-            textAnchor: 'end',
-            fontWeight: 'bold',
-            color: this.colors[this.investedIdentifier].first,
+            textAnchor: this.endTextAnchor,
+            fontWeight: this.boldText,
+            color: cashflowChartColors[investedIdentifier].second,
         };
     }
 
@@ -154,11 +129,9 @@ export class CashflowBarChart extends D3ChartStrategy {
     _updateTooltip(investmentStepIndex: number) {
         const payoutValue = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
         const investedValue = this.investmentSteps[investmentStepIndex].newInvestment;
-        this.textProperties[this.payoutIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
-            payoutValue
-        );
+        this.textProperties[payoutIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(payoutValue);
 
-        this.textProperties[this.investedIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
+        this.textProperties[investedIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
             investedValue
         );
     }

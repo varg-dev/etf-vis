@@ -34,8 +34,7 @@ export function percentageToFloat(value: number) {
  * @returns If the value is a valid percentage.
  */
 export function isPercentage(val: number): boolean {
-    const float = val / 100;
-    return !Number.isNaN(float) && float >= 0 && float <= 1.0;
+    return !Number.isNaN(val) && val >= 0.0 && val <= 100.0;
 }
 
 /**

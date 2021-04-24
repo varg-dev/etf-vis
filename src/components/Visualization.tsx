@@ -13,18 +13,25 @@ import {
     Y_AXIS_LOCK_IDENTIFIER,
     INFLATION_USED_FOR_TOTAL,
     USE_DISTRIBUTION_MODEL,
+    MIDDLE_CONFIDENCE,
+    USE_CONFIDENCE_VISUALIZATION,
     generateCostConfig,
+    MIN_CONFIDENCE,
+    MAX_CONFIDENCE,
 } from './App';
 import { InvestmentModel, ETFRatio } from '../model/InvestmentModel';
 import { AreaChartD3 } from '../renderer/AreaChartD3';
 import { CashflowBarChart } from '../renderer/CashflowBarChartD3';
+import { ConfidenceChartD3 } from '../renderer/ConfidenceChartD3';
 import { D3ChartStrategy } from '../renderer/D3ChartStrategy';
 import { IAppState } from './App';
 import { percentageToFloat } from '../helpers/utils';
+import { NumberInputStateIdentifier } from './TextInputElement';
 
 export interface IConfigOptions {
     costConfig: ICostConfiguration;
     taxFreeAmount: number;
+    confidence: number;
 }
 
 export interface ICostConfiguration {
@@ -40,8 +47,8 @@ export class Visualization extends React.Component<IAppState, {}> {
     private firstSVGRef = React.createRef<HTMLDivElement>();
     private secondSVGRef = React.createRef<HTMLDivElement>();
 
-    private areaChart: AreaChartD3 | undefined = undefined;
-    private barChart: CashflowBarChart | undefined = undefined;
+    private trendChart: AreaChartD3 | ConfidenceChartD3 | undefined = undefined;
+    private cashflowChart: CashflowBarChart | undefined = undefined;
 
     private investmentModel: InvestmentModel | undefined = undefined;
 
@@ -67,20 +74,25 @@ export class Visualization extends React.Component<IAppState, {}> {
      * Calculates the investment model for the current properties.
      *
      * @param etfIdentifierToRatio The etfIdentifier mapping to the ratio.
+     * @param confidenceIdentifier The confidence identifier which should be used for the model.
      * @returns The investment model for the current state.
      */
-    private _getInvestmentModel(etfIdentifierToRatio: ETFRatio): InvestmentModel {
+    private _getInvestmentModel(
+        etfIdentifierToRatio: ETFRatio,
+        confidenceIdentifier: NumberInputStateIdentifier
+    ): InvestmentModel {
         const configOptions: IConfigOptions = {
             taxFreeAmount: this.props[TAX_FREE_AMOUNT_IDENTIFIER].value,
             costConfig: generateCostConfig(this.props, true),
+            confidence: percentageToFloat(this.props[confidenceIdentifier].value),
         };
 
         return new InvestmentModel(
             this.props[STARTING_CAPITAL_IDENTIFIER].value,
             this.props[MONTHLY_INVESTMENT_IDENTIFIER].value,
-            this.props[YEARLY_INVESTMENT_INCREASE_IDENTIFIER].value,
+            percentageToFloat(this.props[YEARLY_INVESTMENT_INCREASE_IDENTIFIER].value),
             this.props[MONTHLY_PAYOUT_IDENTIFIER].value,
-            this.props[YEARLY_PAYOUT_INCREASE_IDENTIFIER].value,
+            percentageToFloat(this.props[YEARLY_PAYOUT_INCREASE_IDENTIFIER].value),
             this.props[SAVING_PHASE_IDENTIFIER].value,
             etfIdentifierToRatio,
             configOptions,
@@ -96,10 +108,10 @@ export class Visualization extends React.Component<IAppState, {}> {
      * @returns The tooltip date if defined.
      */
     private _getTooltipDate(): Date | undefined {
-        if (this.areaChart != null) {
-            return this.areaChart.tooltipDate;
-        } else if (this.barChart != null) {
-            return this.barChart.tooltipDate;
+        if (this.trendChart != null) {
+            return this.trendChart.tooltipDate;
+        } else if (this.cashflowChart != null) {
+            return this.cashflowChart.tooltipDate;
         } else {
             return undefined;
         }
@@ -120,42 +132,57 @@ export class Visualization extends React.Component<IAppState, {}> {
     private _drawVisualization() {
         D3ChartStrategy.reset();
         try {
-            if (
-                this.props.isValid != null &&
-                this.props.isValid &&
-                this.firstSVGRef.current != null &&
-                this.secondSVGRef.current != null
-            ) {
+            if (this.props.isValid && this.firstSVGRef.current != null && this.secondSVGRef.current != null) {
                 const etfIdentifierToRatio = this._getETFIdentifierToRatio();
                 const previousInvestmentSteps =
                     this.investmentModel != null
                         ? this.investmentModel.getInvestmentSteps(this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value)
                         : undefined;
-                this.investmentModel = this._getInvestmentModel(etfIdentifierToRatio);
+                this.investmentModel = this._getInvestmentModel(etfIdentifierToRatio, MIDDLE_CONFIDENCE);
                 const firstPayoutPhaseDate = this.investmentModel.getPayoutPhaseBeginDate();
                 const correctLevelOfDetailInvestmentSteps = this.investmentModel.getInvestmentSteps(
                     this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value
                 );
                 let tooltipDate = this._getTooltipDate();
-                this.areaChart = new AreaChartD3(
-                    correctLevelOfDetailInvestmentSteps,
-                    this.firstSVGRef.current,
-                    firstPayoutPhaseDate,
-                    tooltipDate,
-                    this._getYAxisExtent(this.areaChart),
-                    etfIdentifierToRatio,
-                    this.props[INFLATION_USED_FOR_TOTAL].value,
-                    previousInvestmentSteps
-                );
-                this.areaChart.render();
-                this.barChart = new CashflowBarChart(
+                if (!this.props[USE_CONFIDENCE_VISUALIZATION].value) {
+                    this.trendChart = new AreaChartD3(
+                        correctLevelOfDetailInvestmentSteps,
+                        this.firstSVGRef.current,
+                        firstPayoutPhaseDate,
+                        tooltipDate,
+                        this._getYAxisExtent(this.trendChart),
+                        etfIdentifierToRatio,
+                        this.props[INFLATION_USED_FOR_TOTAL].value,
+                        previousInvestmentSteps
+                    );
+                    this.trendChart.render();
+                } else {
+                    this.trendChart = new ConfidenceChartD3(
+                        correctLevelOfDetailInvestmentSteps,
+                        this._getInvestmentModel(etfIdentifierToRatio, MIN_CONFIDENCE).getInvestmentSteps(
+                            this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value
+                        ),
+                        this._getInvestmentModel(etfIdentifierToRatio, MAX_CONFIDENCE).getInvestmentSteps(
+                            this.props[DETAILED_GRAPH_DROPDOWN_IDENTIFIER].value
+                        ),
+                        this.firstSVGRef.current,
+                        firstPayoutPhaseDate,
+                        tooltipDate,
+                        this._getYAxisExtent(this.trendChart),
+                        etfIdentifierToRatio,
+                        this.props[INFLATION_USED_FOR_TOTAL].value,
+                        previousInvestmentSteps
+                    );
+                    this.trendChart.render();
+                }
+                this.cashflowChart = new CashflowBarChart(
                     correctLevelOfDetailInvestmentSteps,
                     this.secondSVGRef.current,
                     firstPayoutPhaseDate,
                     tooltipDate,
-                    this._getYAxisExtent(this.barChart)
+                    this._getYAxisExtent(this.cashflowChart)
                 );
-                this.barChart.render();
+                this.cashflowChart.render();
             }
         } catch (e) {
             console.error(e);

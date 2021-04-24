@@ -29,7 +29,7 @@ type ETFSelectionDropDownProps = IETFSelection & { autoPercentage: boolean };
  */
 export function ETFSelectionDropDown(props: ETFSelectionDropDownProps) {
     return (
-        <div className="dropdown position-relative">
+        <div className="dropdown position-relative mb-1">
             <button
                 className="btn btn-secondary dropdown-toggle is-invalid"
                 type="button"

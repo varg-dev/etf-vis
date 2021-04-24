@@ -104,7 +104,7 @@ export class ForecastModelSingleton {
         backCastTimeDate.setMonth(backCastTimeConstant);
         ForecastModelSingleton.backCastTimestampConstant = dateToTimestamp(backCastTimeDate);
 
-        // reset predictors if present.
+        // Reset predictors if present.
         if (ForecastModelSingleton.instance != null) {
             const instance = ForecastModelSingleton.getInstance();
             for (const etfIdentifier in instance.coursePredictors) {
@@ -287,13 +287,15 @@ export class ForecastModelSingleton {
     }
 
     /**
-     * Predicts the course of the given ETF at the given date.
+     * Predicts the course of the given ETF at the given date with the specified confidence.
      *
      * @param etfIdentifier The concerning etfIdentifier
      * @param date The concerning date.
+     * @param confidence The confidence of the price development.
+     * @param startDate The startDate of the prediction.
      * @returns The predicted course of the etf.
      */
-    predictCourse(etfIdentifier: string, date: Date) {
+    predictCourse(etfIdentifier: string, date: Date, confidence: number, startDate: Date) {
         if (!(etfIdentifier in this.coursePredictors)) {
             throw generateHistoricalDataNotPresentException(etfIdentifier);
         }
@@ -301,16 +303,20 @@ export class ForecastModelSingleton {
             date,
             etfIdentifier
         );
+        const startingTimestamp = dateToTimestamp(startDate);
         this._createCoursePredictorIfNotPresent(etfIdentifier, predictorTimestamp);
-        return this.coursePredictors[etfIdentifier].predictors[predictorTimestamp].predict(timestamp)[
-            courseIndexOfForecastArray
-        ];
+        const eq = this.coursePredictors[etfIdentifier].predictors[predictorTimestamp].equation;
+        // Transforms the percentage [0,100] to the interval [1.5, 0.5].
+        const confidenceFactor = (1 - confidence - 0.5) * 2 * 0.5 + 1;
+        const startingPrice = eq[0] * startingTimestamp + eq[1];
+        const adjustedConfidencePrice = eq[0] * confidenceFactor * (timestamp - startingTimestamp) + startingPrice;
+        return adjustedConfidencePrice;
     }
 
     /**
      * Predicts the dividend amount of the given ETF at the given year.
      *
-     * @param etfIdentifier The concerning etfIdentifier
+     * @param etfIdentifier The concerning etfIdentifier.
      * @param year The concerning year.
      * @returns The predicted dividend amount of the etf.
      */

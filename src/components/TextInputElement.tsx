@@ -8,6 +8,7 @@ export interface INumberInputState {
     isValid: boolean;
     disabled: boolean;
     identifier: TextInputStateIdentifier;
+    noLabel?: boolean;
     onValueChange: (
         changedValue: string,
         changedStateIdentifier: TextInputStateIdentifier,
@@ -22,6 +23,7 @@ export interface ITextInputState {
     textAppending: string;
     isValid: boolean;
     disabled: boolean;
+    noLabel?: boolean;
     identifier: TextInputStateIdentifier;
     onValueChange: (changedValue: string, changedStateIdentifier: TextInputStateIdentifier) => void;
 }
@@ -33,6 +35,7 @@ export interface IETFTextInputState {
     textAppending: string;
     isValid: boolean;
     disabled: boolean;
+    noLabel?: boolean;
     identifier: string;
     onValueChange: (changedValue: string, changedStateIdentifier: string) => void;
 }
@@ -48,7 +51,10 @@ export type NumberInputStateIdentifier =
     | 'lifeExpectation'
     | 'taxFreeAmount'
     | 'yearlyInvestmentIncrease'
-    | 'yearlyPayoutIncrease';
+    | 'yearlyPayoutIncrease'
+    | 'minConfidence'
+    | 'maxConfidence'
+    | 'middleConfidence';
 
 export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
 
@@ -59,7 +65,9 @@ export type TextInputStateIdentifier = NumberInputStateIdentifier | 'apiKey';
  * @returns Rendered label.
  */
 export function InputLabel(props: INumberInputState | IETFTextInputState | ITextInputState) {
-    if (props.textAppending.length > 0) {
+    if (props.noLabel) {
+        return null;
+    } else if (props.textAppending.length > 0) {
         return (
             <label className="form-label" htmlFor={props.identifier}>
                 {props.label} in <span className="inputUnit">{props.textAppending}</span>
@@ -90,7 +98,6 @@ export function NumberInputElement(props: INumberInputState) {
                 type="number"
                 value={props.value}
                 onChange={e => props.onValueChange(e.target.value, props.identifier, true)}
-                onInput={e => console.log(e)}
                 disabled={props.disabled}
             />
             <ErrorMessage {...props} />
@@ -114,7 +121,6 @@ export function TextInputElement(props: ITextInputState) {
                 type="text"
                 value={props.value + (props.textAppending !== '' ? ' ' + props.textAppending : '')}
                 onChange={e => props.onValueChange(e.target.value.split(' ')[0], props.identifier)}
-                onInput={e => console.log(e)}
                 disabled={props.disabled}
             />
             <ErrorMessage {...props} />

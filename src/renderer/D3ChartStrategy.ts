@@ -2,6 +2,15 @@ import * as d3 from 'd3';
 import { roundDateToBeginningOfMonth, numberOfMonthsOfAYear } from '../helpers/utils';
 import { InvestmentStep } from '../model/InvestmentModel';
 
+export interface DataArrayEntry {
+    yStart: number;
+    yEnd: number;
+    date: Date;
+    color: string;
+}
+
+export type DataArray = DataArrayEntry[][];
+
 interface ITextProperty {
     text: string;
     x: number;
@@ -13,18 +22,20 @@ interface ITextProperty {
     color: string;
 }
 
-interface ITextProperties {
-    [textIdentifier: string]: ITextProperty;
-}
-
-export interface DataArrayEntry {
-    yStart: number;
-    yEnd: number;
-    date: Date;
+interface IOptionalTextProperty {
+    text: string;
+    x: number;
+    y: number;
+    fontSize?: number;
+    fontFamily?: string | null;
+    textAnchor?: string;
+    fontWeight?: string;
     color: string;
 }
 
-export type DataArray = DataArrayEntry[][];
+interface ITextProperties {
+    [textIdentifier: string]: ITextProperty;
+}
 
 const FIVE_MILLION = 5000000;
 const ONE_THOUSAND = 1000;
@@ -45,6 +56,13 @@ export function generateLabel(name: string): string {
     return `${name}:`;
 }
 
+/**
+ * Calculates the element index which contains the given date.
+ *
+ * @param date The concerning date.
+ * @param investmentSteps The investment steps where the date position should be calculated.
+ * @returns The index of the date in the investment steps.
+ */
 function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: InvestmentStep[]): number {
     const firstDate = investmentSteps[0].date;
     const secondDate = investmentSteps[1].date;
@@ -70,15 +88,25 @@ function calculateInvestmentStepIndexForDate(date: Date, investmentSteps: Invest
  * It ensures that all active diagrams are synced regarding the tooltip and x axis.
  */
 export abstract class D3ChartStrategy {
-    tooltipDate: Date;
-    yExtent: [number, number];
+    public tooltipDate: Date;
+    public yExtent: [number, number];
+    public textProperties: ITextProperties = {};
 
     protected readonly lineStrokeWidth = 3;
-    protected readonly standardFontSize = 18;
     protected readonly contentOpacity = 0.65;
+
+    protected readonly valueTextOffset = 200;
+    protected readonly standardFontSize = 18;
     protected readonly labelValueIdentifier = 'value';
     protected readonly deltaIdentifier = 'delta';
     protected readonly monospaceFont = 'monospace';
+    protected readonly standardFont = null;
+    protected readonly startTextAnchor = 'start';
+    protected readonly endTextAnchor = 'end';
+    protected readonly boldText = 'bold';
+    protected readonly normalText = 'normal';
+    protected readonly totalColor = '#e31a1c';
+    protected readonly totalIdentifier = 'total';
 
     protected investmentSteps: InvestmentStep[];
     protected dateExtent: [Date, Date] = [new Date(), new Date()];
@@ -88,10 +116,10 @@ export abstract class D3ChartStrategy {
     protected height: number;
     protected maxIndex = 0;
     protected minIndex = 0;
+    protected xTextOffset;
     protected yScale: d3.ScaleLinear<number, number, never> = d3.scaleLinear();
     protected xScale: d3.ScaleTime<number, number, never> = d3.scaleTime();
     protected dataArray: DataArray = [];
-    protected textProperties: ITextProperties = {};
     protected payoutPhaseStartDate: Date;
 
     protected svg: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -152,6 +180,7 @@ export abstract class D3ChartStrategy {
         this.marginH = marginH;
         this.width = width;
         this.height = height;
+        this.xTextOffset = this.width * 1.02;
 
         // Reset diagram by deletion.
         renderDivRef.innerHTML = '';
@@ -251,6 +280,26 @@ export abstract class D3ChartStrategy {
                   })
                 : ' - '
         }${this.numberIndicator} €`;
+    }
+
+    /**
+     * Adds the text property to the object variable textProperties. Makes some options optional.
+     * Should be used when adding a text property since it reduces the code repetition by having some default values.
+     *
+     * @param identifier The identifier of the text property.
+     * @param property The text properties where some properties are optional.
+     */
+    protected addTextProperty(identifier: string, property: IOptionalTextProperty) {
+        this.textProperties[identifier] = {
+            text: property.text,
+            x: property.x,
+            y: property.y,
+            fontSize: property.fontSize ? property.fontSize : this.standardFontSize,
+            fontFamily: property.fontFamily ? property.fontFamily : this.standardFont,
+            textAnchor: property.textAnchor ? property.textAnchor : this.startTextAnchor,
+            fontWeight: property.fontWeight ? property.fontWeight : this.boldText,
+            color: property.color,
+        };
     }
 
     /**
@@ -478,48 +527,40 @@ export abstract class D3ChartStrategy {
             this.xScale(this.payoutPhaseStartDate) +
             (this.xScale(this.dateExtent[1]) - this.xScale(this.payoutPhaseStartDate)) / 2;
         const yPos = -10;
-        this.textProperties = {
-            savingBold: {
-                text: 'SAVING',
-                x: savingPhaseMid,
-                y: yPos,
-                fontSize: this.standardFontSize,
-                fontFamily: null,
-                textAnchor: 'end',
-                fontWeight: 'bold',
-                color: 'black',
-            },
-            savingPhase: {
-                text: 'Phase',
-                x: savingPhaseMid,
-                y: yPos,
-                fontSize: this.standardFontSize,
-                fontFamily: null,
-                textAnchor: 'start',
-                fontWeight: 'normal',
-                color: 'black',
-            },
-            payoutBold: {
-                text: 'PAYOUT',
-                x: payoutPhaseMid,
-                y: yPos,
-                fontSize: this.standardFontSize,
-                fontFamily: null,
-                textAnchor: 'end',
-                fontWeight: 'bold',
-                color: 'black',
-            },
-            payoutPhase: {
-                text: 'Phase',
-                x: payoutPhaseMid,
-                y: yPos,
-                fontSize: this.standardFontSize,
-                fontFamily: null,
-                textAnchor: 'start',
-                fontWeight: 'normal',
-                color: 'black',
-            },
-        };
+        this.addTextProperty('savingBold', {
+            x: savingPhaseMid,
+            y: yPos,
+            text: 'SAVING',
+            textAnchor: this.endTextAnchor,
+            color: 'black',
+            fontSize: this.standardFontSize * 1.5,
+        });
+        this.addTextProperty('savingPhase', {
+            x: savingPhaseMid,
+            y: yPos,
+            text: 'Phase',
+            textAnchor: this.startTextAnchor,
+            fontWeight: this.normalText,
+            color: 'black',
+            fontSize: this.standardFontSize * 1.5,
+        });
+        this.addTextProperty('payoutBold', {
+            x: payoutPhaseMid,
+            y: yPos,
+            text: 'PAYOUT',
+            textAnchor: this.endTextAnchor,
+            color: 'black',
+            fontSize: this.standardFontSize * 1.5,
+        });
+        this.addTextProperty('payoutPhase', {
+            x: payoutPhaseMid,
+            y: yPos,
+            text: 'Phase',
+            textAnchor: this.startTextAnchor,
+            fontWeight: this.normalText,
+            color: 'black',
+            fontSize: this.standardFontSize * 1.5,
+        });
     }
 
     /**
@@ -534,14 +575,14 @@ export abstract class D3ChartStrategy {
 
         gradient
             .append('stop')
-            .attr('class', 'start')
+            .attr('class', 'gradientStart')
             .attr('offset', '0%')
             .attr('stop-color', 'white')
             .attr('stop-opacity', 0);
 
         gradient
             .append('stop')
-            .attr('class', 'end')
+            .attr('class', 'gradientEnd')
             .attr('offset', '100%')
             .attr('stop-color', 'white')
             .attr('stop-opacity', 1);
