@@ -37,7 +37,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     private readonly negativeColors: NegativeInvestmentToColorMap = {
         inflation: '#f7528e',
         totalCosts: '#6a3d9a',
-        totalTaxes: '#b15928',
+        totalTaxes: '#e31a1c',
     };
     private readonly negativeLabels: NegativeInvestmentStepIdentifier[] = ['totalCosts', 'totalTaxes', 'inflation'];
     private readonly investedIdentifier = 'invested';
