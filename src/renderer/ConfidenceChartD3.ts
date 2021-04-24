@@ -9,7 +9,7 @@ import { AreaChartD3 } from './AreaChartD3';
  */
 export class ConfidenceChartD3 extends AreaChartD3 {
     private readonly confidenceColors = {
-        minimumLine: '#e31a1c',
+        minimumLine: '#ff3e58',
         maximumLine: '#00e396',
         middleLine: this.totalColor,
         area: '#a6d8fe',

@@ -105,7 +105,7 @@ export abstract class D3ChartStrategy {
     protected readonly endTextAnchor = 'end';
     protected readonly boldText = 'bold';
     protected readonly normalText = 'normal';
-    protected readonly totalColor = '#b15928';
+    protected readonly totalColor = '#b59554';
     protected readonly totalIdentifier = 'total';
 
     protected investmentSteps: InvestmentStep[];
