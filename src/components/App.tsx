@@ -13,7 +13,7 @@ import { BrokerDropDown, BrokerProperties, IBrokerDropDown } from './BrokerDropD
 import { GraphDetailDropDown, IGraphDetailDropDown, IGraphDetailLevel } from './GraphDetailDropDown';
 import { ETFSelectionDropDown, IETFSelection } from './ETFSelectionDropDown';
 import { ForecastModelSingleton, ETFIdentifier, IETFProperty } from '../model/ForecastModel';
-import { percentageToFloat, isPercentage, isPositiveInt, clamp } from '../helpers/utils';
+import { percentageToFloat, isPercentage, isPositiveInt } from '../helpers/utils';
 import { ConfidenceElement } from './ConfidenceElement';
 
 export const STARTING_CAPITAL_IDENTIFIER = 'startingCapital';
@@ -301,13 +301,6 @@ export class App extends React.Component<{}, IAppState> {
             state[MIN_CONFIDENCE].errorMessage = 'The minimum confidence cannot be higher than the maximum confidence.';
         }
 
-        // Clamp middle confidence.
-        state[MIDDLE_CONFIDENCE].value = clamp(
-            state[MIDDLE_CONFIDENCE].value,
-            state[MIN_CONFIDENCE].value,
-            state[MAX_CONFIDENCE].value
-        );
-
         // Check the etf percentages.
         let sumOfPercentages = 0;
         let foundOneSelectedEtf = false;
@@ -544,10 +537,10 @@ function getInitialInputFormState(caller: App): IAppState {
         },
         [MIDDLE_CONFIDENCE]: {
             value: 90,
-            label: '',
+            label: 'Confidence for the Calculation',
             errorMessage: '',
             isValid: true,
-            textAppending: '',
+            textAppending: '%',
             identifier: MIDDLE_CONFIDENCE,
             onValueChange: caller.handleTextChange,
             disabled: false,

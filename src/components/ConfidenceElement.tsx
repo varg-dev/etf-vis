@@ -25,11 +25,12 @@ export function ConfidenceElement(props: IConfidence) {
                     <TextOrNumberInputElement {...props.maxConfidence} noLabel={true} />
                 </div>
             </div>
+            <InputLabel {...props.middleConfidence} />
             <div className="row">
-                <div className="col">
+                <div className="col align-self-center">
                     <input
                         type="range"
-                        className="form-range"
+                        className="form-range position-relative"
                         min={props.minConfidence.value}
                         max={props.maxConfidence.value}
                         step={0.1}
@@ -44,13 +45,8 @@ export function ConfidenceElement(props: IConfidence) {
                         }
                     />
                 </div>
-                <div className="col-2 text-nowrap">
-                    <span>
-                        {props.middleConfidence.value.toLocaleString(undefined, {
-                            maximumFractionDigits: 1,
-                            minimumFractionDigits: 1,
-                        })}
-                    </span>
+                <div className="col-5 align-self-center">
+                    <TextOrNumberInputElement {...props.middleConfidence} noLabel={true} />
                 </div>
             </div>
         </div>
