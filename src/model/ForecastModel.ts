@@ -168,7 +168,7 @@ export class ForecastModelSingleton {
      * Loads the historic data for the provided etfIdentifier and sets up the predictors.
      *
      * @param etfIdentifier The concerning ETFIdentifier.
-     * @returns -
+     * @returns
      */
     private async _loadAndCacheHistoricalETFData(etfIdentifier: string): Promise<void> {
         if (etfIdentifier in this.historicalData) {
@@ -208,7 +208,7 @@ export class ForecastModelSingleton {
      * @param timestamp The concerning timestamp.
      * @returns
      */
-    private _createCoursePredictorIfNotPresent(etfIdentifier: string, timestamp: number) {
+    private _createCoursePredictorIfNotPresent(etfIdentifier: string, timestamp: number): void {
         // Skip if already exists.
         if (timestamp in this.coursePredictors[etfIdentifier]) {
             return;

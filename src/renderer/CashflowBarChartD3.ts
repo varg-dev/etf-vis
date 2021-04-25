@@ -38,7 +38,7 @@ export class CashflowBarChart extends D3ChartStrategy {
     /**
      * Prepares the data for the diagram based on the investment model.
      */
-    _prepareData() {
+    protected _prepareData() {
         // Create line array.
         const dataToIndex = {
             invested: 0,
@@ -74,7 +74,7 @@ export class CashflowBarChart extends D3ChartStrategy {
     /**
      * Prepares additional Text that should be displayed by adding it to the textProperties.
      */
-    _prepareText() {
+    protected _prepareText() {
         super._prepareText();
 
         this.textProperties[payoutIdentifier] = {
@@ -126,7 +126,7 @@ export class CashflowBarChart extends D3ChartStrategy {
      *
      * @param investmentStepIndex The index of the investment step of at the current mouse position.
      */
-    _updateTooltip(investmentStepIndex: number) {
+    protected _updateTooltip(investmentStepIndex: number) {
         const payoutValue = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
         const investedValue = this.investmentSteps[investmentStepIndex].newInvestment;
         this.textProperties[payoutIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(payoutValue);
@@ -139,7 +139,7 @@ export class CashflowBarChart extends D3ChartStrategy {
     /**
      * Draws the main content of the diagram. In this case the bars of the cashflow barchart.
      */
-    _drawContent() {
+    protected _drawContent() {
         // Skip the last bar if it is outside the graph.
         const needToSkipLastBar = this.dataArray[0][this.dataArray[0].length - 1].date === this.dateExtent[1];
         for (let barArray of this.dataArray) {

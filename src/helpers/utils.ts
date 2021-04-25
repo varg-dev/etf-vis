@@ -17,7 +17,7 @@ export interface IHistoricEntry {
 }
 
 /**
- * Converts the percentage to a float and return 0 in the case the parsing fails.
+ * Converts the percentage to a float and return 0 in the case the number is NaN.
  *
  * @param value The concerning value.
  * @returns The value as a float.
@@ -121,7 +121,7 @@ export function etfHistoricalToCourseForecastArray(historicalData: IHistoricEntr
 }
 
 /**
- * Constructs a dividend forecasting array which consists of [Year, CourseValue] pairs.
+ * Constructs a dividend forecasting array which consists of [Year, DividendValue] pairs.
  * The historical data needs to be sorted by the date. Which is already done when loading.
  *
  * @param historicalData The historical data array that should be used for the course forecasting array.

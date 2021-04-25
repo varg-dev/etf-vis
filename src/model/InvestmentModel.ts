@@ -616,7 +616,7 @@ function generateEmptyInvestmentStep(etfToRatio: ETFRatio, date: Date, configOpt
 
 /**
  * Creates the investment model for the visualization which consists of arrays of an object
- *  which contain all important values for the visualization.
+ * which contain all important values for the visualization.
  * It can deliver the model with different levels of detail meaning that one step covers more than one month.
  *
  * Example code:

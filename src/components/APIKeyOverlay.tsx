@@ -1,4 +1,4 @@
-import { TextInputElement, TextInputStateIdentifier } from './TextInputElement';
+import { TextOrNumberInputElement, TextInputStateIdentifier } from './TextInputElement';
 
 export interface IAPIKey {
     displayOverlay: boolean;
@@ -37,7 +37,7 @@ export function Overlay(props: IAPIKey) {
                                 Alphavantage API Key
                             </a>{' '}
                         </h1>
-                        <TextInputElement {...props} disabled={!props.displayOverlay} />
+                        <TextOrNumberInputElement {...props} disabled={!props.displayOverlay} />
                         <button type="button" className="btn btn-primary my-5" onClick={props.handleAPIKeyConfirm}>
                             Confirm
                         </button>

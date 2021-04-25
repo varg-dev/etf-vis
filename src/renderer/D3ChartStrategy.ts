@@ -225,7 +225,7 @@ export abstract class D3ChartStrategy {
      * The rendering strategy which defined the order in which the diagram is rendered.
      * Thus defined which part lies on top of the other. e.g. Text is rendered over the central content.
      */
-    render(): void {
+    public render(): void {
         this._prepareData();
         this._calculateExtents();
         this._createScales();

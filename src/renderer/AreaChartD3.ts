@@ -85,7 +85,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     /**
      * Prepares all data from the investment model for rendering.
      */
-    _prepareData() {
+    protected _prepareData() {
         this.dataToIndex = {
             totalCosts: 0,
             totalTaxes: 1,
@@ -148,7 +148,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     /**
      * Draws all the lines of the chart. I.e. the total value line.
      */
-    _drawLines() {
+    protected _drawLines() {
         // Draw total line.
         this.svg
             .append('path')
@@ -172,7 +172,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     /**
      * Draws the main content of the diagram. Currently a stacked area chart.
      */
-    _drawContent() {
+    protected _drawContent() {
         this._drawArea();
         this._drawLines();
     }
@@ -180,7 +180,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     /**
      * Draws the stacked areas of the diagram.
      */
-    _drawArea() {
+    protected _drawArea() {
         // Draw stacked area chart.
         for (let i = 0; i < this.dataArray.length; i++) {
             this.svg
@@ -205,7 +205,7 @@ export class AreaChartD3 extends D3ChartStrategy {
     /**
      * Prepares the additional text that is displayed by adding it to the textProperties.
      */
-    _prepareText() {
+    protected _prepareText() {
         super._prepareText();
         const paddingH = this.standardFontSize * 0.4;
 
@@ -278,7 +278,7 @@ export class AreaChartD3 extends D3ChartStrategy {
                 y: yPos,
                 color: this.etfLineColors[this.etfIdentifiers[i]].total,
             });
-            // Total
+            // Total.
             this.addTextProperty(this.etfIdentifiers[i] + this.deltaIdentifier + this.totalIdentifier, {
                 text: generateLabel(this.totalIdentifier),
                 x: (this.width / numberOfEntriesPerRow) * 1,
@@ -322,7 +322,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      * @param numberOfEntriesPerRow The number of entries per row.
      * @param totalRowYPos The y position of the row that contains the payout and invested label.
      */
-    protected addPayoutAndInvestedDeltaLabels(numberOfEntriesPerRow: number, totalRowYPos: number) {
+    private addPayoutAndInvestedDeltaLabels(numberOfEntriesPerRow: number, totalRowYPos: number) {
         this.textProperties[payoutIdentifier + this.deltaIdentifier] = {
             text: generateLabel(payoutIdentifier),
             x: (this.width / numberOfEntriesPerRow) * 1,
@@ -377,7 +377,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      */
     private addNegativeDeltaLabels(yOffset: number, paddingH: number, xRowOffset: number) {
         for (let i = 0; i < this.negativeLabels.length; i++) {
-            const yPos = yOffset + (this.standardFontSize + paddingH) * (4 + this.etfIdentifiers.length);
+            const yPos = yOffset + (this.standardFontSize + paddingH) * (3.5 + this.etfIdentifiers.length);
             const color = this.negativeColors[this.negativeLabels[i]];
             this.addTextProperty(this.negativeLabels[i] + this.deltaIdentifier, {
                 text: generateLabel(this.negativeLabels[i]),
@@ -507,7 +507,7 @@ export class AreaChartD3 extends D3ChartStrategy {
      *
      * @param investmentStepIndex The index of the investment step of at the current mouse position.
      */
-    _updateTooltip(investmentStepIndex: number) {
+    protected _updateTooltip(investmentStepIndex: number) {
         // Update ETF Values.
         for (const etfIdentifier of this.etfIdentifiers) {
             const totalValue = getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);

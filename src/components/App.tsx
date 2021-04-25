@@ -1,7 +1,7 @@
 import React from 'react';
 import { Visualization, ICostConfiguration } from './Visualization';
 import {
-    NumberInputElement,
+    TextOrNumberInputElement,
     INumberInputState,
     TextInputStateIdentifier,
     NumberInputStateIdentifier,
@@ -349,25 +349,25 @@ export class App extends React.Component<{}, IAppState> {
                         <form className="position-sticky needs-validation" noValidate>
                             {/* Money Options */}
                             <SidebarSectionHeading title="Money Options" initiallyCollapsed={false}>
-                                <NumberInputElement {...this.state[STARTING_CAPITAL_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[YEARLY_INVESTMENT_INCREASE_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[YEARLY_PAYOUT_INCREASE_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[STARTING_CAPITAL_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[MONTHLY_INVESTMENT_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[YEARLY_INVESTMENT_INCREASE_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[MONTHLY_PAYOUT_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[YEARLY_PAYOUT_INCREASE_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[TAX_FREE_AMOUNT_IDENTIFIER]} />
                                 <CheckboxInputElement {...this.state[USE_DISTRIBUTION_MODEL]} />
                             </SidebarSectionHeading>
                             {/* Time Options */}
                             <SidebarSectionHeading title="Time Options" initiallyCollapsed={false}>
-                                <NumberInputElement {...this.state[AGE_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[LIFE_EXPECTATION_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[SAVING_PHASE_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[AGE_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[LIFE_EXPECTATION_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[SAVING_PHASE_IDENTIFIER]} />
                             </SidebarSectionHeading>
                             {/* Cost Options */}
                             <SidebarSectionHeading title="Cost Options" initiallyCollapsed={true}>
                                 <BrokerDropDown {...costConfig} {...this.state[BROKER_DROPDOWN_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[TRANSACTION_PERCENTAGE_COSTS_IDENTIFIER]} />
-                                <NumberInputElement {...this.state[TRANSACTION_FIXED_COSTS_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[TRANSACTION_PERCENTAGE_COSTS_IDENTIFIER]} />
+                                <TextOrNumberInputElement {...this.state[TRANSACTION_FIXED_COSTS_IDENTIFIER]} />
                             </SidebarSectionHeading>
                             {/* Visualization Options */}
                             <SidebarSectionHeading title="Visualization Options" initiallyCollapsed={true}>

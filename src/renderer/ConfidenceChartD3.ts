@@ -50,7 +50,7 @@ export class ConfidenceChartD3 extends AreaChartD3 {
     /**
      * Prepares all data from the investment model for rendering.
      */
-    _prepareData() {
+    protected _prepareData() {
         this.dataToIndex = {
             areaConfidence: 0,
             middleConfidence: 1,
@@ -94,7 +94,7 @@ export class ConfidenceChartD3 extends AreaChartD3 {
     /**
      * Draws all lines of the chart. I.e. the middle line.
      */
-    _drawLines() {
+    protected _drawLines() {
         const lineDataArray = [
             this.dataArray[this.dataToIndex.areaConfidence],
             this.dataArray[this.dataToIndex.areaConfidence],
@@ -128,7 +128,7 @@ export class ConfidenceChartD3 extends AreaChartD3 {
     /**
      * Draws the main content of the diagram. Currently a stacked area chart.
      */
-    _drawContent() {
+    protected _drawContent() {
         this._drawArea();
         this._drawLines();
     }
@@ -136,7 +136,7 @@ export class ConfidenceChartD3 extends AreaChartD3 {
     /**
      * Draws the stacked areas of the diagram.
      */
-    _drawArea() {
+    protected _drawArea() {
         // Draw stacked area chart.
         this.svg
             .append('g')

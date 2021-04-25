@@ -41,7 +41,7 @@ export interface ICostConfiguration {
 
 /**
  * React component which handles the visualization.
- * It re renders the visualizations each time the state changes.
+ * It re-renders the visualizations each time the state changes.
  */
 export class Visualization extends React.Component<IAppState, {}> {
     private firstSVGRef = React.createRef<HTMLDivElement>();
