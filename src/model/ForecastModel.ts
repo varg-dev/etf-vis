@@ -108,18 +108,16 @@ export class ForecastModelSingleton {
         if (ForecastModelSingleton.instance != null) {
             const instance = ForecastModelSingleton.getInstance();
             for (const etfIdentifier in instance.coursePredictors) {
-                instance.coursePredictors[
-                    etfIdentifier
-                ].maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
-                    instance.historicalData[etfIdentifier].courseForecastArray
-                );
+                instance.coursePredictors[etfIdentifier].maxTimestampBeforeCoursePredictorRepetition =
+                    ForecastModelSingleton._calculateTimestampForPredictorRepetition(
+                        instance.historicalData[etfIdentifier].courseForecastArray
+                    );
             }
             for (const etfIdentifier in instance.dividendPredictors) {
-                instance.dividendPredictors[
-                    etfIdentifier
-                ].maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
-                    instance.historicalData[etfIdentifier].dividendForecastArray
-                );
+                instance.dividendPredictors[etfIdentifier].maxYearBeforeDividendPredictorRepetition =
+                    ForecastModelSingleton._calculateTimestampForPredictorRepetition(
+                        instance.historicalData[etfIdentifier].dividendForecastArray
+                    );
             }
         }
     }
@@ -177,14 +175,12 @@ export class ForecastModelSingleton {
         const historicalData = await loadHistoricalETFData(etfIdentifier, ForecastModelSingleton.apiKey);
 
         const courseForecastArray = etfHistoricalToCourseForecastArray(historicalData);
-        const maxTimestampBeforeCoursePredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
-            courseForecastArray
-        );
+        const maxTimestampBeforeCoursePredictorRepetition =
+            ForecastModelSingleton._calculateTimestampForPredictorRepetition(courseForecastArray);
 
         const dividendForecastArray = etfHistoricalToDividendForecastArray(historicalData);
-        const maxYearBeforeDividendPredictorRepetition = ForecastModelSingleton._calculateTimestampForPredictorRepetition(
-            dividendForecastArray
-        );
+        const maxYearBeforeDividendPredictorRepetition =
+            ForecastModelSingleton._calculateTimestampForPredictorRepetition(dividendForecastArray);
 
         this.historicalData[etfIdentifier] = {
             history: historicalData,
@@ -306,8 +302,8 @@ export class ForecastModelSingleton {
         const startingTimestamp = dateToTimestamp(startDate);
         this._createCoursePredictorIfNotPresent(etfIdentifier, predictorTimestamp);
         const eq = this.coursePredictors[etfIdentifier].predictors[predictorTimestamp].equation;
-        // Transforms the percentage [0,100] to the interval [1.5, 0.5].
-        const confidenceFactor = (1 - confidence - 0.5) * 2 * 0.5 + 1;
+        // Transforms the percentage [0,100] to the interval [1.75, 0.25].
+        const confidenceFactor = (1 - confidence - 0.5) * 2 * 0.75 + 1;
         const startingPrice = eq[0] * startingTimestamp + eq[1];
         const adjustedConfidencePrice = eq[0] * confidenceFactor * (timestamp - startingTimestamp) + startingPrice;
         return adjustedConfidencePrice;

@@ -8,6 +8,9 @@ import { AreaChartD3 } from './AreaChartD3';
  * inflation and the total value and invested value of all used ETFs.
  */
 export class ConfidenceChartD3 extends AreaChartD3 {
+    protected readonly contentOpacity: number = 0.65 / 2;
+    protected readonly confidenceAreaOpacity: number = 0.65;
+
     private readonly confidenceColors = {
         minimumLine: '#ff3e58',
         maximumLine: '#00e396',
@@ -51,18 +54,15 @@ export class ConfidenceChartD3 extends AreaChartD3 {
      * Prepares all data from the investment model for rendering.
      */
     protected _prepareData() {
+        super._prepareData();
+        let idx = Math.max(...Object.values(this.dataToIndex));
         this.dataToIndex = {
-            areaConfidence: 0,
-            middleConfidence: 1,
+            areaConfidence: ++idx,
         };
 
-        this.minIndex = this.dataToIndex.areaConfidence;
         this.maxIndex = this.dataToIndex.areaConfidence;
 
-        this.dataArray = [];
-        for (let i = 0; i < Object.keys(this.dataToIndex).length; i++) {
-            this.dataArray.push([]);
-        }
+        this.dataArray.push([]);
         for (let i = 0; i < this.investmentSteps.length; i++) {
             this.dataArray[this.dataToIndex.areaConfidence].push({
                 yStart:
@@ -74,20 +74,6 @@ export class ConfidenceChartD3 extends AreaChartD3 {
                 date: this.investmentSteps[i].date,
                 color: this.confidenceColors.area,
             });
-            console.log(
-                this.dataArray[this.dataToIndex.areaConfidence][
-                    this.dataArray[this.dataToIndex.areaConfidence].length - 1
-                ]
-            );
-            const middleValue =
-                sumOfTotalValues(this.investmentSteps[i]) -
-                (this.subtractInflationFromTotal ? this.investmentSteps[i].inflation : 0);
-            this.dataArray[this.dataToIndex.middleConfidence].push({
-                yStart: middleValue,
-                yEnd: middleValue,
-                date: this.investmentSteps[i].date,
-                color: this.confidenceColors.middleLine,
-            });
         }
     }
 
@@ -95,17 +81,13 @@ export class ConfidenceChartD3 extends AreaChartD3 {
      * Draws all lines of the chart. I.e. the middle line.
      */
     protected _drawLines() {
+        super._drawLines();
         const lineDataArray = [
             this.dataArray[this.dataToIndex.areaConfidence],
             this.dataArray[this.dataToIndex.areaConfidence],
-            this.dataArray[this.dataToIndex.middleConfidence],
         ];
         const lookupIdentifier: ('yStart' | 'yEnd')[] = ['yStart', 'yEnd', 'yStart'];
-        const confidenceColors = [
-            this.confidenceColors.minimumLine,
-            this.confidenceColors.maximumLine,
-            this.confidenceColors.middleLine,
-        ];
+        const confidenceColors = [this.confidenceColors.minimumLine, this.confidenceColors.maximumLine];
         for (let i = 0; i < lineDataArray.length; i++) {
             this.svg
                 .append('path')
@@ -137,13 +119,14 @@ export class ConfidenceChartD3 extends AreaChartD3 {
      * Draws the stacked areas of the diagram.
      */
     protected _drawArea() {
+        super._drawArea();
         // Draw stacked area chart.
         this.svg
             .append('g')
             .attr('class', 'area')
             .append('path')
             .datum(this.dataArray[this.dataToIndex.areaConfidence])
-            .style('opacity', this.contentOpacity)
+            .style('opacity', this.confidenceAreaOpacity)
             .style('fill', d => d[0].color)
             .attr(
                 'd',

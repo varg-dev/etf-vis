@@ -93,7 +93,7 @@ export abstract class D3ChartStrategy {
     public textProperties: ITextProperties = {};
 
     protected readonly lineStrokeWidth = 3;
-    protected readonly contentOpacity = 0.65;
+    protected readonly contentOpacity: number = 0.65;
 
     protected readonly valueTextOffset = 200;
     protected readonly standardFontSize = 18;

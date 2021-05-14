@@ -34,7 +34,6 @@ export function ConfidenceElement(props: IConfidence) {
                         min={props.minConfidence.value}
                         max={props.maxConfidence.value}
                         step={0.1}
-                        id={props.middleConfidence.identifier}
                         value={props.middleConfidence.value}
                         onChange={e =>
                             props.middleConfidence.onValueChange(

@@ -33,6 +33,7 @@ export class AreaChartD3 extends D3ChartStrategy {
         ESGE: { total: '#33a02c', invested: '#b2df8a' },
         SUSA: { total: '#ff7f00', invested: '#fdbf6f' },
     };
+    private totalValueIndex = -1;
 
     private readonly negativeColors: NegativeInvestmentToColorMap = {
         inflation: '#f7528e',
@@ -44,9 +45,9 @@ export class AreaChartD3 extends D3ChartStrategy {
     private readonly capitalIdentifier = 'capital';
 
     private etfIdentifiers: ETFIdentifier[];
+    private previousInvestmentSteps: InvestmentStep[] | undefined;
     protected dataToIndex: IDataToIndex = {};
     protected subtractInflationFromTotal: boolean;
-    private previousInvestmentSteps: InvestmentStep[] | undefined;
 
     /**
      * Constructs the area chart by calling the base class constructor and determining all used ETFs.
@@ -100,6 +101,7 @@ export class AreaChartD3 extends D3ChartStrategy {
 
         this.minIndex = this.dataToIndex.inflation;
         this.maxIndex = currentIdx - 1;
+        this.totalValueIndex = this.maxIndex;
 
         this.dataArray = [];
         for (let i = 0; i < currentIdx; i++) {
@@ -152,7 +154,7 @@ export class AreaChartD3 extends D3ChartStrategy {
         // Draw total line.
         this.svg
             .append('path')
-            .datum(this.dataArray[this.dataArray.length - 1])
+            .datum(this.dataArray[this.totalValueIndex])
             .style('stroke', this.totalColor)
             .style('stroke-width', this.lineStrokeWidth)
             .style('fill', 'none')
@@ -516,12 +518,10 @@ export class AreaChartD3 extends D3ChartStrategy {
                 this.investmentSteps[investmentStepIndex]
             );
             const investedValue = totalValue - totalDividendValue;
-            this.textProperties[
-                etfIdentifier + this.labelValueIdentifier + this.investedIdentifier
-            ].text = this.valueToDisplayText(investedValue, true);
-            this.textProperties[
-                etfIdentifier + this.labelValueIdentifier + this.totalIdentifier
-            ].text = this.valueToDisplayText(totalValue, true);
+            this.textProperties[etfIdentifier + this.labelValueIdentifier + this.investedIdentifier].text =
+                this.valueToDisplayText(investedValue, true);
+            this.textProperties[etfIdentifier + this.labelValueIdentifier + this.totalIdentifier].text =
+                this.valueToDisplayText(totalValue, true);
         }
         // Update negative values.
         for (const negativeLabel of this.negativeLabels) {
@@ -534,9 +534,8 @@ export class AreaChartD3 extends D3ChartStrategy {
             totalValue += getTotalShareValue(etfIdentifier, this.investmentSteps[investmentStepIndex]);
         }
         totalValue -= this.subtractInflationFromTotal ? this.investmentSteps[investmentStepIndex].inflation : 0;
-        this.textProperties[this.totalIdentifier + this.labelValueIdentifier].text = this.valueToDisplayText(
-            totalValue
-        );
+        this.textProperties[this.totalIdentifier + this.labelValueIdentifier].text =
+            this.valueToDisplayText(totalValue);
 
         // Set the delta Values if the previous model exists.
         if (this.previousInvestmentSteps != null && this.previousInvestmentSteps.length > investmentStepIndex) {
@@ -545,9 +544,8 @@ export class AreaChartD3 extends D3ChartStrategy {
                 const currentValue = this.investmentSteps[investmentStepIndex][negativeLabel];
                 const previousValue = this.previousInvestmentSteps[investmentStepIndex][negativeLabel];
                 const value = currentValue - previousValue;
-                this.textProperties[
-                    negativeLabel + this.deltaIdentifier + this.labelValueIdentifier
-                ].text = this.valueToDisplayText(value, true);
+                this.textProperties[negativeLabel + this.deltaIdentifier + this.labelValueIdentifier].text =
+                    this.valueToDisplayText(value, true);
             }
 
             // ETF labels.
@@ -590,23 +588,20 @@ export class AreaChartD3 extends D3ChartStrategy {
             previousTotalValue -= this.subtractInflationFromTotal
                 ? this.previousInvestmentSteps[investmentStepIndex].inflation
                 : 0;
-            this.textProperties[
-                this.totalIdentifier + this.deltaIdentifier + this.labelValueIdentifier
-            ].text = this.valueToDisplayText(totalValue - previousTotalValue);
+            this.textProperties[this.totalIdentifier + this.deltaIdentifier + this.labelValueIdentifier].text =
+                this.valueToDisplayText(totalValue - previousTotalValue);
 
             // Payout.
             const previousPayout = getSumNewPayout(this.previousInvestmentSteps[investmentStepIndex]);
             const currentPayout = getSumNewPayout(this.investmentSteps[investmentStepIndex]);
-            this.textProperties[
-                payoutIdentifier + this.deltaIdentifier + this.labelValueIdentifier
-            ].text = this.valueToDisplayText(currentPayout - previousPayout);
+            this.textProperties[payoutIdentifier + this.deltaIdentifier + this.labelValueIdentifier].text =
+                this.valueToDisplayText(currentPayout - previousPayout);
 
             // Invested.
             const previousInvested = this.previousInvestmentSteps[investmentStepIndex].newInvestment;
             const currentInvested = this.investmentSteps[investmentStepIndex].newInvestment;
-            this.textProperties[
-                investedIdentifier + this.deltaIdentifier + this.labelValueIdentifier
-            ].text = this.valueToDisplayText(currentInvested - previousInvested);
+            this.textProperties[investedIdentifier + this.deltaIdentifier + this.labelValueIdentifier].text =
+                this.valueToDisplayText(currentInvested - previousInvested);
             // Set all delta value to undefined if the investmentStep is not included in the previous investment steps.
         } else if (this.previousInvestmentSteps != null && this.previousInvestmentSteps.length <= investmentStepIndex) {
             for (const textPropertyIdentifier in this.textProperties) {
