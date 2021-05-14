@@ -577,7 +577,7 @@ function getInitialInputFormState(caller: App): IAppState {
         [API_KEY_IDENTIFIER]: {
             displayOverlay: true,
             error: false,
-            value: 'paperKey',
+            value: 'defaultPaperKey',
             label: '',
             errorMessage: '',
             isValid: true,
@@ -599,7 +599,7 @@ function getInitialInputFormState(caller: App): IAppState {
                     label: 'All Months a Year (high detail)',
                 },
                 {
-                    identifier: '3',
+                    identifier: '4',
                     value: 4,
                     label: 'Every 4th Month (middle detail)',
                 },

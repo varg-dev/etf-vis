@@ -37,6 +37,9 @@ export function Overlay(props: IAPIKey) {
                                 Alphavantage API Key
                             </a>{' '}
                         </h1>
+                        <h4>
+                            No changing of the key is required. Simply press Confirm and the visualization is starting.
+                        </h4>
                         <TextOrNumberInputElement {...props} disabled={!props.displayOverlay} />
                         <button type="button" className="btn btn-primary my-5" onClick={props.handleAPIKeyConfirm}>
                             Confirm
