@@ -200,9 +200,8 @@ export class App extends React.Component<{}, IAppState> {
      */
     handleETFSelectionChange(etfProperties: IETFProperty): void {
         const state = { ...this.state };
-        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected = !state[
-            ETF_DROPDOWN_SELECTION_IDENTIFIER
-        ].elements[etfProperties.identifier].selected;
+        state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected =
+            !state[ETF_DROPDOWN_SELECTION_IDENTIFIER].elements[etfProperties.identifier].selected;
         if (state[ETF_AUTOMATIC_PERCENTAGE_IDENTIFIER].value) {
             recalculateETFPercentages(state);
         }
@@ -578,7 +577,7 @@ function getInitialInputFormState(caller: App): IAppState {
         [API_KEY_IDENTIFIER]: {
             displayOverlay: true,
             error: false,
-            value: '',
+            value: 'paperKey',
             label: '',
             errorMessage: '',
             isValid: true,
@@ -601,7 +600,7 @@ function getInitialInputFormState(caller: App): IAppState {
                 },
                 {
                     identifier: '3',
-                    value: 3,
+                    value: 4,
                     label: 'Every 4th Month (middle detail)',
                 },
                 {

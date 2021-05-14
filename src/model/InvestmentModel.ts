@@ -115,7 +115,12 @@ function calculateDividend(etfIdentifier: string, date: Date, confidence: number
         return 0;
     } else {
         const dividendAmount = ForecastModelSingleton.getInstance().predictDividend(etfIdentifier, date.getFullYear());
-        const sharePrice = ForecastModelSingleton.getInstance().predictCourse(etfIdentifier, date, confidence, initialDate);
+        const sharePrice = ForecastModelSingleton.getInstance().predictCourse(
+            etfIdentifier,
+            date,
+            confidence,
+            initialDate
+        );
         return dividendAmount > 0 ? dividendAmount : defaultDividendAmount * sharePrice;
     }
 }
@@ -149,9 +154,9 @@ function subtractTaxFreeGain(taxAmount: number, taxFreeAmount: number): [number,
 }
 
 /**
- * Calculates the sum of all etf share values of the portfolio. 
+ * Calculates the sum of all etf share values of the portfolio.
  * I.e. returns the current value of the whole portfolio.
- * 
+ *
  * @param investmentStep The concerning InvestmentStep.
  * @returns The sum of all total etf values.
  */
@@ -236,6 +241,7 @@ function calculateVorabpauschaleTaxes(
     leftoverTaxFreeAmount: number,
     etfToRatio: ETFRatio
 ): [number, number] {
+    // TODO: tax amount auf das new investment draufrechnen.
     if (!isFirstMonthOfAYear(date) || investmentSteps.length < 2) {
         return [0, leftoverTaxFreeAmount];
     }
@@ -343,7 +349,12 @@ function addSavingPhaseMonth(
         newInvestmentStep.newShares[etfIdentifier] = newShares;
 
         // Handle dividend.
-        const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date, configOptions.confidence, initialDate);
+        const dividendPayoutMoneyPerShare = calculateDividend(
+            etfIdentifier,
+            date,
+            configOptions.confidence,
+            initialDate
+        );
         let dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
 
         if (useDistributingModel) {
@@ -429,7 +440,12 @@ function addPayoutMonth(
         newInvestmentStep.newPayout[etfIdentifier] = 0;
         newInvestmentStep.newInvestedMoney[etfIdentifier] = 0;
         // Handle dividend.
-        const dividendPayoutMoneyPerShare = calculateDividend(etfIdentifier, date, configOptions.confidence, initialDate);
+        const dividendPayoutMoneyPerShare = calculateDividend(
+            etfIdentifier,
+            date,
+            configOptions.confidence,
+            initialDate
+        );
         const dividendPayoutMoney = newInvestmentStep.totalShares[etfIdentifier] * dividendPayoutMoneyPerShare;
 
         // Apply taxes if using distributing model.
@@ -803,9 +819,8 @@ export class InvestmentModel {
                 for (const etfIdentifier of Object.keys(
                     this.investmentSteps[i + offset].newPayout
                 ) as ETFIdentifier[]) {
-                    adjustedInvestmentStep.newPayout[etfIdentifier] += this.investmentSteps[i + offset].newPayout[
-                        etfIdentifier
-                    ];
+                    adjustedInvestmentStep.newPayout[etfIdentifier] +=
+                        this.investmentSteps[i + offset].newPayout[etfIdentifier];
                 }
             }
             selectedInvestmentSteps.push(adjustedInvestmentStep);
