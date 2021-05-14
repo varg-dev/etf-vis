@@ -1,22 +1,22 @@
 {
   "files": {
-    "main.css": "/ETF-Pension-Plan-Visualization/static/css/main.98b0aee5.chunk.css",
-    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.71894ede.chunk.js",
-    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.71894ede.chunk.js.map",
-    "runtime-main.js": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.d156f019.js",
-    "runtime-main.js.map": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.d156f019.js.map",
-    "static/js/2.bf916020.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/2.bf916020.chunk.js",
-    "static/js/2.bf916020.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/2.bf916020.chunk.js.map",
-    "static/js/3.a498f242.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/3.a498f242.chunk.js",
-    "static/js/3.a498f242.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/3.a498f242.chunk.js.map",
+    "main.css": "/ETF-Pension-Plan-Visualization/static/css/main.223bfc3e.chunk.css",
+    "main.js": "/ETF-Pension-Plan-Visualization/static/js/main.8db13aae.chunk.js",
+    "main.js.map": "/ETF-Pension-Plan-Visualization/static/js/main.8db13aae.chunk.js.map",
+    "runtime-main.js": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.5dbb3d41.js",
+    "runtime-main.js.map": "/ETF-Pension-Plan-Visualization/static/js/runtime-main.5dbb3d41.js.map",
+    "static/js/2.0333225b.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/2.0333225b.chunk.js",
+    "static/js/2.0333225b.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/2.0333225b.chunk.js.map",
+    "static/js/3.f3c7ab11.chunk.js": "/ETF-Pension-Plan-Visualization/static/js/3.f3c7ab11.chunk.js",
+    "static/js/3.f3c7ab11.chunk.js.map": "/ETF-Pension-Plan-Visualization/static/js/3.f3c7ab11.chunk.js.map",
     "index.html": "/ETF-Pension-Plan-Visualization/index.html",
-    "static/css/main.98b0aee5.chunk.css.map": "/ETF-Pension-Plan-Visualization/static/css/main.98b0aee5.chunk.css.map",
-    "static/js/2.bf916020.chunk.js.LICENSE.txt": "/ETF-Pension-Plan-Visualization/static/js/2.bf916020.chunk.js.LICENSE.txt"
+    "static/css/main.223bfc3e.chunk.css.map": "/ETF-Pension-Plan-Visualization/static/css/main.223bfc3e.chunk.css.map",
+    "static/js/2.0333225b.chunk.js.LICENSE.txt": "/ETF-Pension-Plan-Visualization/static/js/2.0333225b.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.d156f019.js",
-    "static/js/2.bf916020.chunk.js",
-    "static/css/main.98b0aee5.chunk.css",
-    "static/js/main.71894ede.chunk.js"
+    "static/js/runtime-main.5dbb3d41.js",
+    "static/js/2.0333225b.chunk.js",
+    "static/css/main.223bfc3e.chunk.css",
+    "static/js/main.8db13aae.chunk.js"
   ]
 }
