@@ -138,6 +138,13 @@ export class App extends React.Component<{}, IAppState> {
     }
 
     /**
+     * Initiate the alphavantage key retrieval from the URL as soon as the component is mounted.
+     */
+    componentDidMount(){
+        pullAlphavantageKeyFromURL(this);
+    }
+
+    /**
      * Handles the change of a text and applies its value to the state and validates it.
      *
      * @param changedValue The changed Value.
@@ -221,7 +228,7 @@ export class App extends React.Component<{}, IAppState> {
     }
 
     /**
-     * Handles the confirmation event of the API key.
+     * Handles the confirmation event of the API key and adjusts the URL accordingly.
      */
     async handleAPIKeyConfirm(): Promise<void> {
         const apiKey = this.state[API_KEY_IDENTIFIER].value;
@@ -236,6 +243,14 @@ export class App extends React.Component<{}, IAppState> {
         } catch (e) {
             apiValues.error = true;
         }
+        // Adjust the URL.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlWithoutParams = window.location.href.split('?')[0];
+        urlParams.set(API_KEY_IDENTIFIER, apiKey);
+        //window.location.search = urlParams.toString();
+
+        window.history.replaceState(null, '', `${urlWithoutParams}?${urlParams.toString()}`);
+
         this.setState({ [API_KEY_IDENTIFIER]: apiValues });
         this.forceUpdate();
     }
@@ -668,3 +683,16 @@ function getInitialInputFormState(caller: App): IAppState {
         },
     };
 }
+
+/**
+     * Looks if the url contains an alphavantage key and applies it to the caller state if present.
+     *
+     * @param caller The calling instance of the App class.
+     */
+ function pullAlphavantageKeyFromURL(caller: App): void {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has(API_KEY_IDENTIFIER) && (params.get(API_KEY_IDENTIFIER) !== "" || params.get(API_KEY_IDENTIFIER) != null)){
+        caller.state.apiKey.value = params.get(API_KEY_IDENTIFIER) as string;
+        caller.handleAPIKeyConfirm();
+    }
+};
