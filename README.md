@@ -1,4 +1,4 @@
-# [Website](https://martinbuessemeyer.github.io/ETF-Pension-Plan-Visualization/)
+# [Website](http://etf-vis.net)
 
 This website is a prototype for an ETF retirement plan visualization. It focuses on detail e.g. (includes a tax-free amount) and visualizes costs, taxes, and inflation. The calculation is based on the current german taxation laws (2021). It is intended to present the risks and possibilities of ETFs as a retirement strategy.
 
